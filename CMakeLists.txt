@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 3.4 )
 
-### c++14 standards
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-
 if(WIN32)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -53,6 +47,10 @@ set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 set( TEST_DATA_PATH ${CMAKE_SOURCE_DIR}/data)
 set( EXPECTED_TEST_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output)
 
+
+### Add external libraries
+add_subdirectory($ENV{FMT_SOURCE} fmt_build )
+#add_subdirectory($ENV{DLIB_SOURCE} dlib_build)
 
 ### Add all the files in the src directory to the CMake tree  
 add_subdirectory( src )

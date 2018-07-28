@@ -25,7 +25,6 @@
 #include <random>
 
 
-
 using FastaItem = std::pair< std::string , std::string >;
 
 struct UnirefItem

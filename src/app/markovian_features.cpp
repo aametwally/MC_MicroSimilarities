@@ -18,14 +18,15 @@ int main(int argc, char *argv[])
 
     auto averageClusterSize = populationN / clustersN;
 
-    std::cout << "Average Cluster Size:" << averageClusterSize << std::endl;
+    fmt::print("[Clusters Size:{}][Average Cluster Size:{}]", clustersN , averageClusterSize );
 
-    auto results = markovianTraining( reducedAlphabetClusters , 3 , 2 , averageClusterSize , 0.1 );
+    auto results = markovianTraining( reducedAlphabetClusters , 4 , 0 , averageClusterSize , 0.1 );
     reducedAlphabetClusters.clear();
     seqs.clear();
     unirefItems.clear();
 
-    writeResults( results , argv[2] );
+    auto classificationResults = classification::classify( results.second , results.first );
+//    writeResults( results , argv[2] );
 
 
     return 0;
