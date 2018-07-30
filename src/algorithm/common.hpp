@@ -352,6 +352,19 @@ readFastaFile( const std::string &path ,
     return fasta;
 }
 
+void writeFastaFile( const std::vector< FastaItem > &fItems ,
+                     const std::string &filePath )
+{
+    std::ofstream ostream(filePath);
+    for( auto &item : fItems )
+        ostream << '<' << item.first << '\n'
+                << item.second << '\n';
+}
+
+}
+namespace uniref
+{
+
 UnirefItem fasta2UnirefItem( const FastaItem &fItem )
 {
     UnirefItem uniref;
@@ -375,6 +388,81 @@ fasta2UnirefItems( const std::vector< FastaItem > &fastaItems )
     return unirefItems;
 }
 
+using ClusterType = std::vector< std::reference_wrapper<FastaItem>>;
+using ClustersType = std::map< std::string , ClusterType > ;
+
+ClustersType fastaItemsToClusters( const std::vector< FastaItem > &fItems )
+{
+    ClustersType unirefClusters;
+    for( const FastaItem &fi : fItems )
+    {
+        auto unirefItem = fasta2UnirefItem( fi );
+        unirefClusters[ unirefItem.clusterName ].emplace_back(
+                    std::cref( fi ));
+    }
+    return unirefClusters;
 }
+
+
+std::pair< std::vector< FastaItem > , std::vector<FastaItem >>
+separationExcludingClustersWithLowSequentialData(
+        const std::vector< FastaItem > &fItems ,
+        float percentage = 0.1f ,
+        float threshold = 10.f )
+{
+    std::vector< FastaItem > subset,rest;
+    auto clusterSize = []( const std::vector< std::string > &cluster )
+    {
+        size_t count = 0;
+        for( auto &s : cluster )
+            count += s.length();
+        return count;
+    };
+
+    auto unirefClusters = fastaItemsToClusters( fItems );
+
+    size_t populationSequenceLength = 0;
+    for( const auto &c : reducedAlphabetClusters )
+        populationSequenceLength += clusterSize( c );
+
+    auto averageClusterSequenceSize = populationSequenceLength / unirefClusters.size();
+
+    for( auto &cluster : unirefClusters )
+        if( clusterSize( cluster ) >= averageClusterSequenceSize * threshold )
+        {
+            auto separatedItems = subsetRandomSeparation( cluster , percentage );
+            subset.insert( subset.end() , separatedItems.first.cbegin() , separatedItems.first.cend());
+            rest.insert( rest.end() , separatedItems.second.cbegin() , separatedItems.second.cend());
+        }
+
+    return std::make_pair( subset , rest );
+}
+
+std::pair< std::vector< FastaItem > , std::vector<FastaItem >>
+separationExcludingClustersWithFewMembers(
+        const std::vector< FastaItem > &fItems ,
+        float percentage = 0.1f ,
+        float threshold = 5.f )
+{
+    std::vector< FastaItem > subset,rest;
+    auto unirefClusters = fastaItemsToClusters( fItems );
+
+    auto averageClusterMembers = fItems.size() / unirefClusters.size();
+
+    for( auto &cluster : unirefClusters )
+        if( cluster.size() >= averageClusterMembers * threshold )
+        {
+            auto separatedItems = subsetRandomSeparation( cluster , percentage );
+            subset.insert( subset.end() , separatedItems.first.cbegin() , separatedItems.first.cend());
+            rest.insert( rest.end() , separatedItems.second.cbegin() , separatedItems.second.cend());
+        }
+
+    return std::make_pair( subset , rest );
+}
+
+}
+
+
+
 
 #endif // COMMON_HH

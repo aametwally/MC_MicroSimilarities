@@ -1,21 +1,21 @@
-#include "markovian_features.hpp"
+#include "common.hpp"
 #include "clara.hpp"
 
 int main(int argc, char *argv[])
 {
     std::string clustersFile;
-    int markovianOrder = 2;
-    int gappedMarkovianOrder = -1;
+    float percentage = 0.1f;
+    float threshold = -1;
 
     auto cli
         = clara::Arg( clustersFile, "input" )
             ("UniRef input file")
-        | clara::Opt( markovianOrder, "order" )
-            ["-o"]["--order"]
-            ("Markovian order")
-        | clara::Opt( gappedMarkovianOrder , "gorder" )
-            ["-g"]["--gorder"]
-            ("Gapped markovian order" );
+        | clara::Opt( percentage, "percentage" )
+            ["-p"]["--percentage"]
+            ("subset percentage")
+        | clara::Opt( threshold , "threshold" )
+            ["-t"]["--t"]
+            ("Below cluster size average to exclude from subsetting" );
 
     auto result = cli.parse( clara::Args( argc, argv ) );
     if( !result ) {
@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    fmt::print("[Args][input:{}][order:{}][gorder:{}]\n",
-                clustersFile , markovianOrder , gappedMarkovianOrder );
+    fmt::print("[Args][input:{}][percentage:{}][threshold:{}]\n",
+                clustersFile , percentage , threshold );
 
     auto seqs = io::readFastaFile( argv[1] );
 

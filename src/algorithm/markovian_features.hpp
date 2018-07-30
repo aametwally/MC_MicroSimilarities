@@ -19,6 +19,9 @@ const std::array< char , 256 > aaId([]{
     return ids;
 }());
 
+const std::array< std::string , 14 > reducedAASet_Olfer14 = { "KR","E","D","Q","N" , "C" , "G" , "H" , "ILVM" , "F" , "Y" , "W" , "P" , "ST","A" };
+const std::array< std::string , 8 > reducedAASet_Olfer8 = { "KRH" , "ED" , "C" , "G" , "AILVM" , "FYW" , "P" , "NQST" };
+
 const std::array< std::string , 11 > reducedAASet_DIAMOND = { "KREDQN" , "C" , "G" , "H" , "ILV" , "M" , "F" , "Y" , "W" , "P" , "STA" };
 const std::array< char , 11 > reducedAASetRepresentation_DIAMOND([](){
     std::array< char , 11 > newAlphabet;
@@ -161,40 +164,15 @@ public:
     };
 
 public:
-    MarkovianKernel( uint8_t order, uint8_t gapOrder,
-                     const std::function<double(int)> &gapOrderProbability ) :
+    MarkovianKernel( int order ) :
         _order( order ),
-        _gapOrder( gapOrder ),
-        _gapOrderProbability( gapOrderProbability ),
-        _hits(0),
-        _gappedHits(0)
+        _hits(0)
     {
         assert( order > 0 );
-        size_t kernelLength = powi< statesN >( order );
-        size_t gappedKernelLength = powi< statesN >( gapOrder );
-        _kernel = std::vector< KernelUnit > ( kernelLength );
-        _gappedKernel = std::vector< KernelUnit > ( gappedKernelLength );
-    }
-
-    static FilteredData filterPercentile( const FilteredData &data , float percent = 0.9f )
-    {
-        return { filterPercentile( data.kernels , percent ) ,
-                    filterPercentile( data.gappedKernels , percent )};
-    }
-
-    FilteredData filterPrisrine() const
-    {
-        return { filterPristine( _kernel ), filterPristine( _gappedKernel ) };
-    }
-
-    static std::unordered_map< size_t , KernelUnit >
-    filterPristine( const std::vector< KernelUnit > &kernels )
-    {
-        std::unordered_map< size_t , KernelUnit > filtered;
-        for( size_t i = 0 ; i < kernels.size() ; ++i  )
-            if( !kernels.at( i ).isPristine())
-                filtered.emplace( i , kernels.at( i ));
-        return filtered;
+//        size_t kernelLength = powi< statesN >( order );
+//        size_t gappedKernelLength = (gapOrder >= 0)? powi< statesN >( gapOrder ) : 0;
+//        _kernel = std::vector< KernelUnit > ( kernelLength );
+//        if( gappedKernelLength > 0 ) _gappedKernel = std::vector< KernelUnit > ( gappedKernelLength );
     }
 
     static std::unordered_map< size_t , KernelUnit >
@@ -219,24 +197,10 @@ public:
 
     void train( const std::vector< std::string > &sequences )
     {
-        if( _gapOrder > 0 )
-        {
-            for( const auto &s : sequences )
-            {
-                _countInstance( s );
-                _countInstanceGapped( s );
-            }
-        }
-        else
-        {
-            for( const auto &s : sequences )
-            {
-                _countInstance( s );
-            }
-        }
+        for( const auto &s : sequences )
+            _countInstance( s );
 
         for( auto &u : _kernel ) u.normalize();
-        for( auto &u : _gappedKernel ) u.normalize();
     }
 
     size_t hits() const
@@ -270,22 +234,22 @@ public:
 
     }
 private:
-    void _incrementInstanceGapped( std::string::const_iterator seedFrom ,
-                                   std::string::const_iterator seedUntil ,
-                                   std::string::const_iterator windowFrom ,
-                                   std::string::const_iterator windowUntil )
-    {
-        assert( windowFrom != windowUntil );
-        for( auto it = seedFrom ; it != seedUntil ; ++it )
-        {
-            auto distance = std::distance( it , windowFrom );
-            auto seed = *it;
-            auto index = _sequence2Index( windowFrom , windowUntil - 1 ,
-                                          seed -  reducedAASetRepresentation_DIAMOND.front( ));
-            auto c = reducedAAIds_DIAMOND.at( *(windowUntil - 1) );
-            _gappedKernel.at( index ).increment( c , _gapOrderProbability( distance ));
-        }
-    }
+//    void _incrementInstanceGapped( std::string::const_iterator seedFrom ,
+//                                   std::string::const_iterator seedUntil ,
+//                                   std::string::const_iterator windowFrom ,
+//                                   std::string::const_iterator windowUntil )
+//    {
+//        assert( windowFrom != windowUntil );
+//        for( auto it = seedFrom ; it != seedUntil ; ++it )
+//        {
+//            auto distance = std::distance( it , windowFrom );
+//            auto seed = *it;
+//            auto index = _sequence2Index( windowFrom , windowUntil - 1 ,
+//                                          seed -  reducedAASetRepresentation_DIAMOND.front( ));
+//            auto c = reducedAAIds_DIAMOND.at( *(windowUntil - 1) );
+//            _gappedKernel[ index ].increment( c , _gapOrderProbability( distance ));
+//        }
+//    }
 
 
     void _incrementInstance( std::string::const_iterator from ,
@@ -294,37 +258,37 @@ private:
         assert( from != until );
         auto index = _sequence2Index( from , until - 1 );
         auto c = reducedAAIds_DIAMOND.at( *(until - 1) );
-        _kernel.at( index ).increment( c );
+        _kernel[ index ].increment( c );
     }
 
-    void _countInstanceGapped( const std::string &sequence )
-    {
-        ++_gappedHits;
-        using WindowIteratorType = std::pair< std::string::const_iterator, std::string::const_iterator>;
-        assert( sequence.size() > 2 * _gapOrder );
-        WindowIteratorType seedsIt { sequence.cbegin() , sequence.cbegin() + 1 };
-        WindowIteratorType windowIt { sequence.cbegin() + 2 , sequence.cbegin() + 2 + _gapOrder };
+//    void _countInstanceGapped( const std::string &sequence )
+//    {
+//        ++_gappedHits;
+//        using WindowIteratorType = std::pair< std::string::const_iterator, std::string::const_iterator>;
+//        assert( sequence.size() > 2 * _gapOrder );
+//        WindowIteratorType seedsIt { sequence.cbegin() , sequence.cbegin() + 1 };
+//        WindowIteratorType windowIt { sequence.cbegin() + 2 , sequence.cbegin() + 2 + _gapOrder };
 
-        for( auto i = 0 ; i < _gapOrder ; ++i )
-        {
-            _incrementInstanceGapped( seedsIt.first , seedsIt.second ,
-                                      windowIt.first , windowIt.second );
-            ++seedsIt.second;
-            ++windowIt.first;
-            ++windowIt.second;
-        }
+//        for( auto i = 0 ; i < _gapOrder ; ++i )
+//        {
+//            _incrementInstanceGapped( seedsIt.first , seedsIt.second ,
+//                                      windowIt.first , windowIt.second );
+//            ++seedsIt.second;
+//            ++windowIt.first;
+//            ++windowIt.second;
+//        }
 
-        while( windowIt.second != sequence.cend())
-        {
-            _incrementInstanceGapped( seedsIt.first , seedsIt.second ,
-                                      windowIt.first , windowIt.second );
-            ++seedsIt.first;
-            ++seedsIt.second;
-            ++windowIt.first;
-            ++windowIt.second;
-        }
+//        while( windowIt.second != sequence.cend())
+//        {
+//            _incrementInstanceGapped( seedsIt.first , seedsIt.second ,
+//                                      windowIt.first , windowIt.second );
+//            ++seedsIt.first;
+//            ++seedsIt.second;
+//            ++windowIt.first;
+//            ++windowIt.second;
+//        }
 
-    }
+//    }
 
     void _countInstance( const std::string &sequence )
     {
@@ -344,14 +308,9 @@ private:
     }
 
 private:
-    const uint8_t _order;
-    const uint8_t _gapOrder;
-    const std::function<double(int)> _gapOrderProbability;
-
-    std::vector< KernelUnit > _kernel;
-    std::vector< KernelUnit > _gappedKernel;
+    const int _order;
+    std::unordered_map< KernelUnit > _kernel;
     size_t _hits;
-    size_t _gappedHits;
 };
 
 
@@ -392,49 +351,27 @@ using UnirefClusters = std::map< uint32_t , std::vector< std::string >>;
 
 struct MarkovianFilteredProfile{
     using RowIndex = size_t;
-    MarkovianFilteredProfile( MarkovianFilteredProfile &&other) = default;
-    size_t clusterId;
     size_t hits;
-    size_t gappedHits;
     std::unordered_map< RowIndex , KernelUnit > filteredKernel;
-    std::unordered_map< RowIndex , KernelUnit > filteredGappedKernel;
 };
 
-using MarkovianFilteredProfiles = std::vector< MarkovianFilteredProfile >;
+using MarkovianFilteredProfiles = std::map< std::string , MarkovianFilteredProfile >;
 
 std::pair< MarkovianFilteredProfiles , MarkovianFilteredProfiles >
-markovianTraining( const std::vector< std::vector< std::string >> &population ,
-                   uint32_t markovianOrder ,
-                   uint32_t gapOrder ,
-                   uint32_t minimumClusterSize ,
-                   float testPercentage = 0.1f )
+markovianTraining( const std::vector< std::vector< std::string >> &training ,
+                   int markovianOrder ,
+                   int gapOrder  )
 {
-    size_t clusterId = 0;
-    MarkovianFilteredProfiles consensusProfiles;
-    MarkovianFilteredProfiles testProfiles;
-
-    auto clusterSize = []( const std::vector< std::string > &cluster )
+    MarkovianFilteredProfiles clusterProfiles;
+    for( auto &cluster : training )
     {
-        size_t count = 0;
-        for( auto &s : cluster )
-            count += s.length();
-        return count;
-    };
-
-    for( auto &cluster : population )
-        if( clusterSize( cluster ) >= minimumClusterSize * 10 )
-        {
             MarkovianKernel11Alphabet kernel( markovianOrder , gapOrder ,
                                               geometricDistribution( 0.5f ));
-            if( cluster.size() * testPercentage > 1 )
-            {
                 auto separatedItems = subsetRandomSeparation( cluster , testPercentage );
                 for( auto &s : separatedItems.first )
                 {
-                    MarkovianKernel11Alphabet testKernel( markovianOrder , gapOrder ,
-                                                          geometricDistribution( 0.5f ));
-                    testKernel.train( {s} );
-                    auto filtered =  testKernel.filterPrisrine();
+
+
                     auto profile = MarkovianFilteredProfile{clusterId , testKernel.hits(),
                             testKernel.gappedHits(),
                             filtered.kernels  ,  filtered.gappedKernels };
@@ -453,8 +390,7 @@ markovianTraining( const std::vector< std::vector< std::string >> &population ,
             consensusProfiles.emplace_back( std::move( profile ));
             ++clusterId;
         }
-    return std::make_pair( std::move( consensusProfiles ) ,
-                           std::move( testProfiles ));
+    return consensusProfiles;
 }
 
 namespace classification
@@ -522,7 +458,7 @@ float totalChiSquaredDistance( const MarkovianFilteredProfile &query ,
 
 MatchSet findSimilarities( const MarkovianFilteredProfile &query ,
                            const MarkovianFilteredProfiles &targets ,
-                           size_t kNearest = 5 )
+                           size_t kNearest = 3 )
 {
     MatchSet matchSet;
     for( const MarkovianFilteredProfile &target : targets )
