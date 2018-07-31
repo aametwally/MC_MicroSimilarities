@@ -1,16 +1,31 @@
 ## Dependencies
-#include( Qt )
-include_directories( ../algorithm )
+
+
+set( COMMON_INCLUDE_DIRECTORIES
+        ../algorithm
+        ../report
+        ../data )
+set( COMMON_INCLUDES
+        ../algorithm/common.hpp
+        ../algorithm/markovian_features.hpp
+        ../report/Timers.hpp
+        ../data/SequenceEntry.hpp
+        ../data/FastaEntry.hpp
+        ../data/UniRefEntry.hpp)
 
 ### Generate the main executable
-add_executable( markovian_features   markovian_features.cpp)
-target_include_directories( markovian_features PRIVATE ${CMAKE_SOURCE_DIR}/src/include )
+add_executable( markovian_features ${COMMON_INCLUDES} markovian_features.cpp )
+target_include_directories( markovian_features PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/include
+        ${COMMON_INCLUDE_DIRECTORIES} )
 target_link_libraries( markovian_features PRIVATE fmt-header-only  )
 target_compile_features( markovian_features PRIVATE cxx_std_17)
 
 ### Generate the subsetter executable
-add_executable( subsetDataset   subsetDataset.cpp)
-target_include_directories( subsetDataset PRIVATE ${CMAKE_SOURCE_DIR}/src/include )
+add_executable( subsetDataset  ${COMMON_INCLUDES} subsetDataset.cpp)
+target_include_directories( subsetDataset PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/include
+        ${COMMON_INCLUDE_DIRECTORIES} )
 target_link_libraries( subsetDataset PRIVATE fmt-header-only  )
 target_compile_features( subsetDataset PRIVATE cxx_std_17)
 

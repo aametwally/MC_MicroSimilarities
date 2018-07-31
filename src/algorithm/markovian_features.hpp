@@ -7,7 +7,7 @@
 #include <fmt/format.h>
 
 #include "common.hpp"
-
+#include "UniRefEntry.hpp"
 
 
 const std::set< char > aaSet = {'A','C','D','E','F','G','H','I','K','L','M','N','P','Q','R','S','T','V','W','Y'};
@@ -19,7 +19,7 @@ const std::array< char , 256 > aaId([]{
     return ids;
 }());
 
-const std::array< std::string , 14 > reducedAASet_Olfer14 = { "KR","E","D","Q","N" , "C" , "G" , "H" , "ILVM" , "F" , "Y" , "W" , "P" , "ST","A" };
+const std::array< std::string , 15 > reducedAASet_Olfer14 = { "KR","E","D","Q","N" , "C" , "G" , "H" , "ILVM" , "F" , "Y" , "W" , "P" , "ST","A" };
 const std::array< std::string , 8 > reducedAASet_Olfer8 = { "KRH" , "ED" , "C" , "G" , "AILVM" , "FYW" , "P" , "NQST" };
 
 const std::array< std::string , 11 > reducedAASet_DIAMOND = { "KREDQN" , "C" , "G" , "H" , "ILV" , "M" , "F" , "Y" , "W" , "P" , "STA" };
@@ -156,23 +156,12 @@ public:
         size_t _hits;
     };
 
-    struct FilteredData
-    {
-        using RowIndex = size_t;
-        std::unordered_map< RowIndex , KernelUnit > kernels;
-        std::unordered_map< RowIndex , KernelUnit > gappedKernels;
-    };
-
 public:
     MarkovianKernel( int order ) :
         _order( order ),
         _hits(0)
     {
         assert( order > 0 );
-//        size_t kernelLength = powi< statesN >( order );
-//        size_t gappedKernelLength = (gapOrder >= 0)? powi< statesN >( gapOrder ) : 0;
-//        _kernel = std::vector< KernelUnit > ( kernelLength );
-//        if( gappedKernelLength > 0 ) _gappedKernel = std::vector< KernelUnit > ( gappedKernelLength );
     }
 
     static std::unordered_map< size_t , KernelUnit >
@@ -200,17 +189,13 @@ public:
         for( const auto &s : sequences )
             _countInstance( s );
 
-        for( auto &u : _kernel ) u.normalize();
+        for( auto & [rowId,row] : _kernel )
+            row.normalize();
     }
 
     size_t hits() const
     {
         return _hits;
-    }
-
-    size_t gappedHits() const
-    {
-        return _gappedHits;
     }
 
     void toFiles( const std::string &dir ,
@@ -223,35 +208,19 @@ public:
         for( const auto &u : _kernel )
             kernelFile << u.toString() << std::endl;
         kernelFile.close();
-
-
-        std::ofstream gKernelFile;
-        std::vector< std::string > names2 = { prefix , "gprofile" , id };
-        gKernelFile.open( dir + "/" + io::join( names2 , "_" ) + ".array" );
-        for( const auto &u : _gappedKernel )
-            gKernelFile << u.toString() << std::endl;
-        gKernelFile.close();
-
     }
+
+    const std::unordered_map< size_t , KernelUnit > &kernel() const
+    {
+        return _kernel;
+    }
+
+    int order() const
+    {
+        return _order;
+    }
+
 private:
-//    void _incrementInstanceGapped( std::string::const_iterator seedFrom ,
-//                                   std::string::const_iterator seedUntil ,
-//                                   std::string::const_iterator windowFrom ,
-//                                   std::string::const_iterator windowUntil )
-//    {
-//        assert( windowFrom != windowUntil );
-//        for( auto it = seedFrom ; it != seedUntil ; ++it )
-//        {
-//            auto distance = std::distance( it , windowFrom );
-//            auto seed = *it;
-//            auto index = _sequence2Index( windowFrom , windowUntil - 1 ,
-//                                          seed -  reducedAASetRepresentation_DIAMOND.front( ));
-//            auto c = reducedAAIds_DIAMOND.at( *(windowUntil - 1) );
-//            _gappedKernel[ index ].increment( c , _gapOrderProbability( distance ));
-//        }
-//    }
-
-
     void _incrementInstance( std::string::const_iterator from ,
                              std::string::const_iterator until )
     {
@@ -260,35 +229,6 @@ private:
         auto c = reducedAAIds_DIAMOND.at( *(until - 1) );
         _kernel[ index ].increment( c );
     }
-
-//    void _countInstanceGapped( const std::string &sequence )
-//    {
-//        ++_gappedHits;
-//        using WindowIteratorType = std::pair< std::string::const_iterator, std::string::const_iterator>;
-//        assert( sequence.size() > 2 * _gapOrder );
-//        WindowIteratorType seedsIt { sequence.cbegin() , sequence.cbegin() + 1 };
-//        WindowIteratorType windowIt { sequence.cbegin() + 2 , sequence.cbegin() + 2 + _gapOrder };
-
-//        for( auto i = 0 ; i < _gapOrder ; ++i )
-//        {
-//            _incrementInstanceGapped( seedsIt.first , seedsIt.second ,
-//                                      windowIt.first , windowIt.second );
-//            ++seedsIt.second;
-//            ++windowIt.first;
-//            ++windowIt.second;
-//        }
-
-//        while( windowIt.second != sequence.cend())
-//        {
-//            _incrementInstanceGapped( seedsIt.first , seedsIt.second ,
-//                                      windowIt.first , windowIt.second );
-//            ++seedsIt.first;
-//            ++seedsIt.second;
-//            ++windowIt.first;
-//            ++windowIt.second;
-//        }
-
-//    }
 
     void _countInstance( const std::string &sequence )
     {
@@ -307,9 +247,10 @@ private:
         return code;
     }
 
+
 private:
     const int _order;
-    std::unordered_map< KernelUnit > _kernel;
+    std::unordered_map< size_t , KernelUnit > _kernel;
     size_t _hits;
 };
 
@@ -330,74 +271,47 @@ std::string reduceAlphabets_DIAMOND( const std::string &sequence )
     return reducedSequence;
 }
 
-std::vector< std::vector< std::string >>
-unirefClusters2ReducedAASequences_DIAMOND( const std::vector< UnirefItem > &unirefItems )
+std::vector< UniRefEntry >
+reducedAAEntries_DIAMOND( const std::vector< UniRefEntry > &unirefEntries )
 {
-    std::map< std::string , std::vector< std::string >> unirefClusters;
-    for( const UnirefItem &ui : unirefItems )
-        unirefClusters[ ui.clusterName ].emplace_back( reduceAlphabets_DIAMOND( ui.sequence ));
-
-    std::vector< std::vector< std::string >> reducedAlphabetClusters;
-    for( auto it = unirefClusters.cbegin() ; it != unirefClusters.cend() ; ++it )
-        reducedAlphabetClusters.emplace_back( std::move( it->second ));
-
-    return reducedAlphabetClusters;
+    std::vector< UniRefEntry > unirefReducedEntries;
+    for( const UniRefEntry &ui : unirefEntries )
+    {
+        auto reduced = ui;
+        reduced.setSequence( reduceAlphabets_DIAMOND( ui.getSequence() ));
+        unirefReducedEntries.emplace_back( reduced );
+    }
+    return unirefReducedEntries;
 }
 }
 
 using MarkovianKernel11Alphabet = MarkovianKernel< 11 , float >;
-using KernelUnit = MarkovianKernel11Alphabet::KernelUnit;
+using MarkovianProfile = MarkovianKernel11Alphabet;
+using KernelUnit = MarkovianProfile::KernelUnit;
 using UnirefClusters = std::map< uint32_t , std::vector< std::string >>;
 
-struct MarkovianFilteredProfile{
-    using RowIndex = size_t;
-    size_t hits;
-    std::unordered_map< RowIndex , KernelUnit > filteredKernel;
-};
+using MarkovianProfiles = std::map< std::string , MarkovianProfile >;
 
-using MarkovianFilteredProfiles = std::map< std::string , MarkovianFilteredProfile >;
-
-std::pair< MarkovianFilteredProfiles , MarkovianFilteredProfiles >
-markovianTraining( const std::vector< std::vector< std::string >> &training ,
-                   int markovianOrder ,
-                   int gapOrder  )
+MarkovianProfiles
+markovianTraining( const std::map< std::string , std::vector< std::string >> &training ,
+                   int markovianOrder )
 {
-    MarkovianFilteredProfiles clusterProfiles;
-    for( auto &cluster : training )
+    MarkovianProfiles trainedProfiles;
+
+    for( const auto & [id,sequences] : training )
     {
-            MarkovianKernel11Alphabet kernel( markovianOrder , gapOrder ,
-                                              geometricDistribution( 0.5f ));
-                auto separatedItems = subsetRandomSeparation( cluster , testPercentage );
-                for( auto &s : separatedItems.first )
-                {
-
-
-                    auto profile = MarkovianFilteredProfile{clusterId , testKernel.hits(),
-                            testKernel.gappedHits(),
-                            filtered.kernels  ,  filtered.gappedKernels };
-                    testProfiles.emplace_back( std::move( profile ));
-                }
-                kernel.train( separatedItems.second );
-            }
-            else
-            {
-                kernel.train( cluster );
-            }
-
-            auto filtered =  kernel.filterPrisrine();
-            auto profile = MarkovianFilteredProfile{clusterId ,  kernel.hits(), kernel.gappedHits(),
-                    filtered.kernels  ,  filtered.gappedKernels };
-            consensusProfiles.emplace_back( std::move( profile ));
-            ++clusterId;
-        }
-    return consensusProfiles;
+        MarkovianKernel11Alphabet kernel( markovianOrder );
+        kernel.train( sequences );
+        trainedProfiles.emplace( id , std::move( kernel ));
+    }
+    return trainedProfiles;
 }
 
 namespace classification
 {
 struct MatchDistance
 {
-    size_t id;
+    std::string id;
     float distance;
 
     bool operator>( const MatchDistance &other ) const
@@ -410,8 +324,7 @@ using MatchSet = std::set< MatchDistance , std::greater< MatchDistance >>;
 
 struct Classification
 {
-    size_t testId;
-    size_t trueCluster;
+    std::string trueCluster;
     MatchSet bestMatches;
 
     bool trueClusterFound() const
@@ -423,101 +336,83 @@ struct Classification
     }
 };
 
-bool allHitsCovered( const std::unordered_map< size_t , KernelUnit > &query ,
-                     const std::unordered_map< size_t , KernelUnit > &target )
-{
-    for( auto it = query.cbegin() ; it != query.cend() ; ++it )
-        if( target.find( it->first ) == target.cend())
-            return false;
-    return true;
-}
-
-float totalChiSquaredDistance( const MarkovianFilteredProfile &query ,
-                               const MarkovianFilteredProfile &target )
+float totalChiSquaredDistance( const MarkovianProfile &query ,
+                               const MarkovianProfile &target )
 {
     float sum{0};
-    for( auto it = query.filteredGappedKernel.cbegin() ; it != query.filteredGappedKernel.cend() ; ++it )
+    for( const auto &[ rowId , row ] : query.kernel() )
     {
         try
         {
-            auto &unit1 = it->second;
-            auto &unit2 = target.filteredGappedKernel.at( it->first );
-            //        float w1 = float{unit1.hits()} / query.hits ;
-            //        float w2 = float{unit2.hits()} / target.hits;
-            //        float w = w1 / w1 ;
+            auto &unit1 = row;
+            auto &unit2 = target.kernel().at( rowId );
             sum += unit1.chiSquaredDistance( unit2 ) ;
         } catch( const std::out_of_range &e )
         {
 
         }
-
-
     }
     return sum;
 }
 
-MatchSet findSimilarities( const MarkovianFilteredProfile &query ,
-                           const MarkovianFilteredProfiles &targets ,
+MatchSet findSimilarities( const MarkovianProfile &query ,
+                           const MarkovianProfiles &targets ,
                            size_t kNearest = 3 )
 {
     MatchSet matchSet;
-    for( const MarkovianFilteredProfile &target : targets )
+    for( const auto & [clusterId,clusterProfile] : targets )
     {
-        //        if( allHitsCovered( query.filteredKernel , target.filteredKernel ))
-        //        {
-        float distance = totalChiSquaredDistance( query ,
-                                                  target );
-        matchSet.insert({ target.clusterId , distance });
+        float distance = totalChiSquaredDistance( query , clusterProfile );
+        matchSet.insert({ clusterId , distance });
 
         if( matchSet.size() > kNearest )
             matchSet.erase( matchSet.begin());
-        //        }
     }
     return matchSet;
 }
 
-std::vector< Classification > classify( const MarkovianFilteredProfiles &queries,
-                                        const MarkovianFilteredProfiles &targets )
+std::vector< Classification > classify( const std::vector< FastaEntry > &queries,
+                                        const MarkovianProfiles &targets )
 {
+    const int order = targets.begin()->second.order();
     std::vector< Classification > classifications;
-    size_t testId = 0;
-    size_t trueCluster = 0;
-    for( const MarkovianFilteredProfile &q : queries )
+    for( const auto &q : queries )
     {
-        Classification result{ ++testId , q.clusterId ,
-                    findSimilarities( q , targets )};
+        MarkovianProfile p( order );
+        p.train( {q.getSequence()} );
+        Classification result{  "" , findSimilarities( p , targets )};
         classifications.emplace_back( result );
-        trueCluster += result.trueClusterFound();
-        if( testId % 100 == 0 )
-        {
-            fmt::print("progress:{}\taccuracy:{}\n",
-                       float{testId}/queries.size() ,
-                       float{trueCluster}/testId );
-        }
     }
     return classifications;
 }
 
-
+std::vector< Classification > classify_VALIDATION(
+        const std::vector< UniRefEntry > &queries,
+                                        const MarkovianProfiles &targets )
+{
+    const int order = targets.begin()->second.order();
+    std::vector< Classification > classifications;
+    size_t truePositive = 0;
+    size_t tested = 0;
+    for( const auto &unirefItem : queries )
+    {
+        MarkovianProfile p( order );
+        p.train( {unirefItem.getSequence()} );
+        Classification result{ unirefItem.getClusterName() , findSimilarities( p , targets )};
+        classifications.emplace_back( result );
+        truePositive += result.trueClusterFound();
+        ++tested;
+        if( (tested * 100) / queries.size() - ((tested - 1) * 100) / queries.size() > 0 )
+        {
+            fmt::print("[progress:{}%][accuracy:{}]\n",
+                       float{tested*100}/queries.size() ,
+                       float{truePositive}/tested );
+        }
+    }
+    return classifications;
+}
 }
 
-//void writeResults( const std::pair< MarkovianProfiles , MarkovianProfiles > &results ,
-//                   const std::string &dir )
-//{
-//    const std::string consensusPrefix = "consensus";
-//    for( auto &p : results.first )
-//        p.second.toFiles( dir , consensusPrefix , std::to_string( p.first ));
-
-
-//    size_t testItem = 0;
-//    for( auto &p : results.second )
-//    {
-//        std::string testProfile = "test";
-//        testProfile += std::to_string( testItem++ );
-//        p.second.toFiles( dir , testProfile ,  std::to_string( p.first ) );
-//    }
-
-//}
 
 
 #endif

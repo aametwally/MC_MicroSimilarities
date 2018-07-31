@@ -1,61 +1,84 @@
 #include "markovian_features.hpp"
 #include "clara.hpp"
+#include "Timers.hpp"
+
+constexpr const char *LOADING = "loading";
+constexpr const char *PREPROCESSING = "preprocessing";
+constexpr const char *TRAINING = "training";
+constexpr const char *CLASSIFICATION = "classification";
 
 int main(int argc, char *argv[])
 {
     std::string clustersFile;
     int markovianOrder = 2;
     int gappedMarkovianOrder = -1;
-
+    float testPercentage = 0.1f, threshold = -1;
+    bool showHelp = false;
     auto cli
-        = clara::Arg( clustersFile, "input" )
+            = clara::Arg( clustersFile, "input" )
             ("UniRef input file")
-        | clara::Opt( markovianOrder, "order" )
+            | clara::Opt( markovianOrder, "order" )
             ["-o"]["--order"]
             ("Markovian order")
-        | clara::Opt( gappedMarkovianOrder , "gorder" )
+            | clara::Opt( gappedMarkovianOrder , "gorder" )
             ["-g"]["--gorder"]
-            ("Gapped markovian order" );
+            ("Gapped markovian order" )
+            | clara::Opt( testPercentage, "percentage" )
+            ["-p"]["--percentage"]
+            ("test percentage")
+            | clara::Opt( threshold , "threshold" )
+            ["-t"]["--t"]
+            ("Below cluster size average to exclude from subsetting" )
+            | clara::Help(showHelp);
 
     auto result = cli.parse( clara::Args( argc, argv ) );
     if( !result ) {
         fmt::print("Error in command line:{}\n", result.errorMessage() );
         exit(1);
     }
+    else if (showHelp)
+    {
+        cli.writeToStream(std::cout);
+    }
+    else
+    {
+        fmt::print("[Args][input:{}][order:{}][testPercentage:{}][threshold:{}]\n",
+                   clustersFile , markovianOrder, testPercentage ,  threshold );
 
-    fmt::print("[Args][input:{}][order:{}][gorder:{}]\n",
-                clustersFile , markovianOrder , gappedMarkovianOrder );
-
-    auto seqs = io::readFastaFile( argv[1] );
-
-    auto unirefItems = io::fasta2UnirefItems( seqs );
-    seqs.clear();
-
-    auto reducedAlphabetClusters = preprocess::unirefClusters2ReducedAASequences_DIAMOND( unirefItems );
-    unirefItems.clear();
-
-    auto clustersN = reducedAlphabetClusters.size();
-    size_t populationN = 0;
-    for( const auto &c : reducedAlphabetClusters )
-        for( const auto &s : c )
-            populationN += s.length();
-
-    auto averageClusterSize = populationN / clustersN;
-
-    fmt::print("[Clusters Size:{}][Average Cluster Size:{}][All Sequences:{}]\n", clustersN , averageClusterSize , populationN );
-
-    auto results = markovianTraining( reducedAlphabetClusters , markovianOrder ,
-                                      gappedMarkovianOrder , averageClusterSize , 0.1 );
-
-    fmt::print("[Test Sequences:{}]\n",results.second.size());
-
-    reducedAlphabetClusters.clear();
-    seqs.clear();
-    unirefItems.clear();
-
-    auto classificationResults = classification::classify( results.second , results.first );
-//    writeResults( results , argv[2] );
+        Timers::tic( LOADING );
+        std::vector< UniRefEntry > entries = UniRefEntry::fasta2UnirefEntries( FastaEntry::readFastaFile( argv[1] ) );
+        Timers::toc( LOADING );
+        Timers::report_s( LOADING );
 
 
+        auto [trainingClusters , test] = Timers::reported_invoke_s( [&](){
+
+            entries = preprocess::reducedAAEntries_DIAMOND( entries );
+
+            fmt::print("[All Sequences:{}]\n", entries.size());
+
+            auto [test,training] = ( threshold > 0 )?
+                                   UniRefEntry::separationExcludingClustersWithLowSequentialData( entries , testPercentage , threshold ) :
+                                   subsetRandomSeparation( entries , testPercentage );
+
+            fmt::print("[Training Entries:{}][Test Entries:{}][Test Ratio:{}]\n",
+                       training.size(),test.size(), float{test.size()}/entries.size());
+
+            entries.clear();
+
+            auto trainingClusters = UniRefEntry::groupSequencesByUniRefClusters( training );
+            return std::make_pair( trainingClusters , test );
+        }, PREPROCESSING );
+
+
+        fmt::print("[Training Clusters:{}]\n" ,  trainingClusters.size());
+        auto trainedProfiles = Timers::reported_invoke_s( [&](){
+            return markovianTraining( trainingClusters , markovianOrder );
+        } , TRAINING );
+
+        auto classificationResults = Timers::reported_invoke_s( [&](){
+            return classification::classify_VALIDATION( test , trainedProfiles );
+        }, CLASSIFICATION );
+    }
     return 0;
 }
