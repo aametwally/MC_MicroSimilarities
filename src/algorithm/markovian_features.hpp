@@ -405,8 +405,8 @@ std::vector< Classification > classify_VALIDATION(
         if( (tested * 100) / queries.size() - ((tested - 1) * 100) / queries.size() > 0 )
         {
             fmt::print("[progress:{}%][accuracy:{}]\n",
-                       float{tested*100}/queries.size() ,
-                       float{truePositive}/tested );
+                       float(tested*100)/queries.size() ,
+                       float(truePositive)/tested );
         }
     }
     return classifications;

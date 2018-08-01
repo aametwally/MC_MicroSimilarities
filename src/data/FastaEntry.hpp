@@ -9,11 +9,11 @@
 #include "common.hpp"
 
 
-class FastaEntry : SequenceEntry<FastaEntry>
+class FastaEntry : public SequenceEntry<FastaEntry>
 {
 public:
-    FastaEntry(const std::string &id, const std::string &seq)
-            : _id(id), _sequence(seq)
+    FastaEntry( std::string id, std::string seq)
+            : _id( std::move( id )), _sequence( std::move( seq ))
     {}
 
     size_t sequenceLength() const override

@@ -27,18 +27,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3f0d2b72-853a-4e53-a27b-7098811840a8" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/data/FastaEntry.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/data/UniRefEntry.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/report/Timers.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/algorithm/common.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/common.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/algorithm/markovian_features.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/markovian_features.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/markovian_features.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/markovian_features.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/subsetDataset.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/subsetDataset.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/FastaEntry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/FastaEntry.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/report/Timers.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/Timers.hpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/cmake-build-release/" />
@@ -51,11 +49,11 @@
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Release" />
   <component name="FileEditorManager">
-    <leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file leaf-file-name="common.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/algorithm/common.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="676">
+            <state relative-caret-position="3556">
               <caret line="277" column="5" selection-start-line="277" selection-start-column="5" selection-end-line="277" selection-end-column="5" />
               <folding>
                 <element signature="e#55#72#0" expanded="true" />
@@ -69,8 +67,8 @@
       <file leaf-file-name="SequenceEntry.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/data/SequenceEntry.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="81">
-              <caret line="33" column="45" selection-start-line="33" selection-start-column="45" selection-end-line="33" selection-end-column="45" />
+            <state relative-caret-position="624">
+              <caret line="39" column="5" selection-start-line="39" selection-start-column="5" selection-end-line="39" selection-end-column="5" />
               <folding>
                 <element signature="e#161#175#0" expanded="true" />
               </folding>
@@ -78,11 +76,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="FastaEntry.hpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="FastaEntry.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/data/FastaEntry.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="209">
-              <caret line="16" column="6" selection-start-line="16" selection-start-column="6" selection-end-line="16" selection-end-column="6" />
+            <state relative-caret-position="176">
+              <caret line="11" column="26" selection-start-line="11" selection-start-column="26" selection-end-line="11" selection-end-column="26" />
               <folding>
                 <element signature="e#124#152#0" expanded="true" />
               </folding>
@@ -93,8 +91,8 @@
       <file leaf-file-name="UniRefEntry.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/data/UniRefEntry.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="227">
-              <caret line="65" column="69" selection-start-line="65" selection-start-column="69" selection-end-line="65" selection-end-column="69" />
+            <state relative-caret-position="402">
+              <caret line="70" column="29" selection-start-line="70" selection-start-column="29" selection-end-line="70" selection-end-column="29" />
               <folding>
                 <element signature="e#126#154#0" expanded="true" />
               </folding>
@@ -102,32 +100,14 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/app/CMakeLists.txt">
+      <file leaf-file-name="ConfusionMatrix.hpp" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/report/ConfusionMatrix.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="172">
-              <caret line="27" column="38" selection-start-line="27" selection-start-column="38" selection-end-line="27" selection-end-column="38" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Timers.hpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/report/Timers.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-844">
-              <caret line="13" column="46" selection-start-line="13" selection-start-column="46" selection-end-line="13" selection-end-column="46" />
+            <state relative-caret-position="322">
+              <caret line="207" column="28" selection-start-line="207" selection-start-column="28" selection-end-line="207" selection-end-column="28" />
               <folding>
-                <element signature="e#2085#2118#0" expanded="true" />
+                <element signature="e#165#197#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="chrono" pinned="false" current-in-tab="false">
-        <entry file="file:///usr/include/c++/7/chrono">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="121">
-              <caret line="307" column="4" selection-start-line="307" selection-start-column="4" selection-end-line="307" selection-end-column="4" />
             </state>
           </provider>
         </entry>
@@ -135,8 +115,8 @@
       <file leaf-file-name="markovian_features.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/app/markovian_features.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="161">
-              <caret line="63" column="45" selection-start-line="63" selection-start-column="45" selection-end-line="63" selection-end-column="45" />
+            <state relative-caret-position="82">
+              <caret line="96" column="70" selection-start-line="96" selection-start-column="70" selection-end-line="96" selection-end-column="70" />
             </state>
           </provider>
         </entry>
@@ -144,10 +124,10 @@
       <file leaf-file-name="subsetDataset.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/app/subsetDataset.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="292">
-              <caret line="31" column="60" selection-start-line="31" selection-start-column="60" selection-end-line="31" selection-end-column="60" />
+            <state relative-caret-position="448">
+              <caret line="28" column="41" selection-start-line="28" selection-start-column="41" selection-end-line="28" selection-end-column="41" />
               <folding>
-                <element signature="e#0#21#0" expanded="true" />
+                <element signature="e#0#25#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -156,8 +136,8 @@
       <file leaf-file-name="markovian_features.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/algorithm/markovian_features.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="129">
-              <caret line="400" column="58" selection-start-line="400" selection-start-column="58" selection-end-line="400" selection-end-column="58" />
+            <state relative-caret-position="6656">
+              <caret line="416" selection-start-line="416" selection-end-line="416" />
               <folding>
                 <element signature="e#63#77#0" expanded="true" />
               </folding>
@@ -167,6 +147,20 @@
       </file>
     </leaf>
   </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>Type</find>
+      <find>FSco</find>
+    </findStrings>
+    <replaceStrings>
+      <replace />
+    </replaceStrings>
+    <dirStrings>
+      <dir>$PROJECT_DIR$/src/algorithm</dir>
+      <dir>$PROJECT_DIR$/src/</dir>
+      <dir>$PROJECT_DIR$/src/report</dir>
+    </dirStrings>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -174,14 +168,15 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/src/report/Timers.hpp" />
-        <option value="$PROJECT_DIR$/src/app/subsetDataset.cpp" />
         <option value="$PROJECT_DIR$/src/app/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/src/data/UniRefEntry.hpp" />
         <option value="$PROJECT_DIR$/src/algorithm/common.hpp" />
         <option value="$PROJECT_DIR$/src/algorithm/markovian_features.hpp" />
-        <option value="$PROJECT_DIR$/src/app/markovian_features.cpp" />
         <option value="$PROJECT_DIR$/src/data/SequenceEntry.hpp" />
         <option value="$PROJECT_DIR$/src/data/FastaEntry.hpp" />
+        <option value="$PROJECT_DIR$/src/app/subsetDataset.cpp" />
+        <option value="$PROJECT_DIR$/src/app/markovian_features.cpp" />
+        <option value="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" />
       </list>
     </option>
   </component>
@@ -191,7 +186,7 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="61" />
     <option name="y" value="47" />
     <option name="width" value="1295" />
@@ -273,9 +268,9 @@
     </option>
   </component>
   <component name="RunManager" selected="Application.markovian_features">
-    <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features" EXPLICIT_BUILD_TARGET_NAME="all" />
+    <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="subsetDataset" EXPLICIT_BUILD_TARGET_NAME="all" />
     <configuration name="fmt" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="fmt" CONFIG_NAME="Debug" />
-    <configuration name="markovian_features" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="markovian_features" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features" />
+    <configuration name="markovian_features" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="markovian_features" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="subsetDataset" />
     <configuration name="subsetDataset" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="subsetDataset" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="subsetDataset" />
     <list>
       <item itemvalue="Application.Build All" />
@@ -294,33 +289,34 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1533015799261</updated>
-      <workItem from="1533015804101" duration="9041000" />
+      <workItem from="1533015804101" duration="13631000" />
+      <workItem from="1533110262702" duration="16386000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="9041000" />
+    <option name="totallyTimeSpent" value="30017000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="61" y="47" width="1295" height="701" extended-state="0" />
+    <frame x="51" y="25" width="1315" height="743" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24942085" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24562737" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info active="true" anchor="bottom" id="Messages" visible="true" weight="0.3293718" />
-      <window_info anchor="bottom" id="CMake" weight="0.33106962" />
-      <window_info anchor="bottom" id="Event Log" side_tool="true" />
-      <window_info anchor="bottom" id="Version Control" />
+      <window_info anchor="bottom" id="CMake" order="7" weight="0.31753555" />
+      <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
+      <window_info active="true" anchor="bottom" id="Find" order="1" visible="true" weight="0.328594" />
+      <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" />
-      <window_info id="Favorites" side_tool="true" />
+      <window_info anchor="bottom" id="Terminal" order="7" />
+      <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
-      <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
-      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info active="true" anchor="bottom" id="Messages" order="7" visible="true" weight="0.3293718" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
     </layout>
@@ -332,52 +328,102 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/algorithm/common.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4432">
+          <caret line="277" column="5" selection-start-line="277" selection-start-column="5" selection-end-line="277" selection-end-column="5" />
+          <folding>
+            <element signature="e#55#72#0" expanded="true" />
+            <element signature="e#242#261#0" expanded="true" />
+            <element signature="e#313#333#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/SequenceEntry.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="624">
+          <caret line="39" column="5" selection-start-line="39" selection-start-column="5" selection-end-line="39" selection-end-column="5" />
+          <folding>
+            <element signature="e#161#175#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/FastaEntry.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="176">
+          <caret line="11" column="26" selection-start-line="11" selection-start-column="26" selection-end-line="11" selection-end-column="26" />
+          <folding>
+            <element signature="e#124#152#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/UniRefEntry.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1120">
+          <caret line="70" column="29" selection-start-line="70" selection-start-column="29" selection-end-line="70" selection-end-column="29" />
+          <folding>
+            <element signature="e#126#154#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/app/subsetDataset.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="448">
+          <caret line="28" column="41" selection-start-line="28" selection-start-column="41" selection-end-line="28" selection-end-column="41" />
+          <folding>
+            <element signature="e#0#25#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/markovian_features.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6656">
+          <caret line="416" selection-start-line="416" selection-end-line="416" />
+          <folding>
+            <element signature="e#63#77#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/app/markovian_features.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1744">
+          <caret line="109" lean-forward="true" selection-start-line="109" selection-end-line="109" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/cmake-build-debug/CMakeCache.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-6" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/UniRefEntry.cpp" />
+    <entry file="file://$PROJECT_DIR$/src/algorithm/markovian_features.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6656">
+          <caret line="416" selection-start-line="416" selection-end-line="416" />
+          <folding>
+            <element signature="e#63#77#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/app/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="173">
+          <caret line="27" column="38" selection-start-line="27" selection-start-column="38" selection-end-line="27" selection-end-column="38" />
+        </state>
       </provider>
     </entry>
     <entry file="file:///usr/include/c++/7/chrono">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="121">
           <caret line="307" column="4" selection-start-line="307" selection-start-column="4" selection-end-line="307" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/app/subsetDataset.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="292">
-          <caret line="31" column="60" selection-start-line="31" selection-start-column="60" selection-end-line="31" selection-end-column="60" />
-          <folding>
-            <element signature="e#0#21#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/FastaEntry.cpp">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/UniRefEntry.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="80">
-          <caret line="5" lean-forward="true" selection-start-line="5" selection-end-line="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/app/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="172">
-          <caret line="27" column="38" selection-start-line="27" selection-start-column="38" selection-end-line="27" selection-end-column="38" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/UniRefEntry.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="227">
-          <caret line="65" column="69" selection-start-line="65" selection-start-column="69" selection-end-line="65" selection-end-column="69" />
-          <folding>
-            <element signature="e#126#154#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -391,9 +437,56 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/SequenceEntry.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="624">
+          <caret line="39" column="5" selection-start-line="39" selection-start-column="5" selection-end-line="39" selection-end-column="5" />
+          <folding>
+            <element signature="e#161#175#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/FastaEntry.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="176">
+          <caret line="11" column="26" selection-start-line="11" selection-start-column="26" selection-end-line="11" selection-end-column="26" />
+          <folding>
+            <element signature="e#124#152#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/app/subsetDataset.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="448">
+          <caret line="28" column="41" selection-start-line="28" selection-start-column="41" selection-end-line="28" selection-end-column="41" />
+          <folding>
+            <element signature="e#0#25#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/app/markovian_features.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="82">
+          <caret line="96" column="70" selection-start-line="96" selection-start-column="70" selection-end-line="96" selection-end-column="70" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/UniRefEntry.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="402">
+          <caret line="70" column="29" selection-start-line="70" selection-start-column="29" selection-end-line="70" selection-end-column="29" />
+          <folding>
+            <element signature="e#126#154#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/common.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="676">
+        <state relative-caret-position="3556">
           <caret line="277" column="5" selection-start-line="277" selection-start-column="5" selection-end-line="277" selection-end-column="5" />
           <folding>
             <element signature="e#55#72#0" expanded="true" />
@@ -403,39 +496,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/markovian_features.hpp">
+    <entry file="file://$PROJECT_DIR$/src/report/ConfusionMatrix.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="129">
-          <caret line="400" column="58" selection-start-line="400" selection-start-column="58" selection-end-line="400" selection-end-column="58" />
+        <state relative-caret-position="322">
+          <caret line="207" column="28" selection-start-line="207" selection-start-column="28" selection-end-line="207" selection-end-column="28" />
           <folding>
-            <element signature="e#63#77#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/app/markovian_features.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="161">
-          <caret line="63" column="45" selection-start-line="63" selection-start-column="45" selection-end-line="63" selection-end-column="45" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/SequenceEntry.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="81">
-          <caret line="33" column="45" selection-start-line="33" selection-start-column="45" selection-end-line="33" selection-end-column="45" />
-          <folding>
-            <element signature="e#161#175#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/FastaEntry.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="209">
-          <caret line="16" column="6" selection-start-line="16" selection-start-column="6" selection-end-line="16" selection-end-column="6" />
-          <folding>
-            <element signature="e#124#152#0" expanded="true" />
+            <element signature="e#165#197#0" expanded="true" />
           </folding>
         </state>
       </provider>

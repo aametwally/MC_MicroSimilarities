@@ -60,9 +60,9 @@ double powd(double x, uint16_t exponent) {
  */
 template<typename I>
 I randomElement(I begin, I end) {
-    using UIntType = unsigned long;
-    const UIntType n = std::distance(begin, end);
-    const UIntType divisor = (UIntType(RAND_MAX) + 1) / n;
+    using UInt = unsigned long;
+    const UInt n = std::distance(begin, end);
+    const UInt divisor = (UInt(RAND_MAX) + 1) / n;
 
     unsigned long k;
     do { k = std::rand() / divisor; } while (k >= n);
@@ -118,11 +118,11 @@ subsetRandomSeparation(const ContainerT &items, float percentage) {
 }
 
 namespace io {
-    template<typename CharType = char>
+    template<typename Char = char>
     auto getFileLines(const std::string &filePath) {
-        std::basic_ifstream<CharType> f(filePath);
-        std::vector<std::basic_string<CharType> > lines;
-        std::basic_string<CharType> line;
+        std::basic_ifstream<Char> f(filePath);
+        std::vector<std::basic_string<Char> > lines;
+        std::basic_string<Char> line;
         if (f)
             while (std::getline(f, line))
                 lines.push_back(line);

@@ -1,16 +1,17 @@
+#include "FastaEntry.hpp"
 #include "common.hpp"
 #include "clara.hpp"
 
 int main(int argc, char *argv[]) {
-    std::string clustersFile, outputDir;
+    std::string clustersFile, outputPrefix;
     float percentage = 0.1f;
     float threshold = -1;
 
     auto cli
             = clara::Arg(clustersFile, "input")
                       ("UniRef input file")
-              | clara::Arg(outputDir, "output")
-                      ("output directory")
+              | clara::Arg(outputPrefix, "outputPrefix")
+                      ("output prefix")
               | clara::Opt(percentage, "percentage")
               ["-p"]["--percentage"]
                       ("subset percentage")
@@ -25,12 +26,15 @@ int main(int argc, char *argv[]) {
     }
 
     fmt::print("[Args][input:{}][output:{}][percentage:{}][threshold:{}]\n",
-               clustersFile, outputDir , percentage, threshold);
+               clustersFile, outputPrefix , percentage, threshold);
 
-    auto seqs = io::readFastaFile(argv[1]);
+    auto seqs = FastaEntry::readFastaFile( clustersFile );
     auto [test,training] = ( threshold > 0 )?
-                           uniref::separationExcludingClustersWithLowSequentialData( seqs , percentage , threshold ) :
+                           FastaEntry::separationExcludingClustersWithLowSequentialData( seqs , percentage , threshold ) :
                            subsetRandomSeparation( seqs , percentage );
+
+    FastaEntry::writeFastaFile( test , fmt::format("{}_test.fasta",outputPrefix));
+    FastaEntry::writeFastaFile( training , fmt::format("{}_training.fasta",outputPrefix));
 
     return 0;
 }

@@ -31,7 +31,7 @@ public:
     static std::map<std::string, std::vector<T> >
     groupEntriesByUniRefClusters(const std::vector<T> &entries)
     {
-        std::map<std::string, std::vector< T >> clusters;
+        std::map<std::string, std::vector<T >> clusters;
 
         for (const auto &entry : entries)
             clusters[entry.clusterNameUniRef()].emplace_back(entry);
@@ -54,7 +54,7 @@ public:
             return count;
         };
 
-        auto clusters = groupEntriesByUniRefClusters( entries );
+        auto clusters = groupEntriesByUniRefClusters(entries);
 
         size_t populationSequenceLength = 0;
         for (const auto &[clusterId, cluster] : clusters)

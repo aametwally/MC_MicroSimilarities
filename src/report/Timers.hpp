@@ -10,35 +10,35 @@
 class Timers
 {
 private:
-    using TimeType = decltype( std::chrono::system_clock::now());
-    using DiffType = std::chrono::milliseconds;
+    using Time = decltype( std::chrono::system_clock::now());
+    using Diff = std::chrono::milliseconds;
     struct Clock
     {
-        TimeType c1;
-        TimeType c2;
-        DiffType diff{ DiffType::zero() };
+        Time c1;
+        Time c2;
+        Diff diff{ Diff::zero() };
     };
 
-    using TimersType = std::map< std::string , Clock >;
-    static TimersType &_timers()
+    using Timers = std::map< std::string , Clock >;
+    static Timers &_timers()
     {
-        static TimersType singleton;
+        static Timers singleton;
         return singleton;
     }
-    static const TimersType &_ctimers()
+    static const Timers &_ctimers()
     {
         return _timers();
     }
 
-    static TimeType &_timer1( const char *label )
+    static Time &_timer1( const char *label )
     {
         return  _timers()[ label ].c1;
     }
-    static TimeType &_timer2( const char *label )
+    static Time &_timer2( const char *label )
     {
         return _timers()[ label ].c2;
     }
-    static DiffType &_accumulator( const char *label )
+    static Diff &_accumulator( const char *label )
     {
         return  _timers()[ label ].diff;
     }
@@ -81,8 +81,8 @@ public:
         fmt::print("[Time elapsed for {}:{} msec]\n",label,duration_ms(label));
     }
 
-    template< typename ReportedFunctionType >
-    static auto reported_invoke_s( ReportedFunctionType fn , const char *label )
+    template< typename ReportedFunction >
+    static auto reported_invoke_s( ReportedFunction fn , const char *label )
     {
         tic( label );
         auto ret = fn();
