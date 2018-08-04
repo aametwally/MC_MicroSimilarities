@@ -4,14 +4,14 @@
 set( COMMON_INCLUDE_DIRECTORIES
         ../algorithm
         ../report
-        ../data )
+        ../data ../features )
 set( COMMON_INCLUDES
         ../algorithm/common.hpp
         ../algorithm/markovian_features.hpp
         ../report/Timers.hpp
         ../data/SequenceEntry.hpp
         ../data/FastaEntry.hpp
-        ../data/UniRefEntry.hpp ../report/ConfusionMatrix.hpp)
+        ../data/UniRefEntry.hpp ../report/ConfusionMatrix.hpp ../features/similarities.hpp ../algorithm/aminoacids_grouping.hpp)
 
 ### Generate the main executable
 add_executable( markovian_features ${COMMON_INCLUDES} markovian_features.cpp )
@@ -28,6 +28,16 @@ target_include_directories( subsetDataset PRIVATE
         ${COMMON_INCLUDE_DIRECTORIES} )
 target_link_libraries( subsetDataset PRIVATE fmt-header-only  )
 target_compile_features( subsetDataset PRIVATE cxx_std_17)
+
+
+### Confusion Matrix Test
+add_executable( confusionMatrix  ${COMMON_INCLUDES} confusionMatrix.cpp )
+target_include_directories( confusionMatrix PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/include
+        ${COMMON_INCLUDE_DIRECTORIES} )
+target_link_libraries( confusionMatrix PRIVATE fmt-header-only  )
+target_compile_features( confusionMatrix PRIVATE cxx_std_17)
+
 
 # Install the executable (generate with 'make install' in the bin directory)
 #install( TARGETS ${FINDING_CLUMPS_EXE} DESTINATION bin )

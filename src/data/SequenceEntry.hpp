@@ -6,6 +6,7 @@
 #define MARKOVIAN_FEATURES_SEQUENCEENTRY_HPP
 
 #include "common.hpp"
+#include "aminoacids_grouping.hpp"
 
 template<typename T>
 class SequenceEntry
@@ -92,6 +93,35 @@ public:
 
         return std::make_pair(subset, rest);
     }
+
+    template< size_t N , const std::array< const char *, N > &Grouping >
+    static std::string reduceAlphabets(const std::string &sequence)
+    {
+        constexpr auto newAlphabet = reducedAlphabet<N>();
+        constexpr auto newAlphabetIds = reducedAlphabetIds( Grouping );
+
+        std::string reducedSequence;
+        reducedSequence.reserve(sequence.size());
+        for (auto a : sequence)
+            reducedSequence.push_back(newAlphabet.at(newAlphabetIds.at(a)));
+
+        assert(reducedSequence.find('\0') == std::string::npos);
+        return reducedSequence;
+    }
+
+    template< size_t N , const std::array< const char *, N > &Grouping >
+    static std::vector<T>
+    reducedAlphabetEntries(const std::vector<T> &unirefEntries)
+    {
+        std::vector<T> unirefReducedEntries;
+        for (const T &ui : unirefEntries) {
+            auto reduced = ui;
+            reduced.setSequence(reduceAlphabets<N,Grouping>(ui.getSequence()));
+            unirefReducedEntries.emplace_back(reduced);
+        }
+        return unirefReducedEntries;
+    }
+
 };
 
 

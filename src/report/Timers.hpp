@@ -19,13 +19,13 @@ private:
         Diff diff{ Diff::zero() };
     };
 
-    using Timers = std::map< std::string , Clock >;
-    static Timers &_timers()
+    using TimersDictionary = std::map< std::string , Clock >;
+    static TimersDictionary &_timers()
     {
-        static Timers singleton;
+        static TimersDictionary singleton;
         return singleton;
     }
-    static const Timers &_ctimers()
+    static const TimersDictionary &_ctimers()
     {
         return _timers();
     }

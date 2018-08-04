@@ -13,38 +13,39 @@ class ConfusionMatrix
 private:
     using Row = std::vector<size_t>;
     using Matrix = std::vector<Row>;
+    static constexpr double eps = std::numeric_limits<double>::epsilon();
 public:
-    ConfusionMatrix(size_t order) :
-            _order(order),
+
+    explicit ConfusionMatrix(const std::set<Label> &labels) :
+            _dictionary(_makeDictionary(labels)),
+            _order(_dictionary.size()),
             _matrix(Matrix(_order, Row(_order, 0)))
     {
+
     }
 
-    ConfusionMatrix(const std::vector<Label> &labels) :
-            _order(labels.size()),
-            _matrix(Matrix(_order, Row(_order, 0)))
+    explicit ConfusionMatrix(const std::vector<Label> &labels, const std::vector<Label> &prediction)
+            : _dictionary(_makeDictionary(labels,prediction)),
+              _order(_dictionary.size()),
+              _matrix(Matrix(_order, Row(_order, 0)))
     {
-        defineLabels(labels);
+        assert(labels.size() == prediction.size());
+
+        if (labels.size() != prediction.size())
+            throw std::length_error("Labels size should match predictions size");
+        else {
+            for (auto i = 0; i < labels.size(); ++i)
+                countInstance(prediction.at(i), labels.at(i));
+        }
     }
 
-    void defineLabels(const std::vector<Label> &labels)
-    {
-        assert(_dictionary.empty());
-        assert(labels.size() == _order);
-
-        size_t i = 0;
-        for (auto &label : labels)
-            _dictionary[label] = i++;
-    }
-
-    void countInstance(const Label &output, const Label &actual)
+    void countInstance(const Label &prediction, const Label &actual)
     {
         assert(!_dictionary.empty());
         size_t actualIdx = _dictionary.at(actual);
-        size_t outputIdx = _dictionary.at(output);
+        size_t outputIdx = _dictionary.at(prediction);
         ++_matrix[actualIdx][outputIdx];
     }
-
 
     size_t truePositives(const Label &cl) const
     {
@@ -86,7 +87,7 @@ public:
     size_t population() const
     {
         return std::accumulate(_matrix.cbegin(), _matrix.cend(),
-                               size_t(0), [](size_t count, const Row &row) {
+                               size_t(0), [this](size_t count, const Row &row) {
                     return count + _rowCount(row);
                 });
     }
@@ -97,12 +98,26 @@ public:
         return _accuracy(classIdx);
     }
 
+    double auc(const Label &cl) const
+    {
+        size_t classIdx = _dictionary.at(cl);
+        return _auc(classIdx);
+    }
+
     double averageAccuracy() const
     {
         double acc = 0;
         for (auto i = 0; i < _order; ++i)
             acc += _accuracy(i);
         return acc / _order;
+    }
+
+    double overallAccuracy() const
+    {
+        double acc = 0;
+        for (auto i = 0; i < _order; ++i)
+            acc += _truePositives(i);
+        return acc / population();
     }
 
     double precision(const Label &cl) const
@@ -114,7 +129,7 @@ public:
     double microPrecision() const
     {
         size_t allTp = _allTruePositives(), allFp = _allFalsePositives();
-        return double(allTp) / (allTp + allFp);
+        return double(allTp + eps) / (allTp + allFp + eps);
     }
 
     double recall(const Label &cl)
@@ -126,7 +141,7 @@ public:
     double microRecall() const
     {
         size_t allTp = _allTruePositives(), allFn = _allFalseNegatives();
-        return double(allTp) / (allTp + allFn);
+        return double(allTp + eps) / (allTp + allFn + eps);
     }
 
     double fScore(const Label &cl, double beta = 1) const
@@ -139,7 +154,7 @@ public:
     {
         auto mPrecision = microPrecision(), mRecall = microRecall();
         beta *= beta;
-        return (beta + 1) * mPrecision * mRecall / (beta * mPrecision + mRecall);
+        return ((beta + 1) * mPrecision * mRecall + eps) / (beta * mPrecision + mRecall + eps);
     }
 
     double macroPrecision() const
@@ -162,7 +177,7 @@ public:
     {
         auto mPrecision = macroPrecision(), mRecall = macroRecall();
         beta *= beta;
-        return (beta + 1) * mPrecision * mRecall / (beta * mPrecision + mRecall);
+        return ((beta + 1) * mPrecision * mRecall + eps) / (beta * mPrecision + mRecall + eps);
     }
 
     double accuracy() const
@@ -179,56 +194,87 @@ public:
     {
         auto allTp = _allTruePositives();
         auto allFn = _allFalseNegatives();
-        return double(allTp) / (allTp + allFn);
+        return double(allTp + eps) / (allTp + allFn + eps);
     }
 
-    void printReport(std::string indentation = "") const
+    template<size_t indentation = 0>
+    void printReport() const
     {
-        fmt::print("{1}General Statistics:\n", indentation);
-        indentation += "  ";
-        fmt::print("{1}Overall Accuracy:\t{2}\n"
-                   "{1}Macro Precision, Positive Predictive Value (PPV):\t{3}\n"
-                   "{1}Micro Precision, Positive Predictive Value (PPV):\t{4}\n"
-                   "{1}Macro TPR, Recall, Sensitivity:\t{5}\n"
-                   "{1}Micro TPR, Recall, Sensitivity:\t{6}\n"
-                   "{1}Macro F1-Score:\t{7}\n"
-                   "{1}Micro F1-Score:\t{8}\n",
-                   indentation,
-                   averageAccuracy(),
-                   macroPrecision(), microPrecision(),
-                   macroRecall(), microRecall(),
-                   macroFScore(), microFScore());
+        fmt::print("{:<{}}General Statistics:\n", "", indentation);
+
+        auto printRow = _printRowFunction<indentation + 2>();
+
+        printRow("Overall Accuracy", overallAccuracy());
+        printRow("Average Accuracy", averageAccuracy());
+        printRow("Macro Precision, Positive Predictive Value (PPV)", macroPrecision());
+        printRow("Micro Precision, Positive Predictive Value (PPV)", microPrecision());
+        printRow("Macro TPR, Recall, Sensitivity", macroRecall());
+        printRow("Micro TPR, Recall, Sensitivity", microRecall());
+        printRow("Macro F1-Score", macroFScore());
+        printRow("Micro F1-Score", microFScore());
     }
 
-    void printReport(const Label &cl, std::string indentation = "") const
+    template<size_t indentation = 0>
+    void printClassReport(const Label &cl) const
     {
         auto classIdx = _dictionary.at(cl);
-        fmt::print("{1}General Statistics for class[{2}]:[{3}]",
-                   indentation, classIdx, cl);
-        indentation += "  ";
-        fmt::print("{1}Accuracy:\t{1}\n"
-                   "{1}F0.5 Score:\t{2}\n"
-                   "{1}F1 Score:\t{3}\n"
-                   "{1}F2 Score:\t{4}\n"
-                   "{1}Population:\t{5}\n"
-                   "{1}Precision, PPV:\t{6}\n"
-                   "{1}Recall, sensitivity, TPR:\t{7}\n",
-                   indentation,
-                   _accuracy(classIdx),
-                   _fScore(classIdx, 0.5), _fScore(classIdx, 1), _fScore(classIdx, 2),
-                   _population(classIdx),
-                   _precision(classIdx),
-                   _recall(classIdx));
+        fmt::print("{:<{}}General Statistics for class[{}]:[{}]\n",
+                   "", indentation, classIdx, cl);
+        auto printRow = _printRowFunction<indentation + 2>();
+
+        printRow("Accuracy", _accuracy(classIdx));
+        printRow("F0.5 Score", _fScore(classIdx, 0.5));
+        printRow("F1 Score", _fScore(classIdx, 1));
+        printRow("F2 Score", _fScore(classIdx, 2));
+        printRow("Population", _population(classIdx));
+        printRow("Precision, PPV", _precision(classIdx));
+        printRow("Recall, sensitivity, TPR", _recall(classIdx));
+        printRow("AUC", _auc(classIdx));
+
     }
 
 private:
+    template<size_t indentation, size_t col1Width = 50>
+    static auto _printRowFunction()
+    {
+        return [=](const char *col1, double col2) {
+            constexpr const char *fmtSpec = "{:<{}}{:<{}}:{}\n";
+            fmt::print(fmtSpec, "", indentation, col1, col1Width, col2);
+        };
+    }
+
+    static std::map<Label, size_t> _makeDictionary(const std::set<Label> &labels)
+    {
+        std::map<Label, size_t> dic;
+        size_t i = 0;
+        for (auto &label : labels)
+            dic.emplace(label, i++);
+
+        return dic;
+    }
+    static std::map<Label, size_t> _makeDictionary(const std::vector<Label> &labels,
+                                                   const std::vector<Label> &prediction)
+    {
+        std::map<Label, size_t> dic;
+        size_t i = 0;
+        for (auto &label : labels) {
+            auto res = dic.emplace(label, i);
+            i += res.second;
+        }
+        for (auto &p : prediction) {
+            auto res = dic.emplace(p, i);
+            i += res.second;
+        }
+        return dic;
+    }
+
     double _accuracy(size_t classIdx) const
     {
         auto tp = _truePositives(classIdx);
         auto tn = _trueNegatives(classIdx);
         auto fp = _falsePositives(classIdx);
         auto fn = _falseNegatives(classIdx);
-        return double(tp + tn) / (tp + tn + fp + fn);
+        return double(tp + tn + eps) / (tp + tn + fp + fn + eps);
     }
 
     size_t _truePositives(size_t classIdx) const
@@ -271,7 +317,7 @@ private:
     {
         size_t allTrue = 0;
         for (auto i = 0; i < _order; ++i)
-            allTrue += _matrix.at(_order).at(_order);
+            allTrue += _matrix.at(i).at(i);
         return allTrue;
     }
 
@@ -302,26 +348,36 @@ private:
     double _precision(size_t classIdx) const
     {
         auto tp = _truePositives(classIdx), fp = _falsePositives(classIdx);
-        return double(tp) / (tp + fp);
+        return double(tp + eps) / (tp + fp + eps);
     }
 
     double _recall(size_t classIdx) const
     {
         auto tp = _truePositives(classIdx), fn = _falseNegatives(classIdx);
-        return double(tp) / (tp + fn);
+        return double(tp + eps) / (tp + fn + eps);
     }
 
     double _fScore(size_t classIdx, double beta) const
     {
         auto mPrecision = _precision(classIdx), mRecall = _recall(classIdx);
         beta *= beta;
-        return (beta + 1) * mPrecision * mRecall / (beta * mPrecision + mRecall);
+        return ((beta + 1) * mPrecision * mRecall + eps) / (beta * mPrecision + mRecall + eps);
+    }
+
+    double _auc(size_t classIdx) const
+    {
+        auto tp = _truePositives(classIdx);
+        auto tn = _trueNegatives(classIdx);
+        auto fp = _falsePositives(classIdx);
+        auto fn = _falseNegatives(classIdx);
+
+        return (double(tp + eps) / (tp + fn + eps) + double(tn + eps) / (tn + fp + eps)) / 2;
     }
 
 private:
+    const std::map<Label, size_t> _dictionary;
     const size_t _order;
     Matrix _matrix;
-    std::map<Label, size_t> _dictionary;
 };
 
 
