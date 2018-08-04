@@ -18,7 +18,7 @@ add_executable( markovian_features ${COMMON_INCLUDES} markovian_features.cpp )
 target_include_directories( markovian_features PRIVATE
         ${CMAKE_SOURCE_DIR}/src/include
         ${COMMON_INCLUDE_DIRECTORIES} )
-target_link_libraries( markovian_features PRIVATE fmt-header-only  )
+target_link_libraries( markovian_features PRIVATE fmt-header-only stdc++fs )
 target_compile_features( markovian_features PRIVATE cxx_std_17)
 
 ### Generate the subsetter executable
@@ -26,7 +26,7 @@ add_executable( subsetDataset  ${COMMON_INCLUDES} subsetDataset.cpp)
 target_include_directories( subsetDataset PRIVATE
         ${CMAKE_SOURCE_DIR}/src/include
         ${COMMON_INCLUDE_DIRECTORIES} )
-target_link_libraries( subsetDataset PRIVATE fmt-header-only  )
+target_link_libraries( subsetDataset PRIVATE fmt-header-only  stdc++fs )
 target_compile_features( subsetDataset PRIVATE cxx_std_17)
 
 

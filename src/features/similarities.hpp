@@ -5,9 +5,8 @@
 #ifndef MARKOVIAN_FEATURES_DISTANCES_HPP
 #define MARKOVIAN_FEATURES_DISTANCES_HPP
 
-
 #include "common.hpp"
-#include <mutex>
+
 
 struct Cost{};
 struct Score{};
@@ -124,6 +123,10 @@ struct ClassificationCandidates
                             }) != bestMatches.cend();
     }
 };
+
+
+template <typename...> struct CriteriaList {};
+using SupportedCriteria = CriteriaList<ChiSquared>;
 
 
 #endif //MARKOVIAN_FEATURES_DISTANCES_HPP
