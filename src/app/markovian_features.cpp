@@ -2,17 +2,16 @@
 #include "clara.hpp"
 
 
-
 int main( int argc, char *argv[] )
 {
     std::string input, testFile;
     std::string fastaFormat = "uniref";
     int markovianOrder = 2;
-    int gappedMarkovianOrder = -1;
-    float testPercentage = 0.1f, threshold = -1;
+    size_t k = 10;
     bool showHelp = false;
     std::string grouping = "diamond11";
     std::string criteria = "chi";
+    std::string strategy = "totaldist";
 
     auto cli
             = clara::Arg( input, "input" )
@@ -28,18 +27,15 @@ int main( int argc, char *argv[] )
               | clara::Opt( criteria, "criteria" )
               ["-c"]["--criteria"]
                       ( "Similarity Criteria" )
+              | clara::Opt( strategy, "strategy" )
+              ["-s"]["--strategy"]
+                      ( "Classification Strategy" )
               | clara::Opt( markovianOrder, "order" )
               ["-o"]["--order"]
                       ( "Markovian order" )
-              | clara::Opt( gappedMarkovianOrder, "gorder" )
-              ["-g"]["--gorder"]
-                      ( "Gapped markovian order" )
-              | clara::Opt( testPercentage, "percentage" )
-              ["-p"]["--percentage"]
-                      ( "test percentage" )
-              | clara::Opt( threshold, "threshold" )
-              ["-t"]["--t"]
-                      ( "Below cluster size average to exclude from subsetting" )
+              | clara::Opt( k, "k-fold" )
+              ["-k"]["--k-fold"]
+                      ( "cross validation k-fold" )
               | clara::Help( showHelp );
 
     auto result = cli.parse( clara::Args( argc, argv ));
@@ -52,8 +48,8 @@ int main( int argc, char *argv[] )
         cli.writeToStream( std::cout );
     } else if ( !testFile.empty())
     {
-        fmt::print( "[Args][input:{}][testFile:{}][order:{}][testPercentage:{}][threshold:{}]\n",
-                    input, testFile, markovianOrder, testPercentage, threshold );
+        fmt::print( "[Args][input:{}][testFile:{}][order:{}][kfold:{}]\n",
+                    input, testFile, markovianOrder, k );
 
 
     } else
@@ -61,20 +57,18 @@ int main( int argc, char *argv[] )
         fmt::print( "[Args][input:{}]"
                     "[fformat:{}]"
                     "[order:{}]"
-                    "[testPercentage:{}]"
-                    "[threshold:{}]"
+                    "[k-fold:{}]"
                     "[criteria:{}]"
                     "[grouping:{}]\n",
-                    input, fastaFormat , markovianOrder,
-                    testPercentage, threshold,
+                    input, fastaFormat, markovianOrder,
+                    k,
                     criteria, grouping );
 
         std::visit( [&]( auto &&p ) {
-            p.runPipeline_VALIDATION( UniRefEntry::loadEntries( input ,  fastaFormat ),
+            p.runPipeline_VALIDATION( UniRefEntry::loadEntries( input, fastaFormat ),
                                       markovianOrder,
-                                      testPercentage,
-                                      threshold );
-        }, getConfiguredPipeline( grouping, criteria ));
+                                      k );
+        }, getConfiguredPipeline( grouping, criteria , strategy ));
     }
     return 0;
 }

@@ -278,7 +278,7 @@ private:
         auto tn = _trueNegatives( classIdx );
         auto fp = _falsePositives( classIdx );
         auto fn = _falseNegatives( classIdx );
-        return double( tp + tn + eps ) / (tp + tn + fp + fn + eps);
+        return double( tp + tn ) / (tp + tn + fp + fn + eps);
     }
 
     size_t _truePositives( size_t classIdx ) const

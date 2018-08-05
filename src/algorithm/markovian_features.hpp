@@ -5,6 +5,8 @@
 #include <list>
 #include <type_traits>
 #include <variant>
+#include <typeinfo>
+#include <cxxabi.h>
 
 #include <fmt/format.h>
 
@@ -14,6 +16,8 @@
 #include "ConfusionMatrix.hpp"
 #include "similarities.hpp"
 #include "aminoacids_grouping.hpp"
+#include "CrossValidationStatistics.hpp"
+#include "crossvalidation.hpp"
 
 auto geometricDistribution( double p )
 {
@@ -103,10 +107,10 @@ public:
             return ent;
         }
 
-        template<typename Distance>
-        inline auto distance( const KernelUnit &unit ) const
+        template<typename Criteria>
+        inline auto similarity( const KernelUnit &unit ) const
         {
-            return Distance::measure( _buffer.cbegin(), _buffer.cend(),
+            return Criteria::measure( _buffer.cbegin(), _buffer.cend(),
                                       unit._buffer.cbegin(), unit._buffer.cend());
         }
 
@@ -229,11 +233,30 @@ private:
     size_t _hits;
 };
 
+struct Voting
+{
+};
+struct TotalDistance
+{
+};
+enum class StrategyEnum
+{
+    Voting,
+    TotalDistance
+};
+static const std::map<std::string, StrategyEnum> ClassificationStrategyLabel = {
+        {"voting",    StrategyEnum::Voting},
+        {"totaldist", StrategyEnum::TotalDistance}
+};
 
-template<typename Grouping, typename Criteria>
+template<typename Grouping, typename Criteria, typename Strategy = Voting>
 class ConfiguredPipeline
 {
+public:
+
+private:
     using PriorityQueue = typename MatchSet<Criteria>::Queue;
+    using VotingPQ = typename MatchSet<Score>::Queue;
     using MarkovianProfile = MarkovianKernel<Grouping>;
     using KernelUnit = typename MarkovianProfile::KernelUnit;
     using MarkovianProfiles = std::map<std::string, MarkovianProfile>;
@@ -243,6 +266,10 @@ class ConfiguredPipeline
     static constexpr const char *TRAINING = "training";
     static constexpr const char *CLASSIFICATION = "classification";
 
+    using Prediction = LeaderBoard;
+private:
+
+
 public:
     static std::vector<UniRefEntry>
     reducedAlphabetEntries( const std::vector<UniRefEntry> &entries )
@@ -250,8 +277,8 @@ public:
         return UniRefEntry::reducedAlphabetEntries<Grouping>( entries );
     }
 
-    static double totalDistance( const MarkovianProfile &query,
-                                 const MarkovianProfile &target )
+    static double totalSimilarityMeasure( const MarkovianProfile &query,
+                                          const MarkovianProfile &target )
     {
         double sum = 0;
         for (const auto &[rowId, row] : query.kernel())
@@ -260,31 +287,94 @@ public:
             {
                 auto &unit1 = row;
                 auto &unit2 = target.kernel().at( rowId );
-                sum += unit1.template distance<Criteria>( unit2 );
+                sum += unit1.template similarity<Criteria>( unit2 );
             } catch (const std::out_of_range &e)
-            {
-
-            }
+            {}
         }
         return sum;
+    }
+
+
+    static VotingPQ findSimilarityByVoting(
+            const MarkovianProfile &query,
+            const MarkovianProfiles &targets,
+            size_t kNearest = 5 )
+    {
+        VotingPQ vPQ( kNearest );
+
+        std::map<std::string, double> counter;
+        for (const auto &[rowId, row] : query.kernel())
+        {
+            using PQ = typename MatchSet<Criteria>::Queue;
+            PQ pq( 3 );
+            double p1 = double( row.hits()) / query.hits();
+
+            auto &unit1 = row;
+            for (const auto &[clusterName, profile] : targets)
+            {
+                try
+                {
+                    auto &unit2 = profile.kernel().at( rowId );
+                    double value = unit1.template similarity<Criteria>( unit2 );
+                    pq.insert( {clusterName, value} );
+                } catch (const std::out_of_range &e)
+                {
+
+                }
+            }
+            if ( !pq.empty())
+            {
+                const MarkovianProfile &topTarget = targets.at( pq.top().id );
+                auto &targetRow = topTarget.kernel().at( rowId );
+                double p2 = double( targetRow.hits()) / topTarget.hits();
+                counter[pq.top().id] += 1;
+//                counter[pq.top().id] += 1;
+            }
+        }
+        std::pair<std::string, double> maxVotes = *counter.begin();
+        for (const auto &[id, votes]: counter)
+            vPQ.insert( {id, votes} );
+        return vPQ;
     }
 
     static PriorityQueue findSimilarities( const MarkovianProfile &query,
                                            const MarkovianProfiles &targets,
                                            size_t kNearest = 5 )
     {
-        PriorityQueue matchSet;
+        PriorityQueue matchSet( kNearest );
         for (const auto &[clusterId, clusterProfile] : targets)
         {
-            double distance = totalDistance( query, clusterProfile );
-            matchSet.insert( {clusterId, distance} );
-
-            if ( matchSet.size() > kNearest )
-                matchSet.erase( matchSet.begin());
+            double measure = totalSimilarityMeasure( query, clusterProfile );
+            matchSet.insert( {clusterId, measure} );
         }
         return matchSet;
     }
 
+
+    template<typename S, typename Enable = void>
+    struct ClassificationStrategy;
+
+    template<typename S>
+    struct ClassificationStrategy<S, typename std::enable_if<std::is_same<Voting, S>::value>::type>
+    {
+        static constexpr auto findSimilarity = []( const MarkovianProfile &query,
+                                                   const MarkovianProfiles &targets,
+                                                   size_t kNearest = 5 ) {
+            return findSimilarityByVoting( query, targets, kNearest );
+        };
+    };
+
+    template<typename S>
+    struct ClassificationStrategy<S, typename std::enable_if<std::is_same<TotalDistance, S>::value>::type>
+    {
+        static constexpr auto findSimilarity = []( const MarkovianProfile &query,
+                                                   const MarkovianProfiles &targets,
+                                                   size_t kNearest = 5 ) {
+            return findSimilarities( query, targets, kNearest );
+        };
+    };
+
+    using Classifier = ClassificationStrategy<Strategy>;
 
     static MarkovianProfiles
     markovianTraining( const std::map<std::string, std::vector<std::string >> &training,
@@ -311,99 +401,87 @@ public:
         {
             MarkovianProfile p( order );
             p.train( {q.getSequence()} );
-            ClassificationCandidates<Criteria> result{"", findSimilarities( p, targets )};
-            classifications.emplace_back( result );
+            classifications.emplace_back( "", Classifier::findSimilarity( p, targets ));
         }
         return classifications;
     }
 
-    static std::vector<ClassificationCandidates<Criteria>>
+    static std::vector<ClassificationCandidates<Score>>
     classify_VALIDATION(
-            const std::vector<UniRefEntry> &queries,
+            const std::vector<std::string> &queries,
+            const std::vector<std::string> &trueLabels,
             const MarkovianProfiles &targets )
     {
+        assert( queries.size() == trueLabels.size());
         const int order = targets.begin()->second.order();
-        std::vector<ClassificationCandidates<Criteria>> classifications;
+        std::vector<ClassificationCandidates<Score>> classifications;
         size_t truePositive = 0;
         size_t tested = 0;
-        for (const auto &unirefItem : queries)
+
+        for (auto i = 0; i < queries.size(); ++i)
         {
             MarkovianProfile p( order );
-            p.train( {unirefItem.getSequence()} );
-            ClassificationCandidates<Criteria> result{unirefItem.getClusterName(),
-                                                      findSimilarities( p, targets )};
-            classifications.emplace_back( result );
-            truePositive += result.trueClusterFound();
-            ++tested;
-            if ((tested * 100) / queries.size() - ((tested - 1) * 100) / queries.size() > 0 )
-            {
-                fmt::print( "[progress:{}%][accuracy:{}]\n",
-                            float( tested * 100 ) / queries.size(),
-                            float( truePositive ) / tested );
-            }
+            p.train( {queries.at( i )} );
+            classifications.emplace_back( trueLabels.at( i ), Classifier::findSimilarity( p, targets ));
         }
         return classifications;
     }
 
 
-    void runPipeline_VALIDATION( std::vector<UniRefEntry> entries,
+    void runPipeline_VALIDATION( std::vector<UniRefEntry> &&entries,
                                  int order,
-                                 double testPercentage,
-                                 double threshold )
+                                 size_t k )
     {
-        auto[trainingClusters, test] = Timers::reported_invoke_s( [&]() {
+        std::set<std::string> labels;
+        for (const auto &entry : entries)
+            labels.insert( entry.getClusterName());
 
+        using Folds = std::vector<std::vector<std::pair<std::string, std::string >>>;
+
+        const Folds folds = Timers::reported_invoke_s( [&]() {
             fmt::print( "[All Sequences:{}]\n", entries.size());
-
-            auto[test, training] = (threshold > 0) ?
-                                   UniRefEntry::separationExcludingClustersWithLowSequentialData( entries,
-                                                                                                  testPercentage,
-                                                                                                  threshold ) :
-                                   subsetRandomSeparation( entries, testPercentage );
-
-            test = reducedAlphabetEntries( test );
-            training = reducedAlphabetEntries( training );
-
-            fmt::print( "[Training Entries:{}][Test Entries:{}][Test Ratio:{}]\n",
-                        training.size(), test.size(), float( test.size()) / entries.size());
-
-            entries.clear();
-
-            auto trainingClusters = UniRefEntry::groupSequencesByUniRefClusters( training );
-            return std::make_pair( trainingClusters, test );
+            entries = reducedAlphabetEntries( entries );
+            return kFoldStratifiedSplit( UniRefEntry::groupSequencesByUniRefClusters( entries ), k );
         }, PREPROCESSING );
 
 
-        fmt::print( "[Training Clusters:{}]\n", trainingClusters.size());
-        auto trainedProfiles = Timers::reported_invoke_s( [&]() {
-            return markovianTraining( trainingClusters, order );
-        }, TRAINING );
+        auto extractTest = []( const std::vector<std::pair<std::string, std::string >> &items ) {
+            std::vector<std::string> sequences,labels;
+            for (const auto item : items)
+            {
+                labels.push_back( item.first );
+                sequences.push_back( item.second );
+            }
+            return std::make_pair( sequences , labels );
+        };
 
-        auto classificationResults = Timers::reported_invoke_s( [&]() {
-            return classify_VALIDATION( test, trainedProfiles );
-        }, CLASSIFICATION );
-
-        std::set<std::string> labels;
-        for (const auto &[k, v] : trainedProfiles)
-            labels.insert( k );
-        for (const auto &t : test)
-            labels.insert( t.getClusterName());
-
-        ConfusionMatrix c( labels );
+        CrossValidationStatistics validation( k, labels );
         std::unordered_map<long, size_t> histogram;
-        for (const auto &classification : classificationResults)
+
+        for (auto i = 0; i < k; ++i)
         {
-            ++histogram[classification.trueClusterRank()];
-            c.countInstance( classification.bestMatch(), classification.trueCluster );
+            auto trainingClusters = joinFoldsExceptK( folds, i );
+            auto [test,tLabels] = extractTest( folds.at( i ));
+            auto trainedProfiles = markovianTraining( trainingClusters, order );
+            auto classificationResults = classify_VALIDATION( test, tLabels, trainedProfiles );
+
+            for (const auto &classification : classificationResults)
+            {
+                ++histogram[classification.trueClusterRank()];
+                validation.countInstance( i, classification.bestMatch(), classification.trueCluster());
+            }
         }
-        c.printReport();
+
+        validation.printReport();
 
         fmt::print( "True Classification Histogram:\n" );
 
         for (auto &[k, v] : histogram)
         {
-            if ( k == -1 ) continue;
-            fmt::print( "Rank:{:<10}Count:{}\n", k, v );
+            if ( k == -1 )
+                fmt::print( "{:<20}Count:{}\n", "Unclassified", v );
+            else
+                fmt::print( "{:<20}Count:{}\n", fmt::format( "Rank:{}", k ), v );
         }
     }
 };
@@ -414,75 +492,98 @@ public:
  * @tparam ...
  */
 
-template <typename, typename...> struct midProd {};
 
-template <typename...>
-struct ConfigurationCombination;
+template<typename, typename...>
+struct midProd
+{
+};
 
-template <typename ... R>
-struct ConfigurationCombination<std::variant<R...>>
-{ using type = std::variant<R...>; };
+template<typename...>
+struct magicH;
 
-template <typename ... R, typename i, typename ... cs, typename ... MpS>
-struct ConfigurationCombination<std::variant<R...>, midProd<i, cs...>, MpS...>
-{ using type = typename ConfigurationCombination<std::variant<R..., ConfiguredPipeline<i, cs>...>, MpS...>::type; };
+template<typename ... R>
+struct magicH<std::variant<R...>>
+{
+    using type = std::variant<R...>;
+};
+
+template<typename ... R, typename G, typename ... Cs, typename ... MpS>
+struct magicH<std::variant<R...>, midProd<G, Cs...>, MpS...>
+{
+    using type = typename magicH<std::variant<R..., ConfiguredPipeline<G, Cs>...>, MpS...>::type;
+};
 
 
-template <typename, typename>
+template<typename, typename>
 struct magic;
 
-template <typename ... is, typename ... cs>
-struct magic<AAGroupingList<is...>, CriteriaList<cs...>>
-{ using type = typename ConfigurationCombination<std::variant<>, midProd<is, cs...>...>::type; };
+template<typename ... Gs, typename ... Cs>
+struct magic<AAGroupingList<Gs...>, CriteriaList<Cs...>>
+{
+    using type = typename magicH<std::variant<>, midProd<Gs, Cs...>...>::type;
+};
 
 
-using PipelineVariant = typename magic<SuppotedAAGrouping, SupportedCriteria>::type;
+template<typename...>
+struct StrategiesList
+{
+};
+using SupportedStrategies = StrategiesList<Voting, TotalDistance>;
 
 
-template< typename AAGrouping >
-PipelineVariant getConfiguredPipeline( CriteriaEnum criteria )
+using PipelineVariant = magic<SupportedAAGrouping, SupportedCriteria>::type;
+
+template<typename AAGrouping, typename Criteria>
+PipelineVariant getConfiguredPipeline( StrategyEnum strategy )
+{
+    switch (strategy)
+    {
+        case StrategyEnum::TotalDistance :
+            return ConfiguredPipeline<AAGrouping, Criteria, Voting>();
+        case StrategyEnum::Voting :
+            return ConfiguredPipeline<AAGrouping, Criteria, Voting>();
+    }
+};
+
+template<typename AAGrouping>
+PipelineVariant getConfiguredPipeline( CriteriaEnum criteria, StrategyEnum strategy )
 {
     switch (criteria)
     {
         case CriteriaEnum::ChiSquared :
-        {
-            return ConfiguredPipeline< AAGrouping, ChiSquared>();
-        }
-            break;
+            return getConfiguredPipeline<AAGrouping, ChiSquared>( strategy );
+        case CriteriaEnum::Cosine :
+            return getConfiguredPipeline<AAGrouping, Cosine>( strategy );
+        case CriteriaEnum::KullbackLeiblerDiv:
+            return getConfiguredPipeline<AAGrouping, KullbackLeiblerDivergence>( strategy );
     }
 };
 
 
-PipelineVariant getConfiguredPipeline( AminoAcidGroupingEnum grouping, CriteriaEnum criteria )
+PipelineVariant getConfiguredPipeline( AminoAcidGroupingEnum grouping, CriteriaEnum criteria,
+                                       StrategyEnum strategy )
 {
     switch (grouping)
     {
         case AminoAcidGroupingEnum::DIAMOND11 :
-        {
-            return getConfiguredPipeline< AAGrouping_DIAMOND11>( criteria );
-        }
-            break;
+            return getConfiguredPipeline<AAGrouping_DIAMOND11>( criteria, strategy );
         case AminoAcidGroupingEnum::OLFER8 :
-        {
-            return getConfiguredPipeline< AAGrouping_OLFER8>( criteria );
-        }
-            break;
+            return getConfiguredPipeline<AAGrouping_OLFER8>( criteria, strategy );
         case AminoAcidGroupingEnum::OLFER15 :
-        {
-            return getConfiguredPipeline< AAGrouping_OLFER15>( criteria );
-        }
-            break;
+            return getConfiguredPipeline<AAGrouping_OLFER15>( criteria, strategy );
+
     }
 }
 
 PipelineVariant getConfiguredPipeline( const std::string &groupingName,
-                                       const std::string &criteria )
+                                       const std::string &criteria,
+                                       const std::string &strategy )
 {
     const AminoAcidGroupingEnum groupingLabel = GroupingLabels.at( groupingName );
     const CriteriaEnum criteriaLabel = CriteriaLabels.at( criteria );
-    return getConfiguredPipeline( groupingLabel, criteriaLabel );
+    const StrategyEnum strategyLabel = ClassificationStrategyLabel.at( strategy );
+    return getConfiguredPipeline( groupingLabel, criteriaLabel, strategyLabel );
 }
-
 
 
 #endif

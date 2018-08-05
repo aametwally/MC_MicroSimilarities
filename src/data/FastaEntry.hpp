@@ -65,14 +65,37 @@ public:
             for (const auto &p : fs::directory_iterator( p ))
             {
                 auto newEntries = readFastaFile( p.path());
-                entries.insert( entries.cend(), std::begin( newEntries ) , std::end( newEntries ));
+                entries.insert( entries.cend(), std::begin( newEntries ), std::end( newEntries ));
             }
 
             return entries;
         } else return readFastaFile( pathString );
     }
 
+    static std::map<std::string, std::vector< FastaEntry>>
+    readFastaGroupByFilename( const std::string &pathString )
+    {
+        namespace fs = std::experimental::filesystem;
+        fs::path p( pathString );
+        if ( fs::is_directory( p ))
+        {
+            std::map<std::string, std::vector< FastaEntry >> entries;
+            for (const auto &p : fs::directory_iterator( p ))
+            {
+                auto newEntries = readFastaFile( p.path());
+                entries.emplace( p.path().filename().string(), std::move( newEntries ));
+            }
+            return entries;
+        } else
+        {
+            std::map<std::string, std::vector<FastaEntry >> entries =
+                    {{p.filename().string(), readFastaFile( pathString )}};
+            return entries;
+        }
+    }
+
     static std::vector<FastaEntry>
+
     readFastaFile( const std::string &path )
     {
         std::ifstream input( path );

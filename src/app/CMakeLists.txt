@@ -11,10 +11,10 @@ set( COMMON_INCLUDES
         ../report/Timers.hpp
         ../data/SequenceEntry.hpp
         ../data/FastaEntry.hpp
-        ../data/UniRefEntry.hpp ../report/ConfusionMatrix.hpp ../features/similarities.hpp ../algorithm/aminoacids_grouping.hpp)
+        ../data/UniRefEntry.hpp ../report/ConfusionMatrix.hpp ../features/similarities.hpp ../algorithm/aminoacids_grouping.hpp ../report/CrossValidationStatistics.hpp ../report/crossvalidation.hpp)
 
 ### Generate the main executable
-add_executable( markovian_features ${COMMON_INCLUDES} markovian_features.cpp )
+add_executable( markovian_features ${COMMON_INCLUDES} markovian_features.cpp)
 target_include_directories( markovian_features PRIVATE
         ${CMAKE_SOURCE_DIR}/src/include
         ${COMMON_INCLUDE_DIRECTORIES} )

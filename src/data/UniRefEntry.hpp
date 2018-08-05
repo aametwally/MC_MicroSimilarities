@@ -47,7 +47,20 @@ public:
         UniRefEntry uniref;
         auto tokens = split( fEntry.getId());
         uniref._memberId = split( tokens.front(), "|" ).front();
-        uniref._clusterName =  std::string( tokens.at(1).cbegin() + 1, tokens.at(1).cend() - 1 );
+        uniref._clusterName = std::string( tokens.at( 1 ).cbegin() + 1, tokens.at( 1 ).cend() - 1 );
+        uniref._sequence = fEntry.getSequence();
+        return uniref;
+    }
+
+    static UniRefEntry from_fasta_TARGETP( const FastaEntry &fEntry, const std::string &clusterName )
+    {
+        using io::split;
+        using io::join;
+
+        UniRefEntry uniref;
+        auto tokens = split( fEntry.getId());
+        uniref._memberId = split( tokens.front(), ";" ).front();
+        uniref._clusterName = clusterName;
         uniref._sequence = fEntry.getSequence();
         return uniref;
     }
@@ -101,13 +114,28 @@ public:
     }
 
     static std::vector<UniRefEntry>
+    fasta2UnirefEntries_TARGETP( const std::map<std::string, std::vector< FastaEntry >> &fastaEntries )
+    {
+        std::vector<UniRefEntry> unirefEntries;
+        for (const auto &[clusterName, entries] : fastaEntries )
+            std::transform( entries.cbegin(), entries.cend(),
+                            std::back_inserter( unirefEntries ), [&]( const auto &fi ) {
+                        return from_fasta_TARGETP( fi, clusterName );
+                    });
+        return unirefEntries;
+    }
+
+    static std::vector<UniRefEntry>
     loadEntries( const std::string &input, const std::string &format )
     {
-        if( format == "uniref")
+        if ( format == "uniref" )
             return fasta2UnirefEntries( FastaEntry::readFasta( input ));
-        else if( format == "psort" )
+        else if ( format == "psort" )
             return fasta2UnirefEntries_PSORTDB( FastaEntry::readFasta( input ));
-        else throw std::runtime_error(fmt::format("Unexpected fasta file format:{}",format));
+        else if ( format == "targetp" )
+            return fasta2UnirefEntries_TARGETP( FastaEntry::readFastaGroupByFilename( input ));
+
+        else throw std::runtime_error( fmt::format( "Unexpected fasta file format:{}", format ));
     }
 
 
