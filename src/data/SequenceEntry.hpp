@@ -16,28 +16,26 @@ class SequenceEntry
 public:
     virtual size_t sequenceLength() const = 0;
 
-    virtual std::string clusterNameUniRef() const = 0;
-
     virtual const std::string &getSequence() const = 0;
 
     static std::map<std::string, std::vector<std::string> >
-    groupSequencesByUniRefClusters( const std::vector<T> &entries )
+    groupSequencesByLabels( const std::vector<T> &entries )
     {
         std::map<std::string, std::vector<std::string >> clusters;
 
         for (const auto &entry : entries)
-            clusters[entry.clusterNameUniRef()].emplace_back( entry.getSequence());
+            clusters[entry.getLabel()].emplace_back( entry.getSequence());
 
         return clusters;
     }
 
     static std::map<std::string, std::vector<T> >
-    groupEntriesByUniRefClusters( const std::vector<T> &entries )
+    groupEntriesByLabels( const std::vector<T> &entries )
     {
         std::map<std::string, std::vector<T >> clusters;
 
         for (const auto &entry : entries)
-            clusters[entry.clusterNameUniRef()].emplace_back( entry );
+            clusters[entry.getLabel()].emplace_back( entry );
 
         return clusters;
     }
@@ -57,7 +55,7 @@ public:
             return count;
         };
 
-        auto clusters = groupEntriesByUniRefClusters( entries );
+        auto clusters = groupEntriesByLabels( entries );
 
         size_t populationSequenceLength = 0;
         for (const auto &[clusterId, cluster] : clusters)
@@ -83,7 +81,7 @@ public:
             double threshold = 5.f )
     {
         std::vector<T> subset, rest;
-        auto clusters = groupEntriesByUniRefClusters( entries );
+        auto clusters = groupEntriesByLabels( entries );
 
         auto averageClusterMembers = entries.size() / clusters.size();
 

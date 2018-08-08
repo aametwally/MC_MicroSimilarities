@@ -11,7 +11,7 @@ set( COMMON_INCLUDES
         ../report/Timers.hpp
         ../data/SequenceEntry.hpp
         ../data/FastaEntry.hpp
-        ../data/UniRefEntry.hpp ../report/ConfusionMatrix.hpp ../features/similarities.hpp ../algorithm/aminoacids_grouping.hpp ../report/CrossValidationStatistics.hpp ../report/crossvalidation.hpp)
+        ../data/LabeledEntry.hpp ../report/ConfusionMatrix.hpp ../features/similarities.hpp ../algorithm/aminoacids_grouping.hpp ../report/CrossValidationStatistics.hpp ../report/crossvalidation.hpp)
 
 ### Generate the main executable
 add_executable( markovian_features ${COMMON_INCLUDES} markovian_features.cpp)

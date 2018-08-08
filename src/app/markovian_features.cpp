@@ -2,16 +2,23 @@
 #include "clara.hpp"
 
 
+std::vector<std::string> splitParameters( std::string params )
+{
+    io::trim( params, "[({})]" );
+    return io::split( params, "," );
+}
+
 int main( int argc, char *argv[] )
 {
+    using io::join;
     std::string input, testFile;
-    std::string fastaFormat = "uniref";
-    int markovianOrder = 2;
+    std::string fastaFormat = keys( FormatLabels ).front();
+    std::string markovianOrder = "3";
     size_t k = 10;
     bool showHelp = false;
-    std::string grouping = "diamond11";
-    std::string criteria = "chi";
-    std::string strategy = "totaldist";
+    std::string grouping = keys( GroupingLabels ).front();
+    std::string criteria = keys( CriteriaLabels ).front();
+    std::string strategy = keys( ClassificationStrategyLabel ).front();
 
     auto cli
             = clara::Arg( input, "input" )
@@ -19,23 +26,24 @@ int main( int argc, char *argv[] )
               | clara::Opt( testFile, "test" )
               ["-T"]["--test"]
                       ( "test file" )
-              | clara::Opt( grouping, "grouping" )
+              | clara::Opt( grouping, join( keys( GroupingLabels ), "|" ))
               ["-G"]["--grouping"]
-                      ( "grouping method" )
-              | clara::Opt( fastaFormat, "fastaformat" )
+                      ( fmt::format( "grouping method, default:{}", grouping ))
+              | clara::Opt( fastaFormat, join( keys( FormatLabels ), "|" ))
               ["-f"]["--fformat"]
-              | clara::Opt( criteria, "criteria" )
+                      ( fmt::format( "input file processor, default:{}", fastaFormat ))
+              | clara::Opt( criteria, join( keys( CriteriaLabels ), "|" ))
               ["-c"]["--criteria"]
-                      ( "Similarity Criteria" )
-              | clara::Opt( strategy, "strategy" )
+                      ( fmt::format( "Similarity Criteria, default:{}", criteria ))
+              | clara::Opt( strategy, join( keys( ClassificationStrategyLabel ), "|" ))
               ["-s"]["--strategy"]
-                      ( "Classification Strategy" )
+                      ( fmt::format( "Classification Strategy, default:{}", strategy ))
               | clara::Opt( markovianOrder, "order" )
               ["-o"]["--order"]
-                      ( "Markovian order" )
+                      ( fmt::format( "Markovian order, default:{}", markovianOrder ))
               | clara::Opt( k, "k-fold" )
               ["-k"]["--k-fold"]
-                      ( "cross validation k-fold" )
+                      ( fmt::format( "cross validation k-fold, default:{}", k ))
               | clara::Help( showHelp );
 
     auto result = cli.parse( clara::Args( argc, argv ));
@@ -59,16 +67,28 @@ int main( int argc, char *argv[] )
                     "[order:{}]"
                     "[k-fold:{}]"
                     "[criteria:{}]"
-                    "[grouping:{}]\n",
+                    "[grouping:{}]"
+                    "[strategy:{}]\n",
                     input, fastaFormat, markovianOrder,
-                    k,
-                    criteria, grouping );
+                    k, criteria, grouping, strategy );
 
-        std::visit( [&]( auto &&p ) {
-            p.runPipeline_VALIDATION( UniRefEntry::loadEntries( input, fastaFormat ),
-                                      markovianOrder,
-                                      k );
-        }, getConfiguredPipeline( grouping, criteria , strategy ));
+        for (auto &c : splitParameters( criteria ))
+            for (auto &g : splitParameters( grouping ))
+                for (auto &s: splitParameters( strategy ))
+                    for (auto &o : splitParameters( markovianOrder ))
+                    {
+                        fmt::print( "[Params]"
+                                    "[order:{}]"
+                                    "[criteria:{}]"
+                                    "[grouping:{}]"
+                                    "[strategy:{}]\n", o, c, g, s );
+                        std::visit( [&]( auto &&p ) {
+                            p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ),
+                                                      std::stoi( o ), k );
+                        }, getConfiguredPipeline( g, c, s ));
+                    }
+
+
     }
     return 0;
 }

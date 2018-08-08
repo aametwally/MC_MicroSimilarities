@@ -11,7 +11,7 @@
 
 template<typename T>
 std::vector<std::vector<T >>
-kFoldSplit( std::vector<T> input, size_t k )
+kFoldSplit( std::vector<T> &&input, size_t k )
 {
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::shuffle( input.begin(), input.end(), std::default_random_engine( seed ));
@@ -24,12 +24,12 @@ kFoldSplit( std::vector<T> input, size_t k )
 
 template< typename T, typename Label = std::string >
 std::vector<std::vector<std::pair<Label, T >>>
-kFoldStratifiedSplit( const std::map<Label, std::vector<T> > &input, size_t k )
+kFoldStratifiedSplit( std::map<Label, std::vector<T> > &&input, size_t k )
 {
     std::vector<std::vector<std::pair<Label, T >>> folds( k );
     for (auto &[label, v] : input)
     {
-        auto sFolds = kFoldSplit( v, k );
+        auto sFolds = kFoldSplit( std::move( v ), k );
         for (auto i = 0; i < sFolds.size(); ++i)
         {
             auto &foldK = folds.at( i );

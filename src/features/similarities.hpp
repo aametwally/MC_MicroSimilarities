@@ -24,8 +24,14 @@ struct Criteria
     template<typename Iterator>
     static double measure( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
     {
-        Derived &inst = Derived::instance();
-        return inst.apply( first1, last1, first2, last2 );
+        return Derived::apply( first1, last1, first2, last2 );
+    }
+
+    template<typename Container>
+    static double measure( const Container &kernel1, const Container &kernel2 )
+    {
+        return Derived::apply( std::cbegin( kernel1 ), std::cend( kernel1 ),
+                               std::cbegin( kernel2 ), std::cend( kernel2 ));
     }
 
 private:
@@ -36,21 +42,15 @@ private:
 
 struct ChiSquared : public Criteria<ChiSquared>, Cost
 {
-    static ChiSquared &instance()
-    {
-        static ChiSquared inst;
-        return inst;
-    }
-
     template<typename Iterator>
     static double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
     {
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
-        double sum{0};
-        for (; first1 != last1; ++first1, ++first2)
+        double sum = 0;
+        for (auto it1 = first1, it2 = first2; it1 != last1; ++it1, ++it2)
         {
-            auto m = *first1 - *first2;
-            sum += m * m / *first1;
+            auto m = *it1 - *it2;
+            sum += m * m / *it1;
         }
         return sum;
     }
@@ -61,16 +61,10 @@ private:
 
 struct Cosine : public Criteria<Cosine>, Score
 {
-    static Cosine &instance()
-    {
-        static Cosine inst;
-        return inst;
-    }
-
     template<typename Iterator>
     static inline double norm2( Iterator first, Iterator last )
     {
-        double sum{0};
+        double sum = 0;
         for (auto it = first; it != last; ++it)
         {
             sum += (*it) * (*it);
@@ -103,13 +97,22 @@ struct KullbackLeiblerDivergence : public Criteria<KullbackLeiblerDivergence>, C
     }
 
 
+    /**
+     * @brief Kullback-Leibler Divergence $D_{KL}(Q||P)$
+     * @tparam Iterator
+     * @param qFirst
+     * @param qLast
+     * @param pFirst
+     * @param pLast
+     * @return
+     */
     template<typename Iterator>
-    static inline double apply( Iterator firstActual, Iterator lastActual, Iterator firstAprrox, Iterator lastApprox )
+    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
     {
-        assert( std::distance( firstActual, lastActual ) == std::distance( firstAprrox, lastApprox ));
+        assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
         double sum{0};
-        for (; firstActual != lastActual; ++firstActual, ++firstAprrox)
-            sum += (*firstActual) * std::log((*firstActual + eps) / (*firstAprrox + eps));
+        for (auto qIt = qFirst, pIt = pFirst; qIt != qLast; ++qIt, ++pIt)
+            sum += (*qIt) * std::log((*qIt + eps) / (*pIt + eps));
 
         return sum;
     }
@@ -120,33 +123,44 @@ private:
 
 struct Measurement
 {
-    std::string id;
-    double value;
+
+    Measurement( std::string label, double val )
+            : _label( std::move( label )), _value( val )
+    {}
 
     bool operator==( const Measurement &other ) const
     {
-        return id == other.id && value == other.value;
+        return _label == other._label && _value == other._value;
     }
 
     bool operator>( const Measurement &other ) const
     {
-        return value > other.value;
+        return _value > other._value;
     }
 
     bool operator<( const Measurement &other ) const
     {
-        return value < other.value;
+        return _value < other._value;
     }
 
     bool operator>=( const Measurement &other ) const
     {
-        return value >= other.value;
+        return _value >= other._value;
     }
 
     bool operator<=( const Measurement &other ) const
     {
-        return value <= other.value;
+        return _value <= other._value;
     }
+
+    const std::string &getLabel() const
+    {
+        return _label;
+    }
+
+private:
+    const std::string _label;
+    const double _value;
 };
 
 
@@ -173,6 +187,16 @@ struct PriorityQueueFixed
     {
         return _q.empty();
     }
+
+    template<class... Args>
+    auto emplace( Args &&... args )
+    {
+        auto res = _q.emplace( args... );
+        if ( _q.size() > _kTop )
+            _q.erase( _q.begin());
+        return res;
+    };
+
     auto insert( T &&val )
     {
         auto res = _q.insert( val );
@@ -219,49 +243,41 @@ struct MatchSet<T, typename std::enable_if<std::is_base_of<Score, T>::value>::ty
 };
 
 
-struct LeaderBoard
-{
-    virtual std::string bestMatch() const = 0;
-
-    virtual long trueClusterRank() const = 0;
-
-    virtual bool trueClusterFound() const = 0;
-};
-
 template<typename Criteria>
-struct ClassificationCandidates : LeaderBoard
+struct ClassificationCandidates
 {
     using Queue = typename MatchSet<Criteria>::Queue;
 
-    explicit ClassificationCandidates( std::string trueCluster, Queue q )
-            : _trueCluster( std::move( trueCluster )), _bestMatches( std::move( q ))
+    explicit ClassificationCandidates( std::string trueLabel, Queue q )
+            : _trueLabel( std::move( trueLabel )), _bestMatches( std::move( q ))
     {}
 
-    virtual std::string bestMatch() const override
+    std::string bestMatch() const
     {
-        return _bestMatches.top().id;
+        return _bestMatches.top().getLabel();
     }
 
-    virtual long trueClusterRank() const override
+    long trueClusterRank() const
     {
         return _bestMatches.findRank( [this]( const Measurement &m ) {
-            return m.id == _trueCluster;
+            return m.getLabel() == _trueLabel;
         } );
     }
 
-    virtual bool trueClusterFound() const override
+    bool trueClusterFound() const
     {
         return _bestMatches.contains( [this]( const Measurement &m ) {
-            return m.id == _trueCluster;
+            return m.getLabel() == _trueLabel;
         } );
     }
 
     const std::string &trueCluster() const
     {
-        return _trueCluster;
+        return _trueLabel;
     }
+
 private:
-    std::string _trueCluster;
+    std::string _trueLabel;
     Queue _bestMatches;
 };
 
@@ -284,5 +300,6 @@ struct CriteriaList
 {
 };
 using SupportedCriteria = CriteriaList<ChiSquared, Cosine, KullbackLeiblerDivergence>;
+
 
 #endif //MARKOVIAN_FEATURES_DISTANCES_HPP

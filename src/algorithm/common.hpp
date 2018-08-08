@@ -28,19 +28,6 @@
 #include <fmt/format.h>
 #include <chrono>
 
-const std::array<char, 4> acgt = {'A', 'C', 'G', 'T'};
-const std::array<char, 4> tgca = {'T', 'G', 'C', 'A'};
-const std::array<std::string, 4> bpMutants = {"CGT", "AGT", "ACT", "ACG"};
-
-const std::array<int, 256> codeACGT([] {
-    std::array<int, 256> codes;
-    std::fill(codes.begin(), codes.end(), -1);
-    codes['A'] = 0;
-    codes['C'] = 1;
-    codes['G'] = 2;
-    codes['T'] = 3;
-    return codes;
-}());
 
 template<size_t Base>
 constexpr size_t powi(uint16_t exponent) {
@@ -49,6 +36,49 @@ constexpr size_t powi(uint16_t exponent) {
 
 double powd(double x, uint16_t exponent) {
     return (exponent == 0) ? 1.f : x * powd(x, exponent - 1);
+}
+
+double maxInformation_UNIFORM( size_t k )
+{
+    double p = double(1)/k;
+    double sum = 0;
+    for( auto i = 0 ; i < k ; ++i )
+        sum += std::log2( p ) * p;
+    return -sum;
+}
+
+template< typename I>
+double entropy( I first , I last )
+{
+    double sum = 0;
+    for( auto it = first; it != last ; ++it )
+    {
+        if( *it > 0 )
+        sum += ( *it * std::log2( *it ));
+    }
+    return -sum;
+}
+
+template< typename I >
+double informationGain_UNIFORM( I first , I last , long k = -1 )
+{
+    k = (k<0)? std::distance( first , last ) : k;
+    return maxInformation_UNIFORM( k ) - entropy( first , last );
+}
+
+template< typename I>
+void normalize( I first, I last )
+{
+    double sum = 0;
+    for( auto it = first; it != last ; ++it )
+        sum += *it;
+    for( auto it = first; it != last ; ++it )
+        *it = *it / sum;
+}
+
+void normalize( std::vector< double > &vec )
+{
+    normalize( vec.begin(), vec.end());
 }
 
 /**
@@ -204,6 +234,20 @@ namespace io {
         }).base(), s.end());
     }
 
+    // trim from start (in place)
+    inline void ltrim(std::string &s, const std::string &trimmed ) {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [trimmed](int ch) {
+            return trimmed.find( ch ) == std::string::npos;
+        }));
+    }
+
+// trim from end (in place)
+    inline void rtrim(std::string &s, const std::string &trimmed) {
+        s.erase(std::find_if(s.rbegin(), s.rend(), [trimmed](int ch) {
+            return trimmed.find( ch ) == std::string::npos;
+        }).base(), s.end());
+    }
+
 // trim from both ends (in place)
     inline void trim(std::string &s) {
         ltrim(s);
@@ -225,6 +269,29 @@ namespace io {
 // trim from both ends (copying)
     inline std::string trim_copy(std::string s) {
         trim(s);
+        return s;
+    }
+// trim from both ends (in place)
+    inline void trim(std::string &s, const std::string  &trimmed) {
+        ltrim(s,trimmed);
+        rtrim(s,trimmed);
+    }
+
+// trim from start (copying)
+    inline std::string ltrim_copy(std::string s, const std::string  &trimmed) {
+        ltrim(s,trimmed);
+        return s;
+    }
+
+// trim from end (copying)
+    inline std::string rtrim_copy(std::string s, const std::string  &trimmed) {
+        rtrim(s,trimmed);
+        return s;
+    }
+
+// trim from both ends (copying)
+    inline std::string trim_copy(std::string s, const std::string  &trimmed ) {
+        trim(s, trimmed);
         return s;
     }
 
@@ -277,5 +344,23 @@ namespace io {
         return join(s, sep);
     }
 }
+
+template< typename K , typename V>
+std::vector< K > keys( const std::map< K , V > &m )
+{
+    std::vector< K > ks;
+    for( auto [k,v] : m )
+        ks.push_back( k );
+    return ks;
+};
+
+template< typename K , typename V>
+std::vector< V > values( const std::map< K , V > &m )
+{
+    std::vector< V > vs;
+    for( auto [k,v] : m )
+        vs.push_back( v );
+    return vs;
+};
 
 #endif // COMMON_HH

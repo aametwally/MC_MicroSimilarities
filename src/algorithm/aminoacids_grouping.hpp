@@ -10,12 +10,14 @@
 
 enum class AminoAcidGroupingEnum
 {
+    NoGrouping20,
     OLFER15,
     OLFER8,
     DIAMOND11
 };
 
 const std::map<std::string, AminoAcidGroupingEnum> GroupingLabels{
+        {"nogrouping", AminoAcidGroupingEnum ::NoGrouping20 },
         {"olfer15",   AminoAcidGroupingEnum::OLFER15},
         {"olfer8",    AminoAcidGroupingEnum::OLFER8},
         {"diamond11", AminoAcidGroupingEnum::DIAMOND11}
@@ -57,8 +59,8 @@ reducedAlphabetIds( const std::array<const char *, N> &alphabetGrouping )
     return ids;
 };
 
-constexpr std::array<char, 20> aaSet = {'A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S',
-                                        'T', 'V', 'W', 'Y'};
+constexpr std::array<const char *, 20> AAGrouping_NOGROUPING_Array = {"A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S",
+                                        "T", "V", "W", "Y"};
 
 constexpr std::array<const char *, 15> AAGrouping_OLFER15_Array = {"KR", "E", "D", "Q", "N", "C", "G", "H", "ILVM", "F",
                                                                    "Y",
@@ -76,12 +78,13 @@ struct AAGrouping
     static constexpr size_t StatesN = N;
 };
 
+using AAGrouping_NOGROUPING20 = AAGrouping<20, AAGrouping_NOGROUPING_Array>;
 using AAGrouping_OLFER15 = AAGrouping<15, AAGrouping_OLFER15_Array>;
 using AAGrouping_OLFER8 = AAGrouping<8, AAGrouping_OLFER8_Array>;
 using AAGrouping_DIAMOND11 = AAGrouping<11, AAGrouping_DIAMOND11_Array>;
 
 template <typename...>  struct AAGroupingList {};
-using SupportedAAGrouping  = AAGroupingList<AAGrouping_OLFER8 , AAGrouping_DIAMOND11  ,  AAGrouping_OLFER15 >;
+using SupportedAAGrouping  = AAGroupingList<AAGrouping_NOGROUPING20 ,AAGrouping_OLFER8 , AAGrouping_DIAMOND11  ,  AAGrouping_OLFER15 >;
 
 
 #endif //MARKOVIAN_FEATURES_AMINOACIDS_GROUPING_HPP

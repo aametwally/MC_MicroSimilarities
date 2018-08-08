@@ -7,11 +7,11 @@
 
 #include "common.hpp"
 
-template<typename Label = std::string>
+template<typename Label = std::string, typename T = int64_t>
 class ConfusionMatrix
 {
 private:
-    using Row = std::vector<size_t>;
+    using Row = std::vector<T>;
     using Matrix = std::vector<Row>;
     static constexpr double eps = std::numeric_limits<double>::epsilon();
 public:
@@ -48,44 +48,44 @@ public:
         ++_matrix[actualIdx][outputIdx];
     }
 
-    size_t truePositives( const Label &cl ) const
+    T truePositives( const Label &cl ) const
     {
         assert( !_dictionary.empty());
         size_t classIdx = _dictionary.at( cl );
         return _matrix.at( classIdx ).at( classIdx );
     }
 
-    size_t falsePositives( const Label &cl ) const
+    T falsePositives( const Label &cl ) const
     {
         size_t classIdx = _dictionary.at( cl );
-        size_t fp = 0;
+        T fp = 0;
         for (auto i = 0; i < _order; ++i)
             fp += _matrix.at( i ).at( classIdx );
         return fp - truePositives( cl );
     }
 
-    size_t falseNegatives( const Label &cl ) const
+    T falseNegatives( const Label &cl ) const
     {
         size_t classIdx = _dictionary.at( cl );
-        size_t fn = 0;
+        T fn = 0;
         for (auto i = 0; i < _order; ++i)
             fn += _matrix.at( classIdx ).at( i );
         return fn - truePositives( cl );
     }
 
-    size_t trueNegatives( const Label &cl ) const
+    T trueNegatives( const Label &cl ) const
     {
         auto classIdx = _dictionary.at( cl );
         return _trueNegatives( classIdx );
     }
 
-    size_t population( const Label &cl ) const
+    T population( const Label &cl ) const
     {
         size_t classIdx = _dictionary.at( cl );
         return _population( classIdx );
     }
 
-    size_t population() const
+    T population() const
     {
         return std::accumulate( _matrix.cbegin(), _matrix.cend(),
                                 size_t( 0 ), [this]( size_t count, const Row &row ) {
@@ -103,6 +103,11 @@ public:
     {
         size_t classIdx = _dictionary.at( cl );
         return _auc( classIdx );
+    }
+
+    double mcc( const Label &cl ) const
+    {
+        return _mcc( _dictionary.at( cl ));
     }
 
     double averageAccuracy() const
@@ -129,7 +134,7 @@ public:
 
     double microPrecision() const
     {
-        size_t allTp = _allTruePositives(), allFp = _allFalsePositives();
+        T allTp = _allTruePositives(), allFp = _allFalsePositives();
         return double( allTp + eps ) / (allTp + allFp + eps);
     }
 
@@ -141,7 +146,7 @@ public:
 
     double microRecall() const
     {
-        size_t allTp = _allTruePositives(), allFn = _allFalseNegatives();
+        T allTp = _allTruePositives(), allFn = _allFalseNegatives();
         return double( allTp + eps ) / (allTp + allFn + eps);
     }
 
@@ -181,9 +186,57 @@ public:
         return ((beta + 1) * mPrecision * mRecall + eps) / (beta * mPrecision + mRecall + eps);
     }
 
-    double accuracy() const
+    /**
+     * https://en.wikipedia.org/wiki/Matthews_correlation_coefficient#Multiclass_case
+     * @return
+     */
+    double mcc() const
     {
-        return double( _allTrue()) / population();
+        double num = 0;
+        const auto &c = _matrix;
+        for (auto k = 0; k < _order; ++k)
+            for (auto l = 0; l < _order; ++l)
+                for (auto m = 0; m < _order; ++m)
+                    num += (c[k][k] * c[l][m] - c[k][l] * c[m][k]);
+
+        double den1 = 0;
+        for (auto k = 0; k < _order; ++k)
+        {
+            double den1a = 0;
+            for (auto l = 0; l < _order; ++l)
+                den1a += c[k][l];
+            double den1b = 0;
+            for (auto kk = 0; kk < _order; ++kk)
+            {
+                if ( kk == k ) continue;
+                else
+                {
+                    for (auto ll = 0; ll < _order; ++ll)
+                        den1b += c[kk][ll];
+                }
+            }
+            den1 += (den1a * den1b);
+        }
+        double den2 = 0;
+        for (auto k = 0; k < _order; ++k)
+        {
+            double den2a = 0;
+            for (auto l = 0; l < _order; ++l)
+                den2a += c[l][k];
+            double den2b = 0;
+            for (auto kk = 0; kk < _order; ++kk)
+            {
+                if ( kk == k ) continue;
+                else
+                {
+                    for (auto ll = 0; ll < _order; ++ll)
+                        den2b += c[ll][kk];
+                }
+            }
+            den2 += (den2a * den2b);
+        }
+
+        return num / std::sqrt(den1 * den2);
     }
 
     /**
@@ -213,6 +266,7 @@ public:
         printRow( "Micro TPR, Recall, Sensitivity", microRecall());
         printRow( "Macro F1-Score", macroFScore());
         printRow( "Micro F1-Score", microFScore());
+        printRow( "MCC (multiclass)", mcc());
     }
 
     template<size_t indentation = 0>
@@ -231,7 +285,7 @@ public:
         printRow( "Precision, PPV", _precision( classIdx ));
         printRow( "Recall, sensitivity, TPR", _recall( classIdx ));
         printRow( "AUC", _auc( classIdx ));
-
+        printRow( "MCC", _mcc( classIdx ));
     }
 
 private:
@@ -281,72 +335,81 @@ private:
         return double( tp + tn ) / (tp + tn + fp + fn + eps);
     }
 
-    size_t _truePositives( size_t classIdx ) const
+    T _truePositives( size_t classIdx ) const
     {
         return _matrix.at( classIdx ).at( classIdx );
     }
 
-    size_t _trueNegatives( size_t classIdx ) const
+    T _trueNegatives( size_t classIdx ) const
     {
-        return _allTrue() - _truePositives( classIdx );
+        return _diagonal() - _truePositives( classIdx );
     }
 
-    size_t _falsePositives( size_t classIdx ) const
+    T _falsePositives( size_t classIdx ) const
     {
-        size_t fp = 0;
+        T fp = 0;
         for (auto i = 0; i < _order; ++i)
             fp += _matrix.at( i ).at( classIdx );
         return fp - _truePositives( classIdx );
     }
 
-    size_t _falseNegatives( size_t classIdx ) const
+    T _falseNegatives( size_t classIdx ) const
     {
         const auto &row = _matrix.at( classIdx );
-        size_t fn = std::accumulate( row.cbegin(), row.cend(), size_t( 0 ));
+        T fn = std::accumulate( row.cbegin(), row.cend(), T( 0 ));
         return fn - _truePositives( classIdx );
     }
 
-    size_t _population( size_t classIdx ) const
+    T _population( size_t classIdx ) const
     {
         const auto &row = _matrix.at( classIdx );
         return _rowCount( row );
     }
 
-    size_t _rowCount( const Row &row ) const
+    T _rowCount( const Row &row ) const
     {
-        return std::accumulate( row.cbegin(), row.cend(), size_t( 0 ));
+        return std::accumulate( row.cbegin(), row.cend(), T( 0 ));
     }
 
-    size_t _allTrue() const
+    T _diagonal() const
     {
-        size_t allTrue = 0;
+        T allTrue = 0;
         for (auto i = 0; i < _order; ++i)
             allTrue += _matrix.at( i ).at( i );
         return allTrue;
     }
 
-    size_t _allTruePositives() const
+    T _allTruePositives() const
     {
-        size_t allTp = 0;
+        T allTp = 0;
         for (auto i = 0; i < _order; ++i)
             allTp += _truePositives( i );
         return allTp;
     }
 
-    size_t _allFalseNegatives() const
+    T _allFalseNegatives() const
     {
-        size_t allFn = 0;
+        T allFn = 0;
         for (auto i = 0; i < _order; ++i)
             allFn += _falseNegatives( i );
         return allFn;
     }
 
-    size_t _allFalsePositives() const
+    T _allFalsePositives() const
     {
-        size_t allFp = 0;
+        T allFp = 0;
         for (auto i = 0; i < _order; ++i)
             allFp += _falsePositives( i );
         return allFp;
+    }
+
+    double _mcc( size_t classIdx ) const
+    {
+        auto tp = _truePositives( classIdx );
+        auto tn = _trueNegatives( classIdx );
+        auto fp = _falsePositives( classIdx );
+        auto fn = _falseNegatives( classIdx );
+        return (tp * tn - fp * fn) / std::sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn));
     }
 
     double _precision( size_t classIdx ) const

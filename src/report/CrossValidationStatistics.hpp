@@ -6,6 +6,7 @@
 #define MARKOVIAN_FEATURES_CROSSVALIDATIONSTATISTICS_HPP
 
 #include "ConfusionMatrix.hpp"
+#include <fcntl.h>
 
 template<typename Label = std::string>
 class CrossValidationStatistics
@@ -66,37 +67,49 @@ public:
         return _statistics.at( k ).macroFScore( beta );
     }
 
-    template<typename Function>
-    double averagingFunction( const Function &fn ) const
+    double mcc( size_t k  ) const
     {
-        double sum = 0;
-        for (auto i = 0; i < _k; ++i)
-            sum += fn( i );
-        return sum / _k;
+        return _statistics.at( k ).mcc( );
     }
 
-    double averageAccuracy() const
+    template<typename Function>
+    std::pair< double , double > averagingFunction( const Function &fn ) const
+    {
+        std::vector< double > vals;
+        for( auto i = 0; i < _k; ++i )
+            vals.push_back( fn( i ));
+
+        double sum = std::accumulate( vals.cbegin(),vals.cend(), double(0));
+        double mean = sum / _k;
+        double sDev = std::accumulate( vals.cbegin(),vals.cend(),double(0),
+                                       [mean]( double acc , double val  ){
+            return acc + (val - mean)*(val - mean);
+        });
+        return {mean,sDev};
+    }
+
+    std::pair< double , double > averageAccuracy() const
     {
         return averagingFunction( [this]( size_t k ) {
             return averageAccuracy( k );
         } );
     }
 
-    double overallAccuracy() const
+    std::pair< double , double > overallAccuracy() const
     {
         return averagingFunction( [this]( size_t k ) {
             return overallAccuracy( k );
         } );
     }
 
-    double microPrecision() const
+    std::pair< double , double > microPrecision() const
     {
         return averagingFunction( [this]( size_t k ) {
             return microPrecision( k );
         } );
     }
 
-    double microRecall() const
+    std::pair< double , double > microRecall() const
     {
         return averagingFunction( [this]( size_t k ) {
             return microRecall( k );
@@ -104,40 +117,49 @@ public:
     }
 
 
-    double microFScore( double beta = 1 ) const
+    std::pair< double , double > microFScore( double beta = 1 ) const
     {
         return averagingFunction( [this]( size_t k ) {
             return microFScore( k );
         } );
     }
 
-    double macroPrecision() const
+    std::pair< double , double > macroPrecision() const
     {
         return averagingFunction( [this]( size_t k ) {
             return macroPrecision( k );
         } );
     }
 
-    double macroRecall() const
+    std::pair< double , double > macroRecall() const
     {
         return averagingFunction( [this]( size_t k ) {
             return macroRecall( k );
         } );
     }
 
-    double macroFScore( double beta = 1 ) const
+    std::pair< double , double > macroFScore( double beta = 1 ) const
     {
         return averagingFunction( [this]( size_t k ) {
             return macroFScore( k );
         } );
     }
 
+    std::pair< double , double > mcc( ) const
+    {
+        return averagingFunction( [this]( size_t k ) {
+            return mcc( k );
+        } );
+    }
+
     template<size_t indentation = 0>
     void printReport() const
     {
+
         fmt::print( "{:<{}}General Statistics:\n", "", indentation );
 
         auto printRow = _printRowFunction<indentation + 2>();
+
 
         printRow( "Overall Accuracy", overallAccuracy());
         printRow( "Average Accuracy", averageAccuracy());
@@ -147,15 +169,17 @@ public:
         printRow( "Micro TPR, Recall, Sensitivity", microRecall());
         printRow( "Macro F1-Score", macroFScore());
         printRow( "Micro F1-Score", microFScore());
+        printRow( "MCC (multiclass)", mcc());
+
     }
 
 private:
     template<size_t indentation, size_t col1Width = 50>
     static auto _printRowFunction()
     {
-        return [=]( const char *col1, double col2 ) {
-            constexpr const char *fmtSpec = "{:<{}}{:<{}}:{}\n";
-            fmt::print( fmtSpec, "", indentation, col1, col1Width, col2 );
+        return [=]( const char *col1, std::pair<double,double> &&col2 ) {
+            constexpr const char *fmtSpec = "{:<{}}{:<{}}:{:.4f}  (±{:.3f})\n";
+            fmt::print( fmtSpec, "", indentation, col1, col1Width, col2.first  , col2.second );
         };
     }
 

@@ -21,19 +21,6 @@ public:
         return _sequence.length();
     }
 
-    std::string clusterNameUniRef() const override
-    {
-        using io::split;
-        using io::join;
-        auto tokens = split( getId());
-        return join( tokens.cbegin() + 1,
-                     std::find_if( tokens.cbegin() + 1, tokens.cend(),
-                                   []( const std::string &s ) {
-                                       return s.find( '=' ) != std::string::npos;
-                                   } ), " " );
-
-    }
-
     const std::string &getId() const
     {
         return _id;
