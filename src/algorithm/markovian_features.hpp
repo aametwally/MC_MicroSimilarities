@@ -259,7 +259,7 @@ private:
                              Order order )
     {
         assert( from != until );
-        KernelID id = _sequence2Index( from, until );
+        KernelID id = _sequence2ID( from, until );
         auto c = ReducedAlphabetIds.at( size_t( *(until)));
         _kernels[order][id].increment( c );
     }
@@ -272,16 +272,38 @@ private:
                 _incrementInstance( sequence.cbegin() + i, sequence.cbegin() + i + order, order );
     }
 
-    static size_t _sequence2Index( std::string::const_iterator from,
-                                   std::string::const_iterator until,
-                                   size_t init = 0 )
+    static constexpr inline KernelID _char2ID( char a )
     {
-        size_t code = init;
+        assert( a >= ReducedAlphabet.front());
+        return KernelID( a - ReducedAlphabet.front());
+    }
+
+    static constexpr inline char _id2Char( KernelID id )
+    {
+        assert( id <= 128 );
+        return char( id + ReducedAlphabet.front());
+    }
+
+    static KernelID _sequence2ID( const std::string &s )
+    {
+        return _sequence2ID( s.cbegin(), s.cend());
+    }
+
+    static KernelID _sequence2ID( std::string::const_iterator from,
+                                  std::string::const_iterator until,
+                                  KernelID init = 0 )
+    {
+        KernelID code = init;
         for (auto it = from; it != until; ++it)
-            code = code * StatesN + *it - ReducedAlphabet.front();
+            code = code * StatesN + _char2ID( *it );
         return code;
     }
 
+    static std::string _id2Sequence( KernelID id, const size_t size , std::string &&acc = "" )
+    {
+        if ( acc.size() == size ) return acc;
+        else return _id2Sequence( id / StatesN, size , _id2Char( id % StatesN ) + acc );
+    }
 
 private:
     const Order _maxOrder;
@@ -640,7 +662,7 @@ public:
 
             fmt::print( "[Clusters:{}][{}]\n",
                         groupedEntries.size(),
-                        io::join( labels , "|" ));
+                        io::join( labels, "|" ));
 
             return kFoldStratifiedSplit( std::move( groupedEntries ), k );
         }, PREPROCESSING );

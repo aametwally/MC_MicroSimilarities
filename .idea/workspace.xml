@@ -28,19 +28,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3f0d2b72-853a-4e53-a27b-7098811840a8" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/common.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/common.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/algorithm/markovian_features.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/markovian_features.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/markovian_features.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/markovian_features.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/FastaEntry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/FastaEntry.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/UniRefEntry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/LabeledEntry.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/features/similarities.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/similarities.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/report/crossvalidation.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/crossvalidation.hpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/cmake-build-release/" />
@@ -57,40 +45,14 @@
       <file leaf-file-name="markovian_features.hpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/algorithm/markovian_features.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="262">
-              <caret line="642" column="41" selection-start-line="642" selection-start-column="41" selection-end-line="642" selection-end-column="41" />
+            <state relative-caret-position="92">
+              <caret line="260" column="32" selection-start-line="260" selection-start-column="32" selection-end-line="260" selection-end-column="32" />
               <folding>
                 <element signature="e#63#77#0" expanded="true" />
                 <element signature="e#694#715#0" expanded="true" />
                 <element signature="e#4072#4086#0" expanded="true" />
                 <element signature="e#4184#4198#0" expanded="true" />
                 <element signature="e#8164#8221#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="similarities.hpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/features/similarities.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-3370">
-              <caret line="67" column="17" selection-start-line="67" selection-start-column="17" selection-end-line="67" selection-end-column="17" />
-              <folding>
-                <element signature="e#191#209#0" expanded="true" />
-                <element signature="e#557#577#0" expanded="true" />
-                <element signature="e#4485#4502#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="markovian_features.cpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/app/markovian_features.cpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="240">
-              <caret line="90" selection-start-line="90" selection-end-line="90" />
-              <folding>
-                <element signature="e#0#33#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -265,12 +227,12 @@
       <updated>1533015799261</updated>
       <workItem from="1533015804101" duration="13631000" />
       <workItem from="1533110262702" duration="125269000" />
-      <workItem from="1533571999777" duration="69905000" />
+      <workItem from="1533571999777" duration="73889000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="208805000" />
+    <option name="totallyTimeSpent" value="212789000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="51" y="25" width="1315" height="743" extended-state="6" />
@@ -628,8 +590,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/markovian_features.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="262">
-          <caret line="642" column="41" selection-start-line="642" selection-start-column="41" selection-end-line="642" selection-end-column="41" />
+        <state relative-caret-position="92">
+          <caret line="260" column="32" selection-start-line="260" selection-start-column="32" selection-end-line="260" selection-end-column="32" />
           <folding>
             <element signature="e#63#77#0" expanded="true" />
             <element signature="e#694#715#0" expanded="true" />
