@@ -7,11 +7,11 @@ set( COMMON_INCLUDE_DIRECTORIES
         ../data ../features )
 set( COMMON_INCLUDES
         ../algorithm/common.hpp
-        ../algorithm/markovian_features.hpp
+        ../algorithm/MarkovianKernels.hpp
         ../report/Timers.hpp
         ../data/SequenceEntry.hpp
         ../data/FastaEntry.hpp
-        ../data/LabeledEntry.hpp ../report/ConfusionMatrix.hpp ../features/similarities.hpp ../algorithm/aminoacids_grouping.hpp ../report/CrossValidationStatistics.hpp ../report/crossvalidation.hpp)
+        ../data/LabeledEntry.hpp ../report/ConfusionMatrix.hpp ../features/similarities.hpp ../algorithm/aminoacids_grouping.hpp ../report/CrossValidationStatistics.hpp ../report/crossvalidation.hpp ../algorithm/ConfiguredPipeline.hpp ../algorithm/Series.hpp)
 
 ### Generate the main executable
 add_executable( markovian_features ${COMMON_INCLUDES} markovian_features.cpp)
