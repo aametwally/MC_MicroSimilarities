@@ -83,28 +83,31 @@ public:
     {
         Order mxOrder = maxOrder( targets );
         std::map<std::string, double> accumulator;
-        static Kernel defaultKernel( double( 1 ) / StatesN );
 
         for (const auto &[id, kernel] : query.kernels( mxOrder ))
         {
+//            const auto p1 = query.probabilitisByOrder( mxOrder, id );
+            const auto p1 = double( kernel.hits()) / query.hits( mxOrder );
+
+            const auto s1 = query.kernelsByOrder( mxOrder, id );
+
             using PQ = typename MatchSet<Criteria>::Queue;
             PQ pq( targets.size());
-            double p1 = double( kernel.hits()) / query.hits();
-
             for (const auto &[clusterName, profile] : targets)
             {
-                auto markovFactor = [&]( Order order, KernelID id ) {
-                    return KernelsSeries::sum( query.kernelsByOrder( order, id ),
-                                               profile.kernelsByOrder( order, id ),
-                                               []( const Kernel &k1, const Kernel &k2 ) {
-                                                   return Criteria::measure( k1, k2 );
-                                               }, defaultKernel );
-                };
-
-                pq.emplace( clusterName, markovFactor( mxOrder, id ));
+                try
+                {
+                    auto s2 = profile.kernelsByOrder( mxOrder, id );
+                    auto val = KernelsSeries::sum( s1, s2, []( const Kernel &t1, const Kernel &t2 ) {
+                        return Criteria::measure( t1, t2 );
+                    } );
+                    pq.emplace( clusterName, val );
+                }
+                catch (const std::out_of_range &)
+                {}
             }
             if ( !pq.empty())
-                accumulator[pq.top().getLabel()] += query.probabilitisByOrder( mxOrder, id ).sum();
+                accumulator[pq.top().getLabel()] += pq.top().getValue() * p1;
         }
         std::pair<std::string, double> maxVotes = *accumulator.begin();
         VotingPQ vPQ( targets.size());
@@ -249,17 +252,17 @@ public:
     {
         const Order mxOrder = maxOrder( profiles );
 
-        std::map<std::string, HeteroKernelsFeatures> histogramWeights;
+        std::map<std::string, HeteroKernelsFeatures> weights;
         std::unordered_map<Order, std::set<KernelID >> scannedIDs;
 
         for (const auto &[cluster, profile] : profiles)
         {
-            auto &weights = histogramWeights[cluster];
+            auto &w = weights[cluster];
             for (auto order = MinOrder; order <= mxOrder; ++order)
             {
                 for (const auto &[id, histogram] : profile.kernels( order ))
                 {
-                    weights[order][id] = histogram.hits();
+                    w[order][id] = histogram.hits();
                     scannedIDs[order].insert( id );
                 }
             }
@@ -269,36 +272,40 @@ public:
             for (auto id : scannedIDs.at( order ))
             {
                 double sum = 0;
-                for (auto &[cluster, weights] : histogramWeights)
-                    sum += weights[order][id];
+                for (auto &[cluster, w] : weights)
+                    sum += w[order][id];
 
-                for (auto &[cluster, weights] : histogramWeights)
-                    weights.at( order ).at( id ) /= sum;
+                for (auto &[cluster, w] : weights)
+                    w.at( order ).at( id ) /= sum;
             }
 
-        return histogramWeights;
+        return weights;
     }
 
-    static std::unordered_map<KernelID, double>
-    histogramExclusiveness( const MarkovianProfiles &profiles, const std::map<std::string, double> &clustersWeights )
+    static HeteroKernelsFeatures
+    histogramRelevance( const MarkovianProfiles &profiles, const std::map<std::string, double> &clustersWeights )
     {
         const Order mxOrder = maxOrder( profiles );
-
         const size_t k = profiles.size();
-        std::unordered_map<KernelID, std::vector<double> > kernelWeights;
-        std::unordered_map<KernelID, double> significance;
+        std::unordered_map<Order, std::unordered_map<KernelID, std::vector<double >>> kernelWeights;
+        HeteroKernelsFeatures relevance;
 
         for (const auto &[cluster, profile] : profiles)
-            for (const auto &[id, kernel] : profile.kernels())
-                kernelWeights[id].push_back( kernel.hits() / clustersWeights.at( cluster ));
-
-        for (auto &[id, kernelW] : kernelWeights)
         {
-            double total = std::accumulate( kernelW.cbegin(), kernelW.cend(), double( 0 ));
-            for (auto &p: kernelW) p /= total;
-            significance[id] = informationGain_UNIFORM( kernelW.cbegin(), kernelW.cend(), k );
+            double clusterWeight = clustersWeights.at( cluster );
+            for (Order order = MinOrder; order <= mxOrder; ++order)
+                for (const auto &[id, kernel] : profile.kernels( order ))
+                    kernelWeights[order][id].push_back( kernel.hits() / clusterWeight );
         }
-        return significance;
+
+        for (Order order = MinOrder; order <= mxOrder; ++order)
+            for (auto &[id, kernelW] : kernelWeights.at( order ))
+            {
+                double total = std::accumulate( kernelW.cbegin(), kernelW.cend(), double( 0 ));
+                for (auto &p: kernelW) p /= total;
+                relevance[order][id] = informationGain_UNIFORM( kernelW.cbegin(), kernelW.cend(), k );
+            }
+        return relevance;
     }
 
     static HeteroKernelsFeatures
@@ -333,42 +340,128 @@ public:
         return radius;
     }
 
+    static std::unordered_map<Order, std::set<KernelID >>
+    featureSpace( const MarkovianProfiles &profiles )
+    {
+        const Order mxOrder = maxOrder( profiles );
+        std::unordered_map<Order, std::set<KernelID >> allFeatureSpace;
 
-//    static std::vector<LeaderBoard>
-//    classify( const std::vector<FastaEntry> &queries,
-//              const MarkovianProfiles &targets,
-//              const std::unordered_map<Order, double> &averageSimilarities )
-//    {
-//        const int order = targets.begin()->second.order();
-//        std::vector<LeaderBoard> classifications;
-//        for (const auto &q : queries)
-//        {
-//            MarkovianProfile p( order );
-//            p.train( {q.getSequence()} );
-//            classifications.emplace_back( "", findSimilarity( p, targets , averageSimilarities ));
-//        }
-//        return classifications;
-//    }
+        for (const auto &[cluster, profile] : profiles)
+            for (auto order = MinOrder; order <= mxOrder; ++order)
+                for (const auto &[id, histogram] : profile.kernels( order ))
+                    allFeatureSpace[order].insert( id );
+        return allFeatureSpace;
+    }
+
+    static std::unordered_map<Order, std::set<KernelID >>
+    jointFeatures( const MarkovianProfiles &profiles,
+                   const std::unordered_map<Order, std::set<KernelID >> &allFeatures )
+    {
+        const Order mxOrder = maxOrder( profiles );
+        std::unordered_map<Order, std::set<KernelID >> joint;
+
+        for (auto order = MinOrder; order <= mxOrder; ++order)
+            for (const auto id : allFeatures.at( order ))
+            {
+                bool isJoint = std::all_of( std::cbegin( profiles ), std::cend( profiles ),
+                                            [order, id]( const auto &p ) {
+                                                const auto &isoKernels = p.second.kernels( order );
+                                                return isoKernels.find( id ) != isoKernels.cend();
+                                            } );
+                if ( isJoint )
+                    joint[order].insert( id );
+
+            }
+
+        return joint;
+    }
+
+    static size_t size( const std::unordered_map<Order, std::set<KernelID >> &features )
+    {
+        return std::accumulate( std::cbegin( features ), std::cend( features ), size_t( 0 ),
+                                []( size_t s, const auto &p ) {
+                                    return s + p.second.size();
+                                } );
+    }
+
+    static MarkovianProfiles
+    filterJointKernels( MarkovianProfiles &&profiles )
+    {
+        const Order mxOrder = maxOrder( profiles );
+        auto allFeatures = featureSpace( profiles );
+        auto commonFeatures = jointFeatures( profiles, allFeatures );
+
+//        fmt::print("Join/All:{}\n", double( size(commonFeatures)) / size(allFeatures));
+
+        for (auto &[cluster, profile] : profiles)
+            profile = MarkovianProfile::filter( std::move( profile ), commonFeatures );
+
+        return profiles;
+    }
+
+    static MarkovianProfiles
+    featureSelection( MarkovianProfiles &&profiles )
+    {
+        const Order mxOrder = maxOrder( profiles );
+//        profiles = filterJointKernels( std::move( profiles ));
+        auto weights = clustersWeight( profiles );
+        auto relevance = histogramRelevance( profiles, weights );
+        auto radius = histogramRelevance( profiles, weights );
+        auto allFeatures = featureSpace( profiles );
+        std::vector<std::pair<double, std::pair<Order, KernelID >>> scores;
+
+        for (auto &[order, ids] : allFeatures)
+        {
+            for (auto id : ids)
+            {
+                double score = radius.at( order ).at( id );
+                scores.emplace_back( score, std::make_pair( order, id ));
+            }
+        }
+
+        using ScoredFeature = std::pair<double, std::pair<Order, KernelID >>;
+        using CompFn = std::function<bool( const ScoredFeature &, const ScoredFeature & )>;
+        CompFn cmp = []( const ScoredFeature &s1, const ScoredFeature &s2 ) {
+            return s1.first > s2.first;
+        };
+        const size_t selectedFeatures = size_t( 0.7 * size( allFeatures ));
+
+        PriorityQueueFixed<ScoredFeature,CompFn> topFeatures( cmp, selectedFeatures );
+
+        for (const auto &s : scores)
+            topFeatures.insert( s );
+
+        std::unordered_map<Order, std::set<KernelID >> newFeatures;
+        for (const auto &f : topFeatures)
+            newFeatures[f.second.first].insert( f.second.second );
+
+        for (auto &[cluster, profile] : profiles)
+            profile = MarkovianProfile::filter( std::move( profile ), newFeatures );
+
+        return profiles;
+    }
 
     static std::vector<LeaderBoard>
     classify_VALIDATION(
             const std::vector<std::string> &queries,
             const std::vector<std::string> &trueLabels,
-            const MarkovianProfiles &targets )
+            MarkovianProfiles &&targets )
     {
         assert( queries.size() == trueLabels.size());
-        const int order = targets.begin()->second.maxOrder();
-        std::vector<LeaderBoard> classifications;
-        size_t truePositive = 0;
-        size_t tested = 0;
-//        auto clustersWeights = clustersWeight( targets );
-//        auto histogramsExclusiveness = histogramExclusiveness( targets, clustersWeights );
+        const Order mxOrder = maxOrder( targets );
+
+
+        targets = filterJointKernels( std::move( targets ));
+
         auto histogramsRadius = informationRadius( targets );
         auto meanHistogram = meanHistograms( targets );
         auto similaritiesAverage = averageSimilarities( targets, meanHistogram );
+
+
+        std::vector<LeaderBoard> classifications;
         for (auto i = 0; i < queries.size(); ++i)
         {
-            MarkovianProfile p( order );
+            MarkovianProfile p( mxOrder );
             p.train( {queries.at( i )} );
             classifications.emplace_back( trueLabels.at( i ),
                                           findSimilarity( p, targets,
@@ -424,7 +517,7 @@ public:
             auto trainingClusters = joinFoldsExceptK( folds, i );
             auto[test, tLabels] = extractTest( folds.at( i ));
             auto trainedProfiles = markovianTraining( trainingClusters, order );
-            auto classificationResults = classify_VALIDATION( test, tLabels, trainedProfiles );
+            auto classificationResults = classify_VALIDATION( test, tLabels, std::move( trainedProfiles ));
 
             for (const auto &classification : classificationResults)
             {

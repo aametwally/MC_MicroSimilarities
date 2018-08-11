@@ -36,11 +36,11 @@ public:
         } else return T();
     }
 
-    inline T dot( Derived1 &&other ) const
+    inline T dot( Derived1 other ) const
     {
         assert( length() == other.length());
         auto &derived = static_cast<const Derived1 &>(*this);
-        T sum = T(0);
+        T sum = T( 0 );
         if ( !isEmpty())
         {
             Derived1 copy = derived;
@@ -54,11 +54,11 @@ public:
     }
 
     template<typename OtherSeries>
-    inline T dot( OtherSeries &&other ) const
+    inline T dot( OtherSeries other ) const
     {
         assert( length() == other.length());
         auto &derived = static_cast<const Derived1 &>(*this);
-        T sum = T(0);
+        T sum = T( 0 );
         if ( !isEmpty())
         {
             Derived1 copy = derived;
@@ -72,7 +72,7 @@ public:
     }
 
     template<typename BinaryOp>
-    static double sum( Derived1 &&s1, Derived1 &&s2, BinaryOp op,
+    static double sum( Derived1 s1, Derived1 s2, BinaryOp op,
                        std::optional<T> &&defaultTerm = std::nullopt )
     {
         assert( s1.length() == s2.length());
@@ -95,10 +95,36 @@ public:
         return sum;
     }
 
+    template<typename BinaryOp>
+    static std::vector<double>
+    apply( Derived1 s1, Derived1 s2, BinaryOp op,
+           std::optional<T> defaultTerm = std::nullopt )
+    {
+        assert( s1.length() == s2.length());
+        std::vector<double> result;
+        if ( !s1.isEmpty())
+        {
+            while (!s1.isEmpty() && !s2.isEmpty())
+            {
+                if ( s1.currentTerm())
+                {
+                    if ( s2.currentTerm())
+                        result.push_back( op( s1.currentTerm().value(), s2.currentTerm().value()));
+                    else if ( defaultTerm )
+                        result.push_back(
+                                op( s1.currentTerm().value(), s2.currentTerm().value_or( defaultTerm.value())));
+                }
+                s1.popTerm();
+                s2.popTerm();
+            }
+        }
+        return result;
+    }
+
     template<typename WeightsSeries, typename BinaryOp>
-    static double weightedSum( Derived1 &&s1, Derived1 &&s2,
-                               WeightsSeries &&w, BinaryOp op,
-                               std::optional<T> &&defaultTerm = std::nullopt )
+    static double weightedSum( Derived1 s1, Derived1 s2,
+                               WeightsSeries w, BinaryOp op,
+                               std::optional<T> defaultTerm = std::nullopt )
     {
         assert( s1.length() == s2.length() && s2.length() == w.length());
         double sum = 0;

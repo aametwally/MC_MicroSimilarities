@@ -8,11 +8,30 @@
 #include "common.hpp"
 
 
+static double combineEuclidean( std::vector<double> &&c )
+{
+    double squares = std::accumulate( std::begin( c ), std::end( c ),
+                                      double( 0 ), []( double acc, double val ) {
+                return acc + val * val;
+            } );
+    return std::sqrt( squares );
+}
+
+
+static double combineManhattan( std::vector<double> &&c )
+{
+    return std::accumulate( std::begin( c ), std::end( c ),
+                            double( 0 ));
+}
+
 struct Cost
 {
+
 };
+
 struct Score
 {
+
 };
 
 
@@ -32,6 +51,12 @@ struct Criteria
     {
         return Derived::apply( std::cbegin( kernel1 ), std::cend( kernel1 ),
                                std::cbegin( kernel2 ), std::cend( kernel2 ));
+    }
+
+    template<typename Container>
+    static double combine( Container &&c )
+    {
+        return Derived::combine( c );
     }
 
 private:
@@ -55,6 +80,7 @@ struct ChiSquared : public Criteria<ChiSquared>, Cost
         return sum;
     }
 
+    static constexpr auto combine = combineEuclidean;
 private:
     ChiSquared() = default;
 };
@@ -82,6 +108,8 @@ struct Cosine : public Criteria<Cosine>, Score
 
         return sum / (norm2( first1, last1 ) * norm2( first2, last2 ));
     }
+
+    static constexpr auto combine = combineManhattan;
 
 private:
     Cosine() = default;
@@ -117,6 +145,7 @@ struct KullbackLeiblerDivergence : public Criteria<KullbackLeiblerDivergence>, C
         return sum;
     }
 
+    static constexpr auto combine = combineEuclidean;
 private:
     KullbackLeiblerDivergence() = default;
 };
@@ -158,16 +187,25 @@ struct Measurement
         return _label;
     }
 
+    double getValue() const
+    {
+        return _value;
+    }
 private:
     const std::string _label;
     const double _value;
 };
 
 
-template<typename T, typename Comp>
+template<typename T, typename Comp >
 struct PriorityQueueFixed
 {
     using Queue = std::set<T, Comp>;
+    using ConstantIterator = typename Queue::const_iterator;
+
+    explicit PriorityQueueFixed( const Comp &cmp, size_t kTop )
+            : _kTop( kTop ), _q( cmp )
+    {}
 
     explicit PriorityQueueFixed( size_t kTop )
             : _kTop( kTop )
@@ -176,6 +214,26 @@ struct PriorityQueueFixed
     size_t size() const
     {
         return _q.size();
+    }
+
+    inline ConstantIterator begin() const
+    {
+        return _q.begin();
+    }
+
+    inline ConstantIterator end() const
+    {
+        return _q.end();
+    }
+
+    inline ConstantIterator cbegin() const
+    {
+        return _q.cbegin();
+    }
+
+    inline ConstantIterator cend() const
+    {
+        return _q.cend();
     }
 
     const T &top() const
@@ -196,6 +254,14 @@ struct PriorityQueueFixed
             _q.erase( _q.begin());
         return res;
     };
+
+    auto insert( const T &val )
+    {
+        auto res = _q.insert( val );
+        if ( _q.size() > _kTop )
+            _q.erase( _q.begin());
+        return res;
+    }
 
     auto insert( T &&val )
     {

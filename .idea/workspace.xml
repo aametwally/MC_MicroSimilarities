@@ -28,14 +28,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3f0d2b72-853a-4e53-a27b-7098811840a8" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/algorithm/MarkovianKernels.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/algorithm/Series.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/common.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/common.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/markovian_features.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/MarkovianKernels.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/MarkovianKernels.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/MarkovianKernels.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/Series.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/Series.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/similarities.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/similarities.hpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/cmake-build-release/" />
@@ -52,8 +48,8 @@
       <file leaf-file-name="MarkovianKernels.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/algorithm/MarkovianKernels.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2576">
-              <caret line="28" column="7" selection-start-line="28" selection-start-column="7" selection-end-line="28" selection-end-column="7" />
+            <state relative-caret-position="-1486">
+              <caret line="221" column="37" lean-forward="true" selection-start-line="221" selection-start-column="37" selection-end-line="221" selection-end-column="37" />
               <folding>
                 <element signature="e#62#83#0" expanded="true" />
                 <element signature="e#6458#6498#0" expanded="true" />
@@ -62,16 +58,17 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Series.hpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Series.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/algorithm/Series.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="323">
-              <caret line="136" column="30" lean-forward="true" selection-start-line="136" selection-start-column="30" selection-end-line="136" selection-end-column="30" />
+            <state relative-caret-position="1728">
+              <caret line="126" column="48" selection-start-line="126" selection-start-column="48" selection-end-line="126" selection-end-column="48" />
               <folding>
                 <element signature="e#116#135#0" expanded="true" />
                 <element signature="e#190#231#0" expanded="true" />
                 <element signature="e#1232#1256#0" expanded="true" />
                 <element signature="e#1887#1908#0" expanded="true" />
+                <element signature="e#2622#2641#0" expanded="true" />
                 <element signature="e#2405#2450#0" expanded="true" />
               </folding>
             </state>
@@ -81,8 +78,8 @@
       <file leaf-file-name="markovian_features.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/app/markovian_features.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="16">
-              <caret line="1" selection-start-line="1" selection-end-line="1" />
+            <state relative-caret-position="1340">
+              <caret line="88" selection-start-line="88" selection-end-line="88" />
               <folding>
                 <element signature="e#1#34#0" expanded="true" />
               </folding>
@@ -90,14 +87,46 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ConfiguredPipeline.hpp" pinned="false" current-in-tab="false">
+      <file leaf-file-name="similarities.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/features/similarities.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="132">
+              <caret line="189" column="4" selection-start-line="189" selection-start-column="4" selection-end-line="189" selection-end-column="4" />
+              <folding>
+                <element signature="e#191#209#0" expanded="true" />
+                <element signature="e#1351#1371#0" expanded="true" />
+                <element signature="e#4640#4668#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ConfiguredPipeline.hpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="58">
-              <caret line="93" column="62" selection-start-line="93" selection-start-column="62" selection-end-line="93" selection-end-column="62" />
+            <state relative-caret-position="32">
+              <caret line="89" column="51" selection-start-line="89" selection-start-column="51" selection-end-line="89" selection-end-column="51" />
               <folding>
                 <element signature="e#140#162#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="hashtable_policy.h" pinned="false" current-in-tab="false">
+        <entry file="file:///usr/include/c++/7/bits/hashtable_policy.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="106">
+              <caret line="792" selection-start-line="792" selection-end-line="792" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="unordered_map.h" pinned="false" current-in-tab="false">
+        <entry file="file:///usr/include/c++/7/bits/unordered_map.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="108">
+              <caret line="996" selection-start-line="996" selection-end-line="996" />
             </state>
           </provider>
         </entry>
@@ -160,10 +189,10 @@
         <option value="$PROJECT_DIR$/src/app/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/src/app/markovian_features.cpp" />
         <option value="$PROJECT_DIR$/src/algorithm/common.hpp" />
-        <option value="$PROJECT_DIR$/src/features/similarities.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/MarkovianKernels.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp" />
         <option value="$PROJECT_DIR$/src/algorithm/Series.hpp" />
+        <option value="$PROJECT_DIR$/src/features/similarities.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/MarkovianKernels.hpp" />
       </list>
     </option>
   </component>
@@ -288,12 +317,12 @@
       <updated>1533015799261</updated>
       <workItem from="1533015804101" duration="13631000" />
       <workItem from="1533110262702" duration="125269000" />
-      <workItem from="1533571999777" duration="111692000" />
+      <workItem from="1533571999777" duration="133708000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="250592000" />
+    <option name="totallyTimeSpent" value="272608000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="51" y="25" width="1315" height="743" extended-state="6" />
@@ -301,16 +330,16 @@
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2004644" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Messages" order="7" weight="0.38688526" />
+      <window_info active="true" anchor="bottom" id="Messages" order="7" visible="true" weight="0.26065573" />
       <window_info anchor="bottom" id="CMake" order="7" weight="0.31753555" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" weight="0.328594" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32786885" />
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.3295082" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.32786885" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.32786885" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="7" weight="0.3295082" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.38688526" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.38196722" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -347,7 +376,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="7" />
+      <option name="time" value="9" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
@@ -458,21 +487,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/include/c++/7/bits/stl_map.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="63">
-          <caret line="541" selection-start-line="541" selection-end-line="541" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/pipeline_configuration.hpp" />
-    <entry file="file:///usr/include/c++/7/bits/stl_tree.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="380" selection-start-line="380" selection-end-line="380" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///usr/include/c++/7/bits/stl_iterator.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="115">
@@ -583,20 +598,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/include/c++/7/bits/unordered_map.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="108">
-          <caret line="996" selection-start-line="996" selection-end-line="996" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/hashtable_policy.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="108">
-          <caret line="792" selection-start-line="792" selection-end-line="792" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/app/MarkovianKernels.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="240">
@@ -611,16 +612,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="96">
           <caret line="6" column="29" selection-start-line="6" selection-start-column="29" selection-end-line="6" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/features/similarities.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="336">
-          <caret line="21" column="73" selection-start-line="21" selection-start-column="73" selection-end-line="21" selection-end-column="73" />
-          <folding>
-            <element signature="e#191#209#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -671,10 +662,75 @@
         </state>
       </provider>
     </entry>
+    <entry file="file:///usr/include/c++/7/bits/stl_map.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="63">
+          <caret line="492" selection-start-line="492" selection-end-line="492" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/c++/7/bits/stl_tree.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="106">
+          <caret line="633" selection-start-line="633" selection-end-line="633" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/Series.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1728">
+          <caret line="126" column="48" selection-start-line="126" selection-start-column="48" selection-end-line="126" selection-end-column="48" />
+          <folding>
+            <element signature="e#116#135#0" expanded="true" />
+            <element signature="e#190#231#0" expanded="true" />
+            <element signature="e#1232#1256#0" expanded="true" />
+            <element signature="e#1887#1908#0" expanded="true" />
+            <element signature="e#2622#2641#0" expanded="true" />
+            <element signature="e#2405#2450#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/c++/7/bits/hashtable_policy.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="106">
+          <caret line="792" selection-start-line="792" selection-end-line="792" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/c++/7/bits/unordered_map.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="108">
+          <caret line="996" selection-start-line="996" selection-end-line="996" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/features/similarities.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="132">
+          <caret line="189" column="4" selection-start-line="189" selection-start-column="4" selection-end-line="189" selection-end-column="4" />
+          <folding>
+            <element signature="e#191#209#0" expanded="true" />
+            <element signature="e#1351#1371#0" expanded="true" />
+            <element signature="e#4640#4668#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/app/markovian_features.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1340">
+          <caret line="88" selection-start-line="88" selection-end-line="88" />
+          <folding>
+            <element signature="e#1#34#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/MarkovianKernels.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2576">
-          <caret line="28" column="7" selection-start-line="28" selection-start-column="7" selection-end-line="28" selection-end-column="7" />
+        <state relative-caret-position="-1486">
+          <caret line="221" column="37" lean-forward="true" selection-start-line="221" selection-start-column="37" selection-end-line="221" selection-end-column="37" />
           <folding>
             <element signature="e#62#83#0" expanded="true" />
             <element signature="e#6458#6498#0" expanded="true" />
@@ -682,36 +738,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/app/markovian_features.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="16">
-          <caret line="1" selection-start-line="1" selection-end-line="1" />
-          <folding>
-            <element signature="e#1#34#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="58">
-          <caret line="93" column="62" selection-start-line="93" selection-start-column="62" selection-end-line="93" selection-end-column="62" />
+        <state relative-caret-position="32">
+          <caret line="89" column="51" selection-start-line="89" selection-start-column="51" selection-end-line="89" selection-end-column="51" />
           <folding>
             <element signature="e#140#162#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/Series.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="136" column="30" lean-forward="true" selection-start-line="136" selection-start-column="30" selection-end-line="136" selection-end-column="30" />
-          <folding>
-            <element signature="e#116#135#0" expanded="true" />
-            <element signature="e#190#231#0" expanded="true" />
-            <element signature="e#1232#1256#0" expanded="true" />
-            <element signature="e#1887#1908#0" expanded="true" />
-            <element signature="e#2405#2450#0" expanded="true" />
           </folding>
         </state>
       </provider>

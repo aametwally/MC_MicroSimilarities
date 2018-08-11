@@ -178,30 +178,104 @@ public:
     using HeteroKernelsFeatures = HeteroKernelsAssociativeCollection<double>;
 public:
     explicit MarkovianKernels( Order order ) :
-            _maxOrder( order ),
-            _hits( 0 )
+            _maxOrder( order )
     {
         assert( order >= MinOrder );
     }
 
-    static IsoKernels
-    filterPercentile( const std::unordered_map<size_t, Kernel> &filteredKernel,
-                      float percentile )
+    MarkovianKernels() = delete;
+
+    MarkovianKernels( const MarkovianKernels &mE ) = default;
+
+    MarkovianKernels( MarkovianKernels &&mE ) noexcept
+            : _maxOrder( mE.maxOrder()), _kernels( std::move( mE._kernels ))
     {
-        std::vector<std::pair<KernelID, Kernel >> v;
-        for (const auto &p : filteredKernel) v.push_back( p );
 
-        auto cmp = []( const std::pair<size_t, Kernel> &p1, const std::pair<size_t, Kernel> &p2 ) {
-            return p1.second.hits() > p2.second.hits();
-        };
+    }
 
-        size_t percentileTailIdx = filteredKernel.size() * percentile;
-        std::nth_element( v.begin(), v.begin() + percentileTailIdx,
-                          v.end(), cmp );
+    MarkovianKernels &operator=( const MarkovianKernels &mE )
+    {
+        assert( _maxOrder == mE._maxOrder );
+        if ( _maxOrder != mE._maxOrder )
+            throw std::runtime_error( "Orders mismatch!" );
+        _kernels = mE._kernels;
 
-        IsoKernels filteredKernel2( v.begin(), v.begin() + percentileTailIdx );
+        return *this;
+    }
 
-        return filteredKernel2;
+    MarkovianKernels &operator=( MarkovianKernels &&mE )
+    {
+        assert( _maxOrder == mE._maxOrder );
+        if ( _maxOrder != mE._maxOrder )
+            throw std::runtime_error( "Orders mismatch!" );
+        _kernels = std::move( mE._kernels );
+
+        return *this;
+    }
+
+
+    static std::vector<double> extractFlatFeatureVector(
+            const MarkovianKernels &profile,
+            const std::unordered_map<Order, std::set<KernelID >> &select,
+            double missingVals = 0 )
+    {
+        std::vector<double> features;
+
+        features.reserve(
+                std::accumulate( std::cbegin( select ) , std::cend( select ) , size_t(0) ,
+                                          [&]( size_t acc , const auto &pair ){
+                    return acc + pair.second.size() * StatesN;
+                }));
+
+        for (auto &[order, ids] : select)
+        {
+            for (auto id : ids)
+            {
+                try
+                {
+                    auto &subVector = profile.kernels( order ).at( id );
+                    features.insert( std::end( features ) , std::cbegin( subVector ) , std::cend( subVector ));
+                } catch (const std::out_of_range &)
+                {
+                    features.insert( std::end( features ) , StatesN , missingVals );
+                }
+            }
+        }
+        return features;
+    }
+
+    static MarkovianKernels filter( MarkovianKernels &&other,
+                                    const std::unordered_map<Order, std::set<KernelID >> &select )
+    {
+
+        MarkovianKernels filteredProfiles( other._maxOrder );
+        HeteroKernels selectedKernels;
+
+        for (auto &[order, ids] : select)
+        {
+            for (auto id : ids)
+            {
+                try
+                {
+                    auto &toMove = other.kernels( order ).at( id );
+                    selectedKernels[order][id] = std::move( toMove );
+                } catch (const std::out_of_range &)
+                {}
+            }
+        }
+        filteredProfiles._kernels = std::move( selectedKernels );
+
+//
+//        auto cmp = []( const std::pair<size_t, Kernel> &p1, const std::pair<size_t, Kernel> &p2 ) {
+//            return p1.second.hits() > p2.second.hits();
+//        };
+//        size_t percentileTailIdx = filteredKernel.size() * percentile;
+//        std::nth_element( v.begin(), v.begin() + percentileTailIdx,
+//                          v.end(), cmp );
+
+//        IsoKernels filteredKernel2( v.begin(), v.begin() + percentileTailIdx );
+
+        return filteredProfiles;
     }
 
     void train( const std::vector<std::string> &sequences )
@@ -216,7 +290,15 @@ public:
 
     size_t hits() const
     {
-        return _hits;
+        return hits( maxOrder());
+    }
+
+    size_t hits( Order order ) const
+    {
+        return std::accumulate( std::cbegin( _kernels.at( order )), std::cend( _kernels.at( order )),
+                                size_t( 0 ), []( size_t acc, const auto &p ) {
+                    return acc + p.second.hits();
+                } );
     }
 
     void toFiles( const std::string &dir,
@@ -246,7 +328,7 @@ public:
 
 
     template<typename Derived, typename ReturnType>
-    class ObjectSeriesByOrder : public Series<ReturnType, Derived, ObjectSeriesByOrder<Derived,ReturnType>>
+    class ObjectSeriesByOrder : public Series<ReturnType, Derived, ObjectSeriesByOrder<Derived, ReturnType>>
     {
     public:
         ObjectSeriesByOrder( const MarkovianKernels &kernels,
@@ -374,7 +456,6 @@ private:
 
     void _countInstance( const std::string &sequence )
     {
-        ++_hits;
         for (auto order = MinOrder; order <= _maxOrder; ++order)
             for (auto i = 0; i < sequence.size() - order; ++i)
                 _incrementInstance( sequence.cbegin() + i, sequence.cbegin() + i + order, order );
@@ -417,7 +498,6 @@ private:
 private:
     const Order _maxOrder;
     HeteroKernels _kernels;
-    size_t _hits;
 };
 
 
