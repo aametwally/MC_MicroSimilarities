@@ -17,7 +17,7 @@ public:
     inline void popTerm()
     {
         auto &derived = static_cast<Derived1 &>(*this);
-        return derived.next();
+        return derived.popTerm();
     }
 
     inline T sum() const
@@ -36,23 +36,6 @@ public:
         } else return T();
     }
 
-    inline T dot( Derived1 other ) const
-    {
-        assert( length() == other.length());
-        auto &derived = static_cast<const Derived1 &>(*this);
-        T sum = T( 0 );
-        if ( !isEmpty())
-        {
-            Derived1 copy = derived;
-            while (!copy.isEmpty())
-                sum += copy.currentTerm().value_or( 0 ) * other.currentTerm().value_or( 0 );
-
-            copy.popTerm();
-            other.popTerm();
-        }
-        return sum;
-    }
-
     template<typename OtherSeries>
     inline T dot( OtherSeries other ) const
     {
@@ -63,10 +46,11 @@ public:
         {
             Derived1 copy = derived;
             while (!copy.isEmpty())
+            {
                 sum += copy.currentTerm().value_or( 0 ) * other.currentTerm().value_or( 0 );
-
-            copy.popTerm();
-            other.popTerm();
+                copy.popTerm();
+                other.popTerm();
+            }
         }
         return sum;
     }
@@ -119,6 +103,24 @@ public:
             }
         }
         return result;
+    }
+
+    template<typename WeightsSeries>
+    static T weightedDot( Derived1 s1, Derived1 s2, WeightsSeries w  )
+    {
+        assert( s1.length() == s2.length() && s2.length() == w.length());
+        T sum = T(0);
+
+        while (!s1.isEmpty() && !s2.isEmpty() && !w.isEmpty())
+        {
+            sum += (s1.currentTerm().value_or( 0 ) *
+                    s2.currentTerm().value_or( 0 ) *
+                    w.currentTerm().value_or( 0 ));
+            s1.popTerm();
+            s2.popTerm();
+            w.popTerm();
+        }
+        return sum;
     }
 
     template<typename WeightsSeries, typename BinaryOp>
@@ -187,7 +189,16 @@ public:
         return derived.length();
     }
 
-    inline std::optional<std::reference_wrapper<const T >> currentTerm() const
+    inline std::optional<T> firstTerm() const
+    {
+        auto &derived = static_cast<const Derived1 &>(*this);
+        Series copy = derived;
+        while (!copy.isEmpty() && !copy.currentTerm())
+            copy.popTerm();
+        return copy.currentTerm();
+    }
+
+    inline std::optional<T> currentTerm() const
     {
         auto &derived = static_cast<const Derived1 &>(*this);
         return derived.currentTerm();

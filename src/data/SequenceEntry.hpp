@@ -19,23 +19,23 @@ public:
     virtual const std::string &getSequence() const = 0;
 
     static std::map<std::string, std::vector<std::string> >
-    groupSequencesByLabels( const std::vector<T> &entries )
+    groupSequencesByLabels( std::vector<T> &&entries )
     {
         std::map<std::string, std::vector<std::string >> clusters;
 
-        for (const auto &entry : entries)
+        for (auto &entry : entries)
             clusters[entry.getLabel()].emplace_back( entry.getSequence());
 
         return clusters;
     }
 
     static std::map<std::string, std::vector<T> >
-    groupEntriesByLabels( const std::vector<T> &entries )
+    groupEntriesByLabels( std::vector<T> &&entries )
     {
         std::map<std::string, std::vector<T >> clusters;
 
-        for (const auto &entry : entries)
-            clusters[entry.getLabel()].emplace_back( entry );
+        for (auto &entry : entries)
+            clusters[entry.getLabel()].emplace_back( std::move( entry ));
 
         return clusters;
     }
@@ -121,7 +121,7 @@ public:
         for (const T &ui : unirefEntries)
         {
             auto reduced = ui;
-            reduced.setSequence( reduceAlphabets< AAGrouping >( ui.getSequence()));
+            reduced.setSequence( reduceAlphabets<AAGrouping>( ui.getSequence()));
             reducedEntries.emplace_back( reduced );
         }
         return reducedEntries;

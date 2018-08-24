@@ -173,6 +173,12 @@ public:
 
     }
 
+    template<size_t indentation = 0>
+    void printReport( size_t k ) const
+    {
+        _statistics.at( k ). template printReport<indentation>();
+    }
+
 private:
     template<size_t indentation, size_t col1Width = 50>
     static auto _printRowFunction()

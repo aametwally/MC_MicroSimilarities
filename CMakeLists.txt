@@ -50,8 +50,8 @@ set( EXPECTED_TEST_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/output)
 
 ### Add external libraries
 add_subdirectory($ENV{FMT_SOURCE} fmt_build )
-#add_subdirectory($ENV{DLIB_SOURCE} dlib_build)
+add_subdirectory($ENV{DLIB_SOURCE} dlib_build )
 
-### Add all the files in the src directory to the CMake tree  
+### Add all the files in the src directory to the CMake tree
 add_subdirectory( src )
 

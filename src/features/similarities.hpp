@@ -65,19 +65,22 @@ private:
     friend Derived;
 };
 
-struct ChiSquared : public Criteria<ChiSquared>, Cost
+struct ChiSquared : public Criteria<ChiSquared>, Score
 {
+    static constexpr const char *label = "chi";
+
     template<typename Iterator>
     static double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
     {
+        auto n = std::distance( first1, last1 );
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
         double sum = 0;
         for (auto it1 = first1, it2 = first2; it1 != last1; ++it1, ++it2)
         {
             auto m = *it1 - *it2;
-            sum += m * m / *it1;
+            sum += m * m / (*it1 + 1.0 / n);
         }
-        return sum;
+        return std::exp( -sum );
     }
 
     static constexpr auto combine = combineEuclidean;
@@ -87,6 +90,8 @@ private:
 
 struct Cosine : public Criteria<Cosine>, Score
 {
+    static constexpr const char *label = "cos";
+
     template<typename Iterator>
     static inline double norm2( Iterator first, Iterator last )
     {
@@ -115,15 +120,60 @@ private:
     Cosine() = default;
 };
 
-struct KullbackLeiblerDivergence : public Criteria<KullbackLeiblerDivergence>, Cost
+struct Intersection : public Criteria<Intersection>, Score
 {
+    static constexpr const char *label = "intersection";
 
-    static KullbackLeiblerDivergence &instance()
+    template<typename Iterator>
+    static inline double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
     {
-        static KullbackLeiblerDivergence inst;
-        return inst;
+        assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
+        auto n = std::distance( first1, last1 );
+
+        double sum = 0;
+        for (auto it1 = first1, it2 = first2; it1 != last1; ++it1, ++it2)
+            sum += std::min( *it1, *it2 );
+        return sum / n;
     }
 
+    static constexpr auto combine = combineManhattan;
+
+private:
+    Intersection() = default;
+};
+
+struct Gaussian : public Criteria<Gaussian>, Score
+{
+    static constexpr const char *label = "gaussian";
+
+    template<typename Iterator>
+    static inline double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    {
+        assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
+        auto n = std::distance( first1, last1 );
+
+        double sum = 0;
+        for (auto it1 = first1, it2 = first2; it1 != last1; ++it1, ++it2)
+        {
+            double diff = (*it1 - *it2);
+            sum += diff * diff;
+        }
+        // Variance of ( U[0,1] - U`[0,1] ) = 1/15 - 1/36
+        // See: https://stats.stackexchange.com/a/269492
+        constexpr double var = 1.0 / 15 - 1.0 / 36;
+
+        return std::exp( -sum / (var * n));
+    }
+
+    static constexpr auto combine = combineManhattan;
+
+private:
+    Gaussian() = default;
+};
+
+struct KullbackLeiblerDivergence : public Criteria<KullbackLeiblerDivergence>, Score
+{
+    static constexpr const char *label = "kl";
 
     /**
      * @brief Kullback-Leibler Divergence $D_{KL}(Q||P)$
@@ -138,16 +188,110 @@ struct KullbackLeiblerDivergence : public Criteria<KullbackLeiblerDivergence>, C
     static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
     {
         assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
-        double sum{0};
+        auto n = std::distance( qFirst, qLast );
+        double sum = 0;
         for (auto qIt = qFirst, pIt = pFirst; qIt != qLast; ++qIt, ++pIt)
-            sum += (*qIt) * std::log((*qIt + eps) / (*pIt + eps));
+            sum += (*qIt) * std::log((*qIt + 1.0 / n) / (*pIt + 1.0 / n));
 
-        return sum;
+        return -sum;
     }
 
     static constexpr auto combine = combineEuclidean;
 private:
     KullbackLeiblerDivergence() = default;
+};
+
+template<uint8_t Alpha>
+struct DensityPowerDivergence : public Criteria<DensityPowerDivergence<Alpha>>, Score
+{
+    /**
+     * @brief Density Power Divergence :https://hal.inria.fr/inria-00542337/document
+     * @tparam Iterator
+     * @param qFirst
+     * @param qLast
+     * @param pFirst
+     * @param pLast
+     * @return
+     */
+    template<typename Iterator, uint8_t Alpha_ = Alpha, typename std::enable_if<( Alpha_>0 ), void>::type * = nullptr>
+    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
+    {
+        assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
+        auto n = std::distance( qFirst, qLast );
+        double sum = 0;
+        for (auto qIt = qFirst, pIt = pFirst; qIt != qLast; ++qIt, ++pIt)
+        {
+            double u = (*pIt + 1.0 / n) / (*qIt + 1.0 / n);
+            sum += (*qIt) * (std::pow( u, 1 + Alpha ) - u);
+        }
+        sum *= 1.f / Alpha;
+        return -sum;
+    }
+
+    template<typename Iterator, uint8_t Alpha_ = Alpha, typename std::enable_if<Alpha_ == 0, void>::type * = nullptr>
+    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
+    {
+        assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
+        auto n = std::distance( qFirst, qLast );
+        double sum = 0;
+        for (auto qIt = qFirst, pIt = pFirst; qIt != qLast; ++qIt, ++pIt)
+            sum += (*qIt) * std::log((*qIt + 1.0 / n) / (*pIt + 1.0 / n));
+
+        return -sum;
+    }
+
+    static constexpr auto combine = combineEuclidean;
+private:
+    DensityPowerDivergence() = default;
+};
+
+
+struct DensityPowerDivergence1 : DensityPowerDivergence<1>
+{
+    static constexpr const char *label = "dpd1";
+};
+
+struct DensityPowerDivergence2 : DensityPowerDivergence<2>
+{
+    static constexpr const char *label = "dpd2";
+};
+
+struct DensityPowerDivergence3 : DensityPowerDivergence<3>
+{
+    static constexpr const char *label = "dpd3";
+};
+
+struct ItakuraSaitu : public Criteria<ItakuraSaitu>, Score
+{
+    static constexpr const char *label = "itakura-saitu";
+
+    /**
+     * @brief Itakura-Saitu Distance: https://en.wikipedia.org/wiki/Itakura%E2%80%93Saito_distance
+     * @tparam Iterator
+     * @param qFirst
+     * @param qLast
+     * @param pFirst
+     * @param pLast
+     * @return
+     */
+    template<typename Iterator>
+    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
+    {
+        assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
+        auto n = std::distance( qFirst, qLast );
+        double sum = 0;
+        for (auto qIt = qFirst, pIt = pFirst; qIt != qLast; ++qIt, ++pIt)
+        {
+            double u = (*qIt + 1.0 / n) / (*pIt + 1.0 / n);
+            sum += u - std::log(u) - 1;
+        }
+
+        return -sum;
+    }
+
+    static constexpr auto combine = combineEuclidean;
+private:
+    ItakuraSaitu() = default;
 };
 
 struct Measurement
@@ -191,13 +335,14 @@ struct Measurement
     {
         return _value;
     }
+
 private:
     const std::string _label;
     const double _value;
 };
 
 
-template<typename T, typename Comp >
+template<typename T, typename Comp>
 struct PriorityQueueFixed
 {
     using Queue = std::set<T, Comp>;
@@ -211,7 +356,7 @@ struct PriorityQueueFixed
             : _kTop( kTop )
     {}
 
-    size_t size() const
+    inline size_t size() const
     {
         return _q.size();
     }
@@ -234,6 +379,29 @@ struct PriorityQueueFixed
     inline ConstantIterator cend() const
     {
         return _q.cend();
+    }
+
+    void forTopK( size_t k, const std::function<void( T )> &op )
+    {
+        auto lastIt = (size() < k) ?
+                      std::crend( _q ) :
+                      std::next( std::crbegin( _q ), k );
+
+        std::for_each( std::crbegin( _q ), lastIt, op );
+    }
+
+    void forTopK( size_t k, const std::function<void( T , size_t )> &op )
+    {
+        auto lastIt = (size() < k) ?
+                      std::crend( _q ) :
+                      std::next( std::crbegin( _q ), k );
+
+        size_t index = 0;
+        for( auto it = _q.crbegin() ; it != lastIt ; ++it )
+        {
+            op( *it , index );
+            ++index;
+        }
     }
 
     const T &top() const
@@ -352,20 +520,33 @@ enum class CriteriaEnum
 {
     ChiSquared,
     Cosine,
-    KullbackLeiblerDiv
+    KullbackLeiblerDiv,
+    Intersection,
+    Gaussian,
+    DensityPowerDivergence1,
+    DensityPowerDivergence2,
+    DensityPowerDivergence3,
+    ItakuraSaitu
 };
 
 const std::map<std::string, CriteriaEnum> CriteriaLabels{
-        {"chi", CriteriaEnum::ChiSquared},
-        {"cos", CriteriaEnum::Cosine},
-        {"kl",  CriteriaEnum::KullbackLeiblerDiv}
+        {ChiSquared::label,                CriteriaEnum::ChiSquared},
+        {Cosine::label,                    CriteriaEnum::Cosine},
+        {KullbackLeiblerDivergence::label, CriteriaEnum::KullbackLeiblerDiv},
+        {Intersection::label,              CriteriaEnum::Intersection},
+        {Gaussian::label,                  CriteriaEnum::Gaussian},
+        {DensityPowerDivergence1::label,   CriteriaEnum::DensityPowerDivergence1},
+        {DensityPowerDivergence2::label,   CriteriaEnum::DensityPowerDivergence2},
+        {DensityPowerDivergence3::label,   CriteriaEnum::DensityPowerDivergence3},
+        {ItakuraSaitu::label,   CriteriaEnum::ItakuraSaitu}
 };
 
 template<typename...>
 struct CriteriaList
 {
 };
-using SupportedCriteria = CriteriaList<ChiSquared, Cosine, KullbackLeiblerDivergence>;
+using SupportedCriteria = CriteriaList<ChiSquared, Cosine, KullbackLeiblerDivergence, Intersection, Gaussian,
+        DensityPowerDivergence1, DensityPowerDivergence2, DensityPowerDivergence3 , ItakuraSaitu>;
 
 
 #endif //MARKOVIAN_FEATURES_DISTANCES_HPP
