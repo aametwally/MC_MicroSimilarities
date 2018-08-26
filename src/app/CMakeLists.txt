@@ -25,6 +25,7 @@ set( COMMON_INCLUDES
         ../algorithm/SVMMarkovianModel.hpp
         ../data/dlib_utilities.hpp ../features/FeatureScoreAUC.hpp ../algorithm/FeatureScoringPipeline.hpp ../algorithm/MarkovianModelFeatures.hpp)
 
+add_definitions(-ftemplate-backtrace-limit=0)
 ### Generate the main executable
 add_executable( markovian_features ${COMMON_INCLUDES} markovian_features.cpp)
 target_include_directories( markovian_features PRIVATE
@@ -59,7 +60,7 @@ target_include_directories( markovian_features_scoring PRIVATE
         ${CMAKE_SOURCE_DIR}/src/include
         ${COMMON_INCLUDE_DIRECTORIES} )
 target_link_libraries( markovian_features_scoring PRIVATE fmt-header-only stdc++fs )
-target_compile_features( markovian_features_scoring PRIVATE cxx_std_17)
+target_compile_features( markovian_features_scoring PRIVATE cxx_std_17 )
 
 ### Confusion Matrix Test
 add_executable( confusionMatrix  ${COMMON_INCLUDES} confusionMatrix.cpp )

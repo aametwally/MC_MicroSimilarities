@@ -41,6 +41,266 @@ public:
     using BufferConstIterator = typename Buffer::const_iterator;
 
     using Selection = std::unordered_map<Order, std::set<KernelID >>;
+    using SelectionFlat = std::unordered_map<Order, std::vector<KernelID >>;
+    using SelectionOrdered = std::map<Order, std::set<KernelID>>;
+
+    struct LazySelectionsIntersection
+    {
+        using ValueType = std::pair<Order, KernelID>;
+
+        struct ConstantIterator
+        {
+        protected:
+            friend class LazySelectionsIntersection;
+
+            static ConstantIterator beginIterator( const LazySelectionsIntersection &lazyInt )
+            {
+                return ConstantIterator( lazyInt, true );
+            }
+
+            static ConstantIterator endIterator( const LazySelectionsIntersection &lazyInt )
+            {
+                return ConstantIterator( lazyInt, false );
+            }
+
+        private:
+            std::optional<Order> _currentOrder() const
+            {
+                if ( _orderIt )
+                    return _orderIt.value()->first;
+                else return std::nullopt;
+            }
+
+            std::optional<KernelID> _currentID() const
+            {
+                if ( _idIt )
+                    return *_idIt.value();
+                else return std::nullopt;
+            }
+
+            ConstantIterator( const LazySelectionsIntersection &lazyInt, bool begin )
+                    : _data( std::cref( lazyInt ))
+            {
+                if ( begin )
+                {
+                    _init();
+                }
+            }
+
+            const Selection &_s1() const
+            {
+                if ( _data.get()._s1 )
+                    return _data.get()._s1.value();
+                else return _data.get()._s1Ref->get();
+            }
+
+            const Selection &_s2() const
+            {
+                if ( _data.get()._s2 )
+                    return _data.get()._s2.value();
+                else return _data.get()._s2Ref->get();
+            }
+
+            void _init()
+            {
+                if ( !_s1().empty())
+                {
+                    _orderIt = _s1().cbegin();
+
+                }
+                _next();
+            }
+
+            void _next()
+            {
+
+                if ( _orderIt )
+                {
+
+                    if ( _idIt ) ++_idIt.value();
+
+                    while (_orderIt != _s1().cend())
+                    {
+                        auto order = _orderIt.value()->first;
+                        auto &ids1 = _orderIt.value()->second;
+
+                        if ( auto s2It = _s2().find( order ); s2It != _s2().cend())
+                        {
+                            const auto &ids2 = s2It->second;
+                            _idIt = std::find_if( _idIt.value_or( ids1.cbegin()),
+                                                  ids1.cend(),
+                                                  [&]( const KernelID id ) {
+                                                      return ids2.find( id ) != ids2.cend();
+                                                  } );
+
+                            if ( _idIt != ids1.cend()) return;
+                        }
+                        ++_orderIt.value();
+                        _idIt = std::nullopt;
+                    }
+                    _orderIt = std::nullopt;
+                    _idIt = std::nullopt;
+                }
+            }
+
+        public:
+            ConstantIterator( const ConstantIterator & ) = default;
+
+            ConstantIterator &operator=( const ConstantIterator & ) = default;
+
+            ConstantIterator &operator++()
+            {
+                _next();
+                return *this;
+            }; //prefix increment
+            ConstantIterator operator++( int )
+            {
+                ConstantIterator tmp( *this );
+                _next();
+                return tmp;
+            }
+
+            ValueType operator*() const
+            {
+                return std::make_pair( _currentOrder().value(), _currentID().value());
+            }
+
+            bool operator==( const ConstantIterator &rhs ) const
+            { return _orderIt == rhs._orderIt && _idIt == rhs._idIt; }
+
+            bool operator!=( const ConstantIterator &rhs ) const
+            { return _orderIt != rhs._orderIt || _idIt != rhs._idIt; }
+
+        private:
+            using OrderIterator = Selection::const_iterator;
+            using IDIterator = std::set<KernelID>::const_iterator;
+            std::reference_wrapper<const LazySelectionsIntersection> _data;
+            std::optional<OrderIterator> _orderIt;
+            std::optional<IDIterator> _idIt;
+        };
+
+        LazySelectionsIntersection( const Selection &s1, const Selection &s2 )
+                : _s1Ref( s1 ), _s2Ref( s2 )
+        {}
+
+        LazySelectionsIntersection( const Selection &&s1, const Selection &s2 )
+                : _s1( std::move( s1 )), _s2Ref( s2 )
+        {}
+
+        LazySelectionsIntersection( const Selection &s1, const Selection &&s2 )
+                : _s1Ref( s1 ), _s2( std::move( s2 ))
+        {}
+
+        LazySelectionsIntersection( const Selection &&s1, const Selection &&s2 )
+                : _s1( std::move( s1 )), _s2( std::move( s2 ))
+        {}
+
+        inline ConstantIterator begin() const
+        {
+            return ConstantIterator::beginIterator( *this );
+        }
+
+        inline ConstantIterator cbegin() const
+        {
+            return ConstantIterator::beginIterator( *this );
+        }
+
+        inline ConstantIterator end() const
+        {
+            return ConstantIterator::endIterator( *this );
+        }
+
+        inline ConstantIterator cend() const
+        {
+            return ConstantIterator::endIterator( *this );
+        }
+
+        SelectionOrdered toSelectionOrdered() const
+        {
+            SelectionOrdered selection;
+            for (auto[order, id] : *this)
+                selection[order].insert( id );
+            return selection;
+        }
+
+        static SelectionOrdered toSelectionOrdered( const Selection &s )
+        {
+            SelectionOrdered selection;
+            for (auto &[order, ids] : s)
+                for (auto id : ids)
+                    selection[order].insert( id );
+            return selection;
+        }
+
+        static SelectionOrdered toSelectionOrdered( const SelectionFlat &s )
+        {
+            SelectionOrdered selection;
+            for (auto &[order, ids] : s)
+                for (auto id : ids)
+                    selection[order].insert( id );
+            return selection;
+        }
+
+        bool equals( const Selection &s ) const
+        {
+            return toSelectionOrdered() == toSelectionOrdered( s );
+        }
+
+        bool equals( const SelectionFlat &s ) const
+        {
+            auto m1 = toSelectionOrdered();
+            auto m2 = toSelectionOrdered( s );
+            if ( m1.size() != m2.size()) return false;
+            for (auto &[order, ids] : m1)
+                if ( ids != m2.at( order ))
+                    return false;
+            return true;
+        }
+
+        bool equals_assert( const SelectionFlat &s ) const
+        {
+            auto m1 = toSelectionOrdered();
+            auto m2 = toSelectionOrdered( s );
+            if ( m1.size() != m2.size())
+            {
+                assert( 0 );
+                return false;
+            }
+            for (auto &[order, ids] : m1)
+                if ( ids != m2.at( order ))
+                {
+                    assert( 0 );
+                    return false;
+                }
+            return true;
+        }
+
+        static size_t size( const Selection &s1 )
+        {
+            size_t sum = 0;
+            for (auto &[order, ids] : s1)
+                sum += ids.size();
+            return sum;
+        }
+
+        template<typename Select1, typename Select2>
+        static LazySelectionsIntersection intersection( Select1 &&s1, Select2 &&s2 )
+        {
+            auto n1 = size( s1 );
+            auto n2 = size( s2 );
+            if ( n1 * std::log2( n2 ) < n2 * std::log2( n1 ))
+            {
+                return LazySelectionsIntersection( std::forward<Select1>( s1 ), std::forward<Select2>( s2 ));
+            } else return LazySelectionsIntersection( std::forward<Select1>( s1 ), std::forward<Select2>( s2 ));
+        }
+
+    private:
+        std::optional<std::reference_wrapper<const Selection>> _s1Ref;
+        std::optional<std::reference_wrapper<const Selection>> _s2Ref;
+        std::optional<const Selection> _s1;
+        std::optional<const Selection> _s2;
+
+    };
 
 
     struct KernelIdentifier
@@ -282,7 +542,42 @@ public:
         return scannedKernels;
     }
 
-    static Selection intersection( const Selection &s1, const Selection &s2, Order mxOrder )
+    static SelectionFlat intersection2( const Selection &s1, const Selection &s2 )
+    {
+        SelectionFlat sInt;
+        for (auto &[order, ids1] : s1)
+        {
+            std::vector<KernelID> intersect;
+            if ( auto ids2It = s2.find( order ); ids2It != s2.cend())
+            {
+                const auto &ids2 = ids2It->second;
+                std::set_intersection( ids1.cbegin(), ids1.cend(), ids2.cbegin(), ids2.cend(),
+                                       std::back_inserter( intersect ));
+            }
+            if ( !intersect.empty()) sInt[order] = std::move( intersect );
+        }
+        return sInt;
+    }
+
+    static Selection intersection( Selection &&s1, const Selection &s2 ) noexcept
+    {
+        for (auto &[order, ids1] : s1)
+        {
+            std::set<KernelID> intersect;
+            if ( auto ids2It = s2.find( order ); ids2It != s2.cend())
+            {
+                const auto &ids2 = ids2It->second;
+                std::set_intersection( ids1.cbegin(), ids1.cend(), ids2.cbegin(), ids2.cend(),
+                                       std::inserter( intersect, intersect.end()));
+            }
+            if ( intersect.empty())
+                s1.erase( order );
+            else s1[order] = std::move( intersect );
+        }
+        return s1;
+    }
+
+    static Selection intersection( const Selection &s1, const Selection &s2, Order mxOrder ) noexcept
     {
         Selection _intersection;
         for (Order order = MinOrder; order <= mxOrder; ++order)
@@ -301,18 +596,17 @@ public:
     }
 
     static Selection
-    intersection( const std::vector<Selection> sets, Order mxOrder, std::optional<double> coverage = std::nullopt )
+    intersection( const std::vector<Selection> sets, Order mxOrder, std::optional<double> minCoverage = std::nullopt )
     {
         const size_t k = sets.size();
-        Selection result;
-        if ( coverage )
+        if ( minCoverage && minCoverage == 0.0 )
         {
-            Selection scannedKernels;
-            for (const auto &selection : sets)
-            {
-                scannedKernels = union_( scannedKernels, selection, mxOrder );
-            }
-
+            return union_( sets, mxOrder );
+        }
+        if ( minCoverage && minCoverage > 0.0 )
+        {
+            const Selection scannedKernels = union_( sets, mxOrder );
+            Selection result;
             for (const auto &[order, ids] : scannedKernels)
             {
                 for (auto id : ids)
@@ -322,23 +616,23 @@ public:
                                                      const auto &isoKernels = set.at( order );
                                                      return isoKernels.find( id ) != isoKernels.cend();
                                                  } );
-                    if ( shared >= coverage.value() * k )
+                    if ( shared >= minCoverage.value() * k )
                     {
                         result[order].insert( id );
                     }
                 }
             }
-
+            return result;
         } else
         {
-            result = sets.front();
+            Selection result = sets.front();
             for (auto i = 1; i < sets.size(); ++i)
             {
                 result = intersection( result, sets[i], mxOrder );
             }
+            return result;
         }
 
-        return result;
     }
 
     static Selection
@@ -371,13 +665,15 @@ public:
     static Selection
     jointFeatures( const MarkovianProfiles &profiles,
                    const std::unordered_map<Order, std::set<KernelID >> &allFeatures,
-                   std::optional<size_t> minShared = std::nullopt )
+                   std::optional<double> minSharedPercentage = std::nullopt )
     {
         const Order mxOrder = maxOrder( profiles );
         Selection joint;
-
-        if ( minShared )
+        if ( minSharedPercentage )
         {
+            assert( minSharedPercentage > 0.0 );
+
+            const size_t minShared = size_t( profiles.size() * minSharedPercentage.value());
             for (auto order = MinOrder; order <= mxOrder; ++order)
                 for (const auto id : allFeatures.at( order ))
                 {
@@ -386,7 +682,7 @@ public:
                                                      const auto kernel = p.second.kernel( order, id );
                                                      return kernel.has_value();
                                                  } );
-                    if ( shared >= minShared.value())
+                    if ( shared >= minShared )
                         joint[order].insert( id );
 
                 }
@@ -405,8 +701,6 @@ public:
 
                 }
         }
-
-
         return joint;
     }
 
@@ -428,9 +722,13 @@ public:
     filter( std::map<std::string, MarkovianKernels> &&profiles,
             const Selection &selection )
     {
+        std::map<std::string, MarkovianKernels> filteredProfiles;
         for (auto &[cluster, profile] : profiles)
-            profile = filter( std::move( profile ), selection );
-        return profiles;
+        {
+            if ( auto filtered = filter( std::move( profile ), selection ); filtered )
+                filteredProfiles.emplace( cluster, std::move( filtered.value()));
+        }
+        return filteredProfiles;
     }
 
     std::vector<double> extractFlatFeatureVector(
@@ -483,43 +781,31 @@ public:
         return features;
     }
 
-    static MarkovianKernels filter( MarkovianKernels &&other,
-                                    const Selection &select ) noexcept
+    static std::optional<MarkovianKernels>
+    filter( MarkovianKernels &&other, const Selection &select ) noexcept
     {
+        using LazyIntersection = LazySelectionsIntersection;
 
-        MarkovianKernels filteredProfiles( other._maxOrder );
         HeteroKernels selectedKernels;
 
-        for (auto &[order, ids] : select)
+        assert( LazyIntersection::intersection( select, other.featureSpace())
+                        .equals_assert( intersection2( select, other.featureSpace())));
+
+//        for (auto &[order, ids] : intersection2( select, other.featureSpace()))
+//            for( auto id : ids )
+//            selectedKernels[order][id] = std::move( other.kernel( order, id ).value());
+        for (auto[order, id] : LazyIntersection::intersection( select, other.featureSpace()))
+            selectedKernels[order][id] = std::move( other.kernel( order, id ).value());
+
+        if ( selectedKernels.empty())
+            return std::nullopt;
+        else
         {
-            if ( auto isoKernelsOpt = other.kernels( order ); isoKernelsOpt )
-            {
-                auto &isoKernels = isoKernelsOpt.value().get();
-                auto &_selectedKernels = selectedKernels[order];
-                if ( ids.size() < isoKernels.size() * std::log2( ids.size()))
-                {
-                    for (auto id : ids)
-                    {
-                        if ( auto selectedIt = isoKernels.find( id ); selectedIt != isoKernels.end())
-                            _selectedKernels[id] = std::move( selectedIt->second );
-
-                    }
-                } else
-                {
-                    for (auto &[id, kernel] : isoKernels)
-                    {
-                        if ( ids.find( id ) != ids.cend())
-                            _selectedKernels[id] = std::move( kernel );
-                    }
-
-                }
-            }
-
+            MarkovianKernels filteredProfiles( other._maxOrder );
+            filteredProfiles._kernels = std::move( selectedKernels );
+            filteredProfiles._characters = other._characters;
+            return std::make_optional( filteredProfiles );
         }
-        filteredProfiles._kernels = std::move( selectedKernels );
-        filteredProfiles._characters = other._characters;
-
-        return filteredProfiles;
     }
 
     void train( const std::vector<std::string> &sequences )
@@ -546,7 +832,8 @@ public:
 
             if ( selection )
             {
-                trainedProfiles.emplace( label, filter( std::move( kernel ), selection.value().get()));
+                if ( auto profile = filter( std::move( kernel ), selection->get()); profile )
+                    trainedProfiles.emplace( label, std::move( profile.value()));
 
             } else
             {
@@ -563,6 +850,7 @@ public:
         for (auto &[order, isoKernels] : _kernels)
             for (auto &[id, kernel] : isoKernels)
                 allHits[order][id] = kernel.hits();
+        assert( !allHits.empty());
         return allHits;
     }
 

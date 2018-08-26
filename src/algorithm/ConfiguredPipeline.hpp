@@ -36,29 +36,28 @@ static const std::map<std::string, StrategyEnum> ClassificationStrategyLabel = {
 template<typename Grouping, typename Criteria, typename Strategy>
 class ConfiguredPipeline
 {
-    using MF = MarkovianModelFeatures<Grouping>;
-
 public:
 
 private:
 
     using PriorityQueue = typename MatchSet<Score>::Queue;
+    using MF =  MarkovianModelFeatures<Grouping>;
+    using MP = MarkovianKernels<Grouping>;
 
-    using MarkovianProfile = MarkovianKernels<Grouping>;
-    using Kernel = typename MarkovianProfile::Kernel;
-    using MarkovianProfiles = std::map<std::string, MarkovianProfile>;
-    using KernelID = typename MarkovianProfile::KernelID;
-    using Order = typename MarkovianProfile::Order;
+    using Kernel = typename MP::Kernel;
+    using MarkovianProfiles = std::map<std::string, MP>;
+    using KernelID = typename MP::KernelID;
+    using Order = typename MP::Order;
 
-    using HeteroKernels =  typename MarkovianProfile::HeteroKernels;
-    using HeteroKernelsFeatures =  typename MarkovianProfile::HeteroKernelsFeatures;
+    using HeteroKernels =  typename MP::HeteroKernels;
+    using HeteroKernelsFeatures =  typename MP::HeteroKernelsFeatures;
 
-    using DoubleSeries = typename MarkovianProfile::ProbabilitisByOrder;
-    using KernelsSeries = typename MarkovianProfile::KernelSeriesByOrder;
-    using KernelsSelection = std::unordered_map<Order, std::set<KernelID >>;
+    using DoubleSeries = typename MP::ProbabilitisByOrder;
+    using KernelsSeries = typename MP::KernelSeriesByOrder;
+    using Selection = typename MP::Selection;
 
-    static constexpr Order MinOrder = MarkovianProfile::MinOrder;
-    static constexpr size_t StatesN = MarkovianProfile::StatesN;
+    static constexpr Order MinOrder = MP::MinOrder;
+    static constexpr size_t StatesN = MP::StatesN;
     static constexpr double eps = std::numeric_limits<double>::epsilon();
     static constexpr const char *LOADING = "loading";
     static constexpr const char *PREPROCESSING = "preprocessing";
@@ -81,11 +80,11 @@ public:
             const std::vector<std::string> &trueLabels,
             MarkovianProfiles &&targets,
             std::map<std::string, std::vector<std::string >> &&trainingClusters,
-            const KernelsSelection &selection,
+            const Selection &selection,
             Order order )
     {
         assert( queries.size() == trueLabels.size());
-        const Order mxOrder = MarkovianProfile::maxOrder( targets );
+        const Order mxOrder = MP::maxOrder( targets );
 
         auto results = predict( queries, targets, std::move( trainingClusters ), selection, order );
         assert( results.size() == queries.size());
@@ -104,18 +103,18 @@ public:
             const std::vector<std::string> &queries,
             const MarkovianProfiles &targets,
             std::map<std::string, std::vector<std::string >> &&kernelRelevance,
-            const KernelsSelection &selection,
+            const Selection &selection,
             Order mxOrder )
     {
         std::vector<PriorityQueue> results;
         for (auto &seq : queries)
         {
-            using FeatureSeries = typename MarkovianProfile::KernelsFeaturesByOrder;
+            using FeatureSeries = typename MP::KernelsFeaturesByOrder;
             std::map<std::string, double> accumulator;
 
-            MarkovianProfile query( mxOrder );
+            MP query( mxOrder );
             query.train( {seq} );
-//            query = MarkovianProfile::filter( std::move( query ), selection );
+//            query = MP::filter( std::move( query ), selection );
             for (const auto &[order, isoKernels] : query.kernels())
                 for (const auto &[id, k1] : isoKernels.get())
                 {
@@ -161,38 +160,38 @@ public:
             const std::vector<std::string> &queries,
             const MarkovianProfiles &targets,
             std::map<std::string, std::vector<std::string >> &&trainingClusters,
-            const KernelsSelection &selection,
+            const Selection &selection,
             Order mxOrder )
     {
         const auto relevance =
-                MF::minMaxScale( MF::histogramRelevance_ALL2WITHIN_WEIGHTED( trainingClusters , mxOrder, selection ));
+                MF::minMaxScale( MF::histogramRelevance_ALL2WITHIN_WEIGHTED( trainingClusters, mxOrder, selection ));
         std::vector<PriorityQueue> results;
         for (auto &seq : queries)
         {
             std::map<std::string, double> voter;
-            MarkovianProfile query( {seq}, mxOrder );
-            query = MarkovianProfile::filter( std::move( query ), selection );
-            for (const auto &[order, isoKernels] : query.kernels())
-            {
-                for (const auto &[id, k1] : isoKernels.get())
-                {
-                    PriorityQueue pq( targets.size());
-                    for (const auto &[clusterName, profile] : targets)
-                    {
-                        if ( auto k2Opt = profile.kernel( order, id ); k2Opt )
-                        {
-                            auto val = Criteria::measure( k1, k2Opt.value().get());
-                            pq.emplace( clusterName, val );
-                        }
-                    }
-                    double score = getOr( relevance, order, id, double( 0 ));
 
-                    pq.forTopK( targets.size(), [&]( const auto &candidate, size_t index ) {
-                        std::string label = candidate.getLabel();
-                        voter[label] += double( score ) / (index + 1);
-                    } );
+            if ( auto query = MP::filter( MP( {seq}, mxOrder ), selection ); query )
+                for (const auto &[order, isoKernels] : query->kernels())
+                {
+                    for (const auto &[id, k1] : isoKernels.get())
+                    {
+                        PriorityQueue pq( targets.size());
+                        for (const auto &[clusterName, profile] : targets)
+                        {
+                            if ( auto k2Opt = profile.kernel( order, id ); k2Opt )
+                            {
+                                auto val = Criteria::measure( k1, k2Opt.value().get());
+                                pq.emplace( clusterName, val );
+                            }
+                        }
+                        double score = getOr( relevance, order, id, double( 0 ));
+
+                        pq.forTopK( targets.size(), [&]( const auto &candidate, size_t index ) {
+                            std::string label = candidate.getLabel();
+                            voter[label] += (1 + score) / (index + 1);
+                        } );
+                    }
                 }
-            }
 
             std::pair<std::string, double> maxVotes = *voter.begin();
             PriorityQueue vPQ( targets.size());
@@ -207,7 +206,7 @@ public:
     predict_ACCUMULATIVE( const std::vector<std::string> &queries,
                           const MarkovianProfiles &targets,
                           std::map<std::string, std::vector<std::string >> &&trainingClusters,
-                          const KernelsSelection &selection,
+                          const Selection &selection,
                           Order mxOrder )
     {
         auto relevance =
@@ -218,26 +217,28 @@ public:
         for (auto &seq : queries)
         {
             PriorityQueue matchSet( targets.size());
-            MarkovianProfile query( mxOrder );
-            query.train( {seq} );
-            query = MarkovianProfile::filter( std::move( query ), selection );
 
-            for (const auto &[clusterId, profile] : targets)
+            auto queryOpt = MP::filter( MP( {seq}, mxOrder ), selection );
+            if ( queryOpt )
             {
-                double sum = 0;
-                for (const auto &[order, isoKernels] : query.kernels())
-                    for (const auto &[id, kernel1] : isoKernels.get())
-                    {
-                        auto k2 = profile.kernel( order, id );
-                        if ( k2 )
+                for (const auto &[clusterId, profile] : targets)
+                {
+                    double sum = 0;
+                    for (const auto &[order, isoKernels] : queryOpt->kernels())
+                        for (const auto &[id, kernel1] : isoKernels.get())
                         {
                             double score = getOr( relevance, order, id, double( 0 ));
-                            sum += Criteria::measure( kernel1, k2.value().get()) * score;
+                            auto k2 = profile.kernel( order, id );
+                            if ( k2 )
+                            {
+                                sum += Criteria::measure( kernel1, k2.value().get()) + score;
+                            }
                         }
-                    }
-                matchSet.emplace( clusterId, sum );
+                    matchSet.emplace( clusterId, sum  );
+                }
+                results.emplace_back( std::move( matchSet ));
             }
-            results.emplace_back( std::move( matchSet ));
+
         }
 
         return results;
@@ -247,7 +248,7 @@ public:
     predict( const std::vector<std::string> &queries,
              const MarkovianProfiles &targets,
              std::map<std::string, std::vector<std::string >> &&trainingClusters,
-             const KernelsSelection &selection,
+             const Selection &selection,
              Order order )
     {
         if ( std::is_same<Strategy, Voting>::value )
@@ -257,15 +258,15 @@ public:
         else throw std::runtime_error( "Undefined Strategy!" );
     }
 
-    static std::pair<KernelsSelection, MarkovianProfiles>
+    static std::pair<Selection, MarkovianProfiles>
     featureSelection( const std::map<std::string, std::vector<std::string> > &trainingClusters,
                       Order order )
     {
-        auto[selection, trainedProfiles] = MF::filterJointKernels( trainingClusters, order, 0.5 );
+        auto selection = MF::withinJointAllUnionKernels( trainingClusters, order, 0.05 );
 //        auto scoredFeatures = MF::histogramRelevance_ALL2WITHIN_UNIFORM( trainingClusters, order, selection );
 //        auto scoredSelection = MF::filter( scoredFeatures, 0.75 );
-//        trainedProfiles = MarkovianProfile::filter( std::move( trainedProfiles ), scoredSelection );
-        return {std::move( selection ), std::move( trainedProfiles )};
+        auto trainedProfiles = MP::train( std::move( trainingClusters ), order , selection );
+        return std::make_pair( std::move( selection ), std::move( trainedProfiles ));
     }
 
     void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries,
@@ -311,7 +312,7 @@ public:
         {
             auto trainingClusters = joinFoldsExceptK( folds, i );
             auto[test, tLabels] = extractTest( folds.at( i ));
-            auto trainedProfiles = MarkovianProfile::train( trainingClusters, order );
+            auto trainedProfiles = MP::train( trainingClusters, order );
             auto[selection, filteredProfiles] = featureSelection( trainingClusters, order );
             auto classificationResults = classify_VALIDATION( test, tLabels, std::move( filteredProfiles ),
                                                               std::move( trainingClusters ),

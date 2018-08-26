@@ -55,13 +55,13 @@ public:
             return -1;
         }
 
-        auto it = std::partition( std::begin( _cases ) , std::end( _cases ) , []( const Case &c ){
-           return !std::isnan( c.score());
-        });
+        auto it = std::partition( std::begin( _cases ), std::end( _cases ), []( const Case &c ) {
+            return !std::isnan( c.score());
+        } );
 
-        std::sort( std::begin( _cases ), it , []( const Case &c1, const Case &c2 ) {
-             return c1.score() > c2.score();
-        });
+        std::sort( std::begin( _cases ), it, []( const Case &c1, const Case &c2 ) {
+            return c1.score() > c2.score();
+        } );
 
 
         auto maxScore = _cases.front().score();
@@ -124,28 +124,46 @@ public:
     double max() const
     {
         auto it = std::max_element( std::begin( _cases ), std::end( _cases ),
-                                  []( const Case &c1, const Case &c2 ) { return c1.score() < c2.score(); } );
+                                    []( const Case &c1, const Case &c2 ) { return c1.score() < c2.score(); } );
         return it->score();
     }
 
     double min() const
     {
         auto it = std::min_element( std::begin( _cases ), std::end( _cases ),
-                                  []( const Case &c1, const Case &c2 ) { return c1.score() < c2.score(); } );
+                                    []( const Case &c1, const Case &c2 ) { return c1.score() < c2.score(); } );
         return it->score();
     }
 
     std::pair<double, double> minMax() const
     {
-        auto mm = std::minmax_element(std::begin( _cases ), std::end( _cases ),
-                                      []( const Case &c1, const Case &c2 ) { return c1.score() < c2.score(); } );
-        return { mm.first->score() , mm.second->score()};
+        auto mm = std::minmax_element( std::begin( _cases ), std::end( _cases ),
+                                       []( const Case &c1, const Case &c2 ) { return c1.score() < c2.score(); } );
+        return {mm.first->score(), mm.second->score()};
     }
 
     double range() const
     {
         auto mm = minMax();
         return mm.second - mm.first;
+    }
+
+    std::string scores2String() const
+    {
+        std::vector<double> scores;
+        std::transform( _cases.cbegin(), _cases.cend(), std::back_inserter( scores ),
+                        []( const Case &c ) { return c.score(); } );
+        return io::join2string( scores, " " );
+    }
+
+    std::string tpfn2String() const
+    {
+        std::string scores;
+        for( auto &c : _cases )
+        {
+            scores += (c.tp())? "1 ": "0 ";
+        }
+        return scores;
     }
 
 private:

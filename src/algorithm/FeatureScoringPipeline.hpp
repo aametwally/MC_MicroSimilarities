@@ -19,7 +19,7 @@ template<typename Grouping>
 class FeatureScoringPipeline
 {
     using MF = MarkovianModelFeatures<Grouping>;
-
+    using MP = MarkovianKernels<Grouping>;
 public:
 
 private:
@@ -105,10 +105,41 @@ private:
                     double tp = double( _fAUC.tp()) / n;
                     double fn = double( _fAUC.fn()) / n;
 
-                    printRow( fmt::format( "AUC ({})(n={})(tp={})(fn={})(range={})(nans={})", label,
+                    printRow( fmt::format( "AUC ({})(n={})(tp={:.2f})(fn={:.2f})(range={})(nans={})", label,
                                            n, tp, fn, _fAUC.range(), _fAUC.nans()), _fAUC.auc());
                 }
+                fmt::print( "\n" );
+            }
+        }
 
+        template<size_t indentation = 0>
+        void reportToFile( const std::string &prefix )
+        {
+            namespace fs = std::experimental::filesystem;
+            fs::create_directory( prefix.c_str() );
+
+            for (auto &[eqn, fAUC] : _record)
+            {
+                for (auto &[sim, _fAUC] : fAUC)
+                {
+                    double auc = _fAUC.auc();
+                    const auto n = _fAUC.n();
+                    double tp = double( _fAUC.tp()) / n;
+                    double fn = double( _fAUC.fn()) / n;
+
+                    std::ofstream reportFile;
+                    const std::string fname = fmt::format( "[eqn:{}][sim:{}][auc:{}]"
+                                                           "[n={}][tp={:.2f}][fn={:.2f}]"
+                                                           "[range={}][nans={}]", eqn, sim,
+                                                           auc, n, tp, fn, _fAUC.range(), _fAUC.nans());
+                    const std::string filePath = io::join( {prefix, fname} , "/");
+                    fmt::print("Writing to file:{}\n", filePath);
+                    reportFile.open( filePath , std::ios::out );
+                    reportFile << _fAUC.tpfn2String() << "\n";
+                    reportFile << _fAUC.scores2String();
+                    reportFile << "\n";
+                    reportFile.close();
+                }
             }
         }
 
@@ -121,6 +152,15 @@ private:
             return [=]( const std::string col1, double col2 ) {
                 constexpr const char *fmtSpec = "{:<{}}{:<{}}:{:.4f}\n";
                 fmt::print( fmtSpec, "", indentation, col1, col1Width, col2 );
+            };
+        }
+
+        template<size_t indentation, size_t col1Width = 70>
+        static auto _printRowFunction( std::ofstream &s )
+        {
+            return [&]( const std::string col1, double col2 ) {
+                constexpr const char *fmtSpec = "{:<{}}{:<{}}:{:.4f}\n";
+                s << fmt::format( fmtSpec, "", indentation, col1, col1Width, col2 );
             };
         }
 
@@ -160,6 +200,11 @@ private:
         void report()
         {
             getAUCRecorder().report();
+        }
+
+        void reportToFile( const std::string &prefix )
+        {
+            getAUCRecorder().reportToFile( prefix );
         }
 
         void addFeatureScoring( std::string &&label, HeteroKernelsFeatures &&scoring )
@@ -473,17 +518,18 @@ public:
             {
                 const auto &q = queries.at( queryIdx );
                 const auto &trueLabel = trueLabels.at( queryIdx );
-                MarkovianProfile query( {q}, mxOrder );
-                query = MarkovianProfile::filter( std::move( query ), selection );
 
+                if ( auto queryOpt = MarkovianProfile::filter( MarkovianProfile( {q}, mxOrder ), selection ); queryOpt )
+                {
+                    auto &query = queryOpt.value();
+                    std::vector<KernelPrediction> kernelPredictions = nearestKernels( query, targets, similarity );
+                    correlator.record_VOTING( similarityLabel, kernelPredictions, trueLabel );
+                    correlator.record_MICRO( similarityLabel, kernelPredictions, trueLabel );
 
-                std::vector<KernelPrediction> kernelPredictions = nearestKernels( query, targets, similarity );
-                correlator.record_VOTING( similarityLabel, kernelPredictions, trueLabel );
-                correlator.record_MICRO( similarityLabel, kernelPredictions, trueLabel );
-
-                auto predictedProfile = nearestProfile( query, targets, similarity );
-                Prediction p( query.featureSpace(), std::move( predictedProfile.first ), predictedProfile.second );
-                correlator.record_ACCUMULATIVE( similarityLabel, std::move( p ), trueLabel );
+                    auto predictedProfile = nearestProfile( query, targets, similarity );
+                    Prediction p( query.featureSpace(), std::move( predictedProfile.first ), predictedProfile.second );
+                    correlator.record_ACCUMULATIVE( similarityLabel, std::move( p ), trueLabel );
+                }
             }
         }
     }
@@ -491,7 +537,8 @@ public:
 
     void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries,
                                  Order order,
-                                 size_t k )
+                                 size_t k,
+                                 const std::string &outputFile )
     {
         std::set<std::string> labels;
         for (const auto &entry : entries)
@@ -517,7 +564,7 @@ public:
 
         auto extractTest = []( const std::vector<std::pair<std::string, std::string >> &items ) {
             std::vector<std::string> sequences, labels;
-            for (const auto item : items)
+            for (const auto &item : items)
             {
                 labels.push_back( item.first );
                 sequences.push_back( item.second );
@@ -532,13 +579,14 @@ public:
         {
             auto trainingClusters = joinFoldsExceptK( folds, i );
             auto[test, tLabels] = extractTest( folds.at( i ));
-            auto[selection, trainedProfiles] = MF::filterJointKernels( trainingClusters, order, 0.5 );
-
+            auto selection = MF::withinJointAllUnionKernels( trainingClusters, order, 0.05 );
+            auto trainedProfiles = MP::train( trainingClusters , order , selection );
             classify_VALIDATION_SAMPLER( test, tLabels, std::move( trainedProfiles ),
                                          std::move( trainingClusters ), std::move( selection ));
         }
 
         PredictionFeatureCorrelator::getFeatureCorrelator().report();
+        PredictionFeatureCorrelator::getFeatureCorrelator().reportToFile( outputFile );
     }
 
 };

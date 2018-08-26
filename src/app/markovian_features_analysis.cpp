@@ -11,10 +11,32 @@
 #include "clara.hpp"
 
 
+#include <iomanip>
+
+std::string timeNow()
+{
+    auto n = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t( n );
+    auto bf = std::localtime( &in_time_t );
+
+    std::stringstream ss;
+    ss << std::put_time( bf, "%Y-%m-%d %X" );
+
+    return ss.str();
+}
+
+
 std::vector<std::string> splitParameters( std::string params )
 {
     io::trim( params, "[({})]" );
     return io::split( params, "," );
+}
+
+std::string prefix( const std::string &input,
+                    const std::string &o,
+                    const std::string &g )
+{
+    return fmt::format( "[{}][{}][order:{}][grouping:{}]", timeNow(), input, o, g );
 }
 
 int main( int argc, char *argv[] )
@@ -71,6 +93,9 @@ int main( int argc, char *argv[] )
                     input, fastaFormat,
                     markovianOrder,
                     k, grouping );
+        namespace fs = std::experimental::filesystem;
+        fs::path p( input.c_str());
+        const std::string fname = p.filename();
 
         for (auto &g : splitParameters( grouping ))
             for (auto &o : splitParameters( markovianOrder ))
@@ -80,7 +105,7 @@ int main( int argc, char *argv[] )
                             "[grouping:{}]\n", o, g );
                 std::visit( [&]( auto &&p ) {
                     p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ),
-                                              std::stoi( o ), k );
+                                              std::stoi( o ), k, prefix( fname, o, g ));
                 }, getFeatureScoringPipeline( g ));
             }
 

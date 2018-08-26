@@ -11,25 +11,25 @@
 template<typename Grouping>
 class MarkovianModelFeatures
 {
-    using MarkovianProfile = MarkovianKernels<Grouping>;
-    using Kernel = typename MarkovianProfile::Kernel;
-    using MarkovianProfiles = std::map<std::string, MarkovianProfile>;
-    using KernelID = typename MarkovianProfile::KernelID;
-    using Order = typename MarkovianProfile::Order;
+    using MP = MarkovianKernels<Grouping>;
+    using Kernel = typename MP::Kernel;
+    using MarkovianProfiles = std::map<std::string, MarkovianKernels<Grouping>>;
+    using KernelID = typename MP::KernelID;
+    using Order = typename MP::Order;
 
-    using HeteroKernels =  typename MarkovianProfile::HeteroKernels;
-    using HeteroKernelsFeatures =  typename MarkovianProfile::HeteroKernelsFeatures;
+    using HeteroKernels =  typename MP::HeteroKernels;
+    using HeteroKernelsFeatures =  typename MP::HeteroKernelsFeatures;
 
-    using DoubleSeries = typename MarkovianProfile::ProbabilitisByOrder;
-    using KernelsSeries = typename MarkovianProfile::KernelSeriesByOrder;
-    using Selection = typename MarkovianProfile::Selection;
-    using KernelIdentifier = typename MarkovianProfile::KernelIdentifier;
+    using DoubleSeries = typename MP::ProbabilitisByOrder;
+    using KernelsSeries = typename MP::KernelSeriesByOrder;
+    using Selection = typename MP::Selection;
+    using KernelIdentifier = typename MP::KernelIdentifier;
 
     static constexpr double eps = std::numeric_limits<double>::epsilon();
     static constexpr double nan = std::numeric_limits<double>::quiet_NaN();
     static constexpr double inf = std::numeric_limits<double>::infinity();
-    static constexpr Order MinOrder = MarkovianProfile::MinOrder;
-    static constexpr size_t StatesN = MarkovianProfile::StatesN;
+    static constexpr Order MinOrder = MP::MinOrder;
+    static constexpr size_t StatesN = MP::StatesN;
 
 
 public:
@@ -100,7 +100,7 @@ public:
     meanHistograms( const MarkovianProfiles &profiles,
                     const std::map<std::string, HeteroKernelsFeatures> &kernelWeights )
     {
-        const Order mxOrder = MarkovianProfile::maxOrder( profiles );
+        const Order mxOrder = MP::maxOrder( profiles );
         HeteroKernels means;
 
         for (const auto &[cluster, profile] : profiles)
@@ -124,7 +124,7 @@ public:
 
 
     static std::vector<HeteroKernelsFeatures>
-    histogramWeights( const std::vector<MarkovianProfile> &profiles )
+    histogramWeights( const std::vector<MP> &profiles )
     {
         const Order mxOrder = profiles.front().maxOrder();
 
@@ -165,7 +165,7 @@ public:
     static std::map<std::string, HeteroKernelsFeatures>
     histogramWeights( const MarkovianProfiles &profiles )
     {
-        const Order mxOrder = MarkovianProfile::maxOrder( profiles );
+        const Order mxOrder = MP::maxOrder( profiles );
 
         std::map<std::string, HeteroKernelsFeatures> weights;
         std::unordered_map<Order, std::set<KernelID >> scannedIDs;
@@ -206,13 +206,18 @@ public:
 
     using ProfileHits = ProfileFeatures<size_t>;
 
-    template<typename Container>
+    template<typename It, typename Retriever>
     static ProfileFeatures<size_t>
-    summer( const Container &container )
+    summer( It first, It last, Retriever retriever )
     {
+        auto k = std::distance( first, last );
+        assert( k > 0 );
+
         ProfileFeatures<size_t> sum;
-        for (auto &features : container)
+        for (auto it = first; it != last; ++it)
         {
+            const auto &features = retriever( it );
+            assert( !features.empty());
             for (auto &[order, isoFeatures] :  features)
             {
                 for (auto &[id, feature] : isoFeatures)
@@ -222,14 +227,15 @@ public:
         return sum;
     };
 
-    template<typename Container>
+    template<typename It, typename Retriever>
     static std::vector<HeteroKernelsFeatures>
-    normalizer( const Container &container )
+    normalizer( It first, It last, Retriever retriever )
     {
         std::vector<HeteroKernelsFeatures> normalizedItems;
-        ProfileFeatures<size_t> sum = summer( container );
-        for (const ProfileFeatures<size_t> &features : container)
+        ProfileFeatures<size_t> sum = summer( first, last, retriever );
+        for (auto it = first; it != last; ++it)
         {
+            const auto &features = retriever( it );
             HeteroKernelsFeatures normalized;
             for (auto &[order, isoFeatures] : features)
             {
@@ -243,36 +249,82 @@ public:
         return normalizedItems;
     };
 
+    static ProfileFeatures<size_t>
+    summer( const std::vector<ProfileHits> &counts )
+    {
+        using It = typename std::vector<ProfileHits>::const_iterator;
+        return summer( counts.cbegin(), counts.cend(), []( It it ) -> ProfileHits const & { return *it; } );
+    };
+
+    static ProfileFeatures<size_t>
+    summer( const std::vector<std::reference_wrapper<const ProfileHits >> &counts )
+    {
+        using It = typename std::vector<std::reference_wrapper<const ProfileHits> >::const_iterator;
+        for (auto &c : counts)
+            assert( !c.get().empty());
+        return summer( counts.begin(), counts.end(),
+                       []( It it ) -> ProfileHits const & {
+                           assert( !it->get().empty());
+                           return (*it).get();
+                       } );
+    };
+
+    static std::vector<HeteroKernelsFeatures>
+    normalizer( const std::vector<ProfileHits> &counts )
+    {
+        using It = typename std::vector<ProfileHits>::const_iterator;
+        return normalizer( counts.begin(), counts.end(), []( It it ) -> ProfileHits const & { return *it; } );
+    };
+
+    static std::vector<HeteroKernelsFeatures>
+    normalizer( const std::vector<std::reference_wrapper<const ProfileHits >> &counts )
+    {
+        using It = typename std::vector<std::reference_wrapper<const ProfileHits> >::const_iterator;
+        return normalizer( counts.begin(), counts.end(), []( It it ) -> ProfileHits const & { return (*it).get(); } );
+    };
+
+
     static HeteroKernelsFeatures
     histogramRelevance_ALL2WITHIN_WEIGHTED( const std::map<std::string, std::vector<std::string >> &trainingItems,
                                             Order maxOrder,
                                             const Selection &selection )
     {
 
-        std::map<std::string, std::vector<MarkovianProfile >> withinClassProfiles;
+        std::map<std::string, std::vector<MP >> withinClassProfiles;
         std::map<std::string, std::vector<ProfileHits >> withinClassCounters;
         std::map<std::string, HeteroKernelsFeatures> withinClassRadius;
 
-        std::vector<MarkovianProfile> populationProfiles;
-        std::vector<ProfileHits> populationCounts;
+        std::vector<std::reference_wrapper<const MP>> populationProfiles;
+        std::vector<std::reference_wrapper<const ProfileHits >> populationCounts;
 
 
         for (auto &[label, sequences] : trainingItems)
         {
-            auto &_counter = withinClassCounters[label];
-            auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
             {
-                MarkovianProfile profile( {s}, maxOrder );
-                profile = MarkovianProfile::filter( std::move( profile ), selection );
-                _counter.emplace_back( std::move( profile.hits()));
-                _profiles.emplace_back( std::move( profile ));
-                populationCounts.push_back( _counter.back());
-                populationProfiles.push_back( _profiles.back());
+                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                {
+                    withinClassCounters[label].emplace_back( std::move( profile->hits()));
+                    withinClassProfiles[label].emplace_back( std::move( profile.value()));
+                }
             }
         }
 
+        for (const auto &[label, profiles] : withinClassProfiles)
+        {
+            auto &withinCounters = withinClassCounters.at( label );
+            for (auto i = 0; i < profiles.size(); ++i)
+            {
+                assert( !withinCounters.at( i ).empty());
+                populationCounts.push_back( std::cref( withinCounters.at( i )));
+                populationProfiles.push_back( std::cref( profiles.at( i )));
+            }
+        }
+
+
         auto populationTotalCounter = summer( populationCounts );
+        assert( !populationTotalCounter.empty());
+
         auto populationRadius = informationRadius_WEIGHTED( std::move( populationProfiles ),
                                                             normalizer( std::move( populationCounts )),
                                                             selection );
@@ -290,6 +342,7 @@ public:
         for (const auto &[label, profiles] :  withinClassProfiles)
         {
             auto withinClassTotalCounter = summer( withinClassCounters.at( label ));
+            assert( !withinClassTotalCounter.empty());
             const auto &classRadius = withinClassRadius.at( label );
 
             for (const auto &[order, ids] : selection)
@@ -348,24 +401,30 @@ public:
                                            const Selection &selection )
     {
 
-        std::map<std::string, std::vector<MarkovianProfile >> withinClassProfiles;
+        std::map<std::string, std::vector<MP >> withinClassProfiles;
         std::map<std::string, HeteroKernelsFeatures> withinClassRadius;
 
-        std::vector<MarkovianProfile> populationProfiles;
+        std::vector<std::reference_wrapper<const MP>> populationProfiles;
 
         const auto k = trainingItems.size();
+
 
         for (auto &[label, sequences] : trainingItems)
         {
             auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
+                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                    _profiles.emplace_back( std::move( profile.value()));
+        }
+
+        for (const auto &[label, profiles] : withinClassProfiles)
+        {
+            for (auto &profile : profiles)
             {
-                MarkovianProfile profile( {s}, maxOrder );
-                profile = MarkovianProfile::filter( std::move( profile ), selection );
-                _profiles.emplace_back( std::move( profile ));
-                populationProfiles.push_back( _profiles.back());
+                populationProfiles.push_back( std::cref( profile ));
             }
         }
+
 
         auto populationRadius = informationRadius_UNIFORM( std::move( populationProfiles ),
                                                            selection );
@@ -426,13 +485,12 @@ public:
                                          const Selection &selection )
     {
 
-        std::map<std::string, std::vector<MarkovianProfile >> withinClassProfiles;
+        std::map<std::string, std::vector<MP >> withinClassProfiles;
         std::map<std::string, std::vector<ProfileHits >> withinClassCounters;
         std::map<std::string, HeteroKernelsFeatures> withinClassRadius;
 
-        std::vector<MarkovianProfile> populationProfiles;
-        std::vector<ProfileHits> populationCounts;
-
+        std::vector<std::reference_wrapper<const MP>> populationProfiles;
+        std::vector<std::reference_wrapper<const ProfileHits>> populationCounts;
 
         for (auto &[label, sequences] : trainingItems)
         {
@@ -440,12 +498,21 @@ public:
             auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
             {
-                MarkovianProfile profile( {s}, maxOrder );
-                profile = MarkovianProfile::filter( std::move( profile ), selection );
-                _counter.emplace_back( std::move( profile.hits()));
-                _profiles.emplace_back( std::move( profile ));
-                populationCounts.push_back( _counter.back());
-                populationProfiles.push_back( _profiles.back());
+                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                {
+                    _counter.emplace_back( std::move( profile->hits()));
+                    _profiles.emplace_back( std::move( profile.value()));
+                }
+            }
+        }
+
+        for (const auto &[label, profiles] : withinClassProfiles)
+        {
+            auto &withinCounters = withinClassCounters.at( label );
+            for (auto i = 0; i < profiles.size(); ++i)
+            {
+                populationCounts.push_back( std::cref( withinCounters.at( i )));
+                populationProfiles.push_back( std::cref( profiles.at( i )));
             }
         }
 
@@ -527,11 +594,11 @@ public:
                                          const Selection &selection )
     {
 
-        std::map<std::string, std::vector<MarkovianProfile >> withinClassProfiles;
+        std::map<std::string, std::vector<MP >> withinClassProfiles;
         std::map<std::string, std::vector<ProfileHits >> withinClassCounters;
         std::map<std::string, HeteroKernelsFeatures> withinClassRadius;
 
-        std::vector<ProfileHits> populationCounts;
+        std::vector<std::reference_wrapper<const ProfileHits>> populationCounts;
 
 
         for (auto &[label, sequences] : trainingItems)
@@ -540,13 +607,18 @@ public:
             auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
             {
-                MarkovianProfile profile( {s}, maxOrder );
-                profile = MarkovianProfile::filter( std::move( profile ), selection );
-                _counter.emplace_back( std::move( profile.hits()));
-                _profiles.emplace_back( std::move( profile ));
-                populationCounts.push_back( _counter.back());
+                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                {
+                    _counter.emplace_back( std::move( profile->hits()));
+                    _profiles.emplace_back( std::move( profile.value()));
+                }
             }
         }
+
+
+        for (const auto &[label, withinCounters] : withinClassCounters)
+            for (auto &c : withinCounters)
+                populationCounts.push_back( std::cref( c ));
 
         auto populationTotalCounter = summer( populationCounts );
 
@@ -631,21 +703,16 @@ public:
     {
 
         const auto k = trainingItems.size();
-        std::map<std::string, std::vector<MarkovianProfile >> withinClassProfiles;
+        std::map<std::string, std::vector<MP >> withinClassProfiles;
         std::map<std::string, HeteroKernelsFeatures> withinClassRadius;
-
 
         for (auto &[label, sequences] : trainingItems)
         {
             auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
-            {
-                MarkovianProfile profile( {s}, maxOrder );
-                profile = MarkovianProfile::filter( std::move( profile ), selection );
-                _profiles.emplace_back( std::move( profile ));
-            }
+                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                    _profiles.emplace_back( std::move( profile.value()));
         }
-
 
         for (const auto &[label, profiles] :  withinClassProfiles)
         {
@@ -709,25 +776,28 @@ public:
                                         const Selection &selection )
     {
         const auto k = trainingItems.size();
-        std::map<std::string, std::vector<MarkovianProfile >> withinClassProfiles;
+        std::map<std::string, std::vector<MP >> withinClassProfiles;
         std::map<std::string, HeteroKernelsFeatures> withinClassRadius;
 
-        std::vector<MarkovianProfile> populationProfiles;
-
+        std::vector<std::reference_wrapper<const MP> > populationProfiles;
 
         for (auto &[label, sequences] : trainingItems)
         {
             auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
+                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                    _profiles.emplace_back( std::move( profile.value()));
+        }
+
+        for (const auto &[label, profiles] : withinClassProfiles)
+        {
+            for (auto &profile : profiles)
             {
-                MarkovianProfile profile( {s}, maxOrder );
-                profile = MarkovianProfile::filter( std::move( profile ), selection );
-                _profiles.emplace_back( profile );
-                populationProfiles.emplace_back( std::move( profile ));
+                populationProfiles.push_back( std::cref( profile ));
             }
         }
 
-        auto populationRadius = informationRadius_UNIFORM( populationProfiles, selection );
+        auto populationRadius = informationRadius_UNIFORM( std::move( populationProfiles ), selection );
 
         for (const auto &[label, profiles] :  withinClassProfiles)
         {
@@ -777,7 +847,7 @@ public:
                 double val = getOr( tRadius, id, nan ) - getOr( wcRadius, id, nan );
                 if ( std::isnan( val ))
                 {
-
+                    fmt::print( "nan\n" );
                 }
                 _relevance[id] = val;
             }
@@ -787,54 +857,38 @@ public:
         return relevance;
     }
 
+    template<typename ProfileForwardIt, typename WeightForwardIt, typename Retriever>
     static HeteroKernelsFeatures
-    informationRadius_WEIGHTED( const std::vector<MarkovianProfile> &profiles,
-                                const std::vector<HeteroKernelsFeatures> &histogramsWeights,
-                                const Selection &selection )
+    informationRadius_WEIGHTED( ProfileForwardIt profileFirstIt, ProfileForwardIt profileLastIt,
+                                WeightForwardIt wFirstIt, WeightForwardIt wLastIt,
+                                const Selection &selection,
+                                Retriever &&retrieve )
     {
-        assert( profiles.size() == histogramsWeights.size());
+        assert( std::distance( profileFirstIt, profileLastIt ) == std::distance( wFirstIt, wLastIt ));
+        using LazyIntersection = typename MP::LazySelectionsIntersection;
 
         HeteroKernelsFeatures meanEntropies;
         HeteroKernels meanHistogram;
         HeteroKernelsFeatures radius;
-
-        for (auto i = 0; i < profiles.size(); ++i)
+        auto profileIt = profileFirstIt;
+        auto weightIt = wFirstIt;
+        for (; profileIt != profileLastIt; ++profileIt, ++weightIt)
         {
-            const MarkovianProfile &profile = profiles[i];
-            auto &weights = histogramsWeights[i];
-            for (auto &[order, ids] : selection)
+            const MP &profile = retrieve( profileIt );
+            const auto &weights = *weightIt;
+
+            for (auto[order, id] : LazyIntersection::intersection( profile.featureSpace(), selection ))
             {
-                if ( auto isoHistogramsOpt = profile.kernels( order ); isoHistogramsOpt )
-                {
-                    const auto &isoHistograms = isoHistogramsOpt.value().get();
-                    if ( auto weightIt = weights.find( order ); weightIt != weights.cend())
-                    {
-                        auto &_weights = weightIt->second;
-                        auto &_meanEntropies = meanEntropies[order];
-                        auto &_meanHistogram = meanHistogram[order];
+                auto &_weights = weights.at( order );
+                auto &_meanEntropies = meanEntropies[order];
+                auto &_meanHistogram = meanHistogram[order];
 
-                        for (auto id : ids)
-                        {
-                            auto weightIt = _weights.find( id );
-                            auto &meanEntropy = _meanEntropies[id];
-                            auto &__meanHistogram = _meanHistogram[id];
-                            if ( auto histogramIt = isoHistograms.find( id );
-                                    histogramIt != isoHistograms.cend() && weightIt != _weights.cend())
-                            {
-                                double b = weightIt->second;
-                                const auto &histogram = histogramIt->second;
-                                meanEntropy += (histogram.information() * b);
-                                __meanHistogram += (histogram * b);
-                            }
-
-                        }
-
-                    }
-                }
-
+                double b = _weights.at( id );
+                const auto &histogram = profile.kernel( order, id ).value().get();
+                _meanEntropies[id] += (histogram.information() * b);
+                _meanHistogram[id] += (histogram * b);
             }
         }
-
 
         for (auto &[order, ids] : selection)
         {
@@ -861,80 +915,107 @@ public:
                 }
             }
         }
+        return radius;
+    }
 
+
+    template<typename ProfileForwardIt, typename Retriever>
+    static HeteroKernelsFeatures
+    informationRadius_UNIFORM( ProfileForwardIt profileFirstIt, ProfileForwardIt profileLastIt,
+                               const Selection &selection,
+                               Retriever &&retrieve )
+    {
+        using LazyIntersection = typename MP::LazySelectionsIntersection;
+
+        const auto k = std::distance( profileFirstIt, profileLastIt );
+        HeteroKernelsFeatures meanEntropies;
+        HeteroKernels meanHistogram;
+        HeteroKernelsFeatures radius;
+
+        for (auto it = profileFirstIt; it != profileLastIt; ++it)
+        {
+            const MP &profile = retrieve( it );
+            for (auto[order, id] : LazyIntersection::intersection( profile.featureSpace(), selection ))
+            {
+
+                double b = double( 1 ) / k;
+                const auto &histogram = profile.kernel( order, id ).value().get();
+                meanEntropies[order][id] += (histogram.information() * b);
+                meanHistogram[order][id] += (histogram * b);
+            }
+        }
+
+        for (auto &[order, ids] : selection)
+        {
+            auto isoMeanEntropiesIt = meanEntropies.find( order );
+            auto isoMeanHistogramIt = meanHistogram.find( order );
+            auto &_radius = radius[order];
+            if ( isoMeanEntropiesIt == meanEntropies.cend() || isoMeanHistogramIt == meanHistogram.cend())
+            {
+                for (auto id: ids) _radius[id] = nan;
+            } else
+            {
+                for (auto id: ids)
+                {
+                    auto meanEntropyIt = isoMeanEntropiesIt->second.find( id );
+                    auto meanHistogramIt = isoMeanHistogramIt->second.find( id );
+
+                    if ( meanEntropyIt != isoMeanEntropiesIt->second.cend() &&
+                         meanHistogramIt != isoMeanHistogramIt->second.cend())
+                    {
+                        const auto &__meanHistogram = meanHistogramIt->second;
+                        const auto &meanEntropy = meanEntropyIt->second;
+                        _radius[id] = __meanHistogram.information() - meanEntropy;
+                    } else _radius[id] = nan;
+                }
+            }
+        }
         return radius;
     }
 
     static HeteroKernelsFeatures
-    informationRadius_UNIFORM( const std::vector<MarkovianProfile> &profiles,
+    informationRadius_WEIGHTED( const std::vector<MP> &profiles,
+                                const std::vector<HeteroKernelsFeatures> &histogramsWeights,
+                                const Selection &selection )
+    {
+        return informationRadius_WEIGHTED( profiles.cbegin(), profiles.cend(),
+                                           histogramsWeights.cbegin(), histogramsWeights.cend(),
+                                           selection, []( auto it ) -> const MP & { return *it; } );
+    }
+
+    static HeteroKernelsFeatures
+    informationRadius_UNIFORM( const std::vector<MP> &profiles,
                                const Selection &selection )
     {
-        const auto k = profiles.size();
-        HeteroKernelsFeatures meanEntropies;
-        HeteroKernels meanHistogram;
-        HeteroKernelsFeatures radius;
+        return informationRadius_UNIFORM( profiles.cbegin(), profiles.cend(),
+                                          selection, []( auto it ) -> const MP & { return *it; } );
+    }
 
-        for (auto i = 0; i < profiles.size(); ++i)
-        {
-            const MarkovianProfile &profile = profiles[i];
-            for (auto &[order, ids] : selection)
-            {
-                if ( auto isoHistogramsOpt = profile.kernels( order ); isoHistogramsOpt )
-                {
-                    const auto &isoHistograms = isoHistogramsOpt.value().get();
-                    auto &_meanEntropies = meanEntropies[order];
-                    auto &_meanHistogram = meanHistogram[order];
+    static HeteroKernelsFeatures
+    informationRadius_WEIGHTED( std::vector<std::reference_wrapper<const MP>> &&profiles,
+                                const std::vector<HeteroKernelsFeatures> &histogramsWeights,
+                                const Selection &selection )
+    {
+        using It = typename std::vector<std::reference_wrapper<const MP>>::const_iterator;
+        return informationRadius_WEIGHTED( profiles.cbegin(), profiles.cend(),
+                                           histogramsWeights.cbegin(), histogramsWeights.cend(),
+                                           selection, []( It it ) -> const MP & { return (*it).get(); } );
+    }
 
-                    for (auto id : ids)
-                    {
-                        auto &meanEntropy = _meanEntropies[id];
-                        auto &__meanHistogram = _meanHistogram[id];
-                        if ( auto histogramIt = isoHistograms.find( id ); histogramIt != isoHistograms.cend())
-                        {
-                            double b = 1.0 / k;
-                            const auto &histogram = histogramIt->second;
-                            meanEntropy += (histogram.information() * b);
-                            __meanHistogram += (histogram * b);
-                        }
-
-                    }
-                }
-            }
-        }
-
-
-        for (auto &[order, ids] : selection)
-        {
-            auto isoMeanEntropiesIt = meanEntropies.find( order );
-            auto isoMeanHistogramIt = meanHistogram.find( order );
-            auto &_radius = radius[order];
-            if ( isoMeanEntropiesIt == meanEntropies.cend() || isoMeanHistogramIt == meanHistogram.cend())
-            {
-                for (auto id: ids) _radius[id] = nan;
-            } else
-            {
-                for (auto id: ids)
-                {
-                    auto meanEntropyIt = isoMeanEntropiesIt->second.find( id );
-                    auto meanHistogramIt = isoMeanHistogramIt->second.find( id );
-
-                    if ( meanEntropyIt != isoMeanEntropiesIt->second.cend() &&
-                         meanHistogramIt != isoMeanHistogramIt->second.cend())
-                    {
-                        const auto &__meanHistogram = meanHistogramIt->second;
-                        const auto &meanEntropy = meanEntropyIt->second;
-                        _radius[id] = __meanHistogram.information() - meanEntropy;
-                    } else _radius[id] = nan;
-                }
-            }
-        }
-        return radius;
+    static HeteroKernelsFeatures
+    informationRadius_UNIFORM( std::vector<std::reference_wrapper<const MP>> &&profiles,
+                               const Selection &selection )
+    {
+        using It = typename std::vector<std::reference_wrapper<const MP>>::const_iterator;
+        return informationRadius_UNIFORM( profiles.cbegin(), profiles.cend(),
+                                          selection, []( It it ) -> const MP & { return (*it).get(); } );
     }
 
     static HeteroKernelsFeatures
     informationRadius_WEIGHTED( const MarkovianProfiles &profiles,
                                 const std::map<std::string, HeteroKernelsFeatures> &histogramsWeights )
     {
+
         const size_t k = profiles.size();
 
         HeteroKernelsFeatures meanEntropies;
@@ -964,7 +1045,7 @@ public:
     static HeteroKernelsFeatures
     informationRadius_UNIFORM( const MarkovianProfiles &profiles )
     {
-        const Order mxOrder = MarkovianProfile::maxOrder( profiles );
+        const Order mxOrder = MP::maxOrder( profiles );
         const size_t k = profiles.size();
 
         HeteroKernelsFeatures meanEntropies;
@@ -992,6 +1073,15 @@ public:
         return radius;
     }
 
+    static std::pair<Selection, MarkovianProfiles>
+    filterJointKernels( const std::map<std::string, std::vector<std::string >> &trainingClusters,
+                        Order order,
+                        double minSharedPercentage = 0.75 )
+    {
+        assert( percentage > 0 && percentage <= 1 );
+        return filterJointKernels( MP::train( trainingClusters, order ), minSharedPercentage );
+    }
+
     static size_t size( const std::unordered_map<Order, std::set<KernelID >> &features )
     {
         return std::accumulate( std::cbegin( features ), std::cend( features ), size_t( 0 ),
@@ -1000,30 +1090,20 @@ public:
                                 } );
     }
 
-    static std::pair<Selection, MarkovianProfiles>
-    filterJointKernels( const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                        Order order,
-                        double percentage = 0.75 )
-    {
-        assert( percentage > 0 && percentage <= 1 );
-        auto profiles = MarkovianProfile::train( trainingClusters, order );
-        return filterJointKernels( std::move( profiles ), percentage );
-    }
 
     static std::pair<Selection, MarkovianProfiles>
-    filterJointKernels( MarkovianProfiles &&profiles, double percentage = 0.75 )
+    filterJointKernels( MarkovianProfiles &&profiles, double minSharedPercentage = 0.75 )
     {
-        assert( percentage > 0 && percentage <= 1 );
+        assert( percentage >= 0 && percentage <= 1 );
         const size_t k = profiles.size();
-        const Order mxOrder = MarkovianProfile::maxOrder( profiles );
-        auto allFeatures = MarkovianProfile::featureSpace( profiles );
-        auto commonFeatures = MarkovianProfile::jointFeatures( profiles, allFeatures, size_t( percentage * k ));
+        const Order mxOrder = MP::maxOrder( profiles );
+        auto allFeatures = MP::featureSpace( profiles );
+        auto commonFeatures = MP::jointFeatures( profiles, allFeatures, minSharedPercentage );
 
 //        fmt::print("Join/All:{}\n", double( size(commonFeatures)) / size(allFeatures));
-        profiles = MarkovianProfile::filter( std::move( profiles ), commonFeatures );
+        profiles = MP::filter( std::move( profiles ), commonFeatures );
 
-        return std::make_pair( std::move( commonFeatures ),
-                               std::move( profiles ));
+        return std::make_pair( std::move( commonFeatures ), std::move( profiles ));
     }
 
     static Selection
@@ -1031,7 +1111,6 @@ public:
                                 Order order,
                                 double withinCoverage = 0.5 )
     {
-        assert( withinCoverage > 0 && withinCoverage <= 1 );
         const size_t k = trainingClusters.size();
         std::vector<Selection> withinKernels;
         for (const auto &[clusterName, sequences] : trainingClusters)
@@ -1040,19 +1119,19 @@ public:
             Selection allKernels;
             for (const auto &s : sequences)
             {
-                MarkovianProfile p( {s}, order );
+                MP p ( {s}, order );
                 clusterJointKernels.emplace_back( p.featureSpace());
             }
-            withinKernels.emplace_back( MarkovianProfile::intersection( clusterJointKernels, order, withinCoverage ));
+            withinKernels.emplace_back( MP::intersection( clusterJointKernels, order, withinCoverage ));
         }
-        return MarkovianProfile::union_( withinKernels, order );
+        return MP::union_( withinKernels, order );
     }
 
     static MarkovianProfiles
     filter( MarkovianProfiles &&profiles, const Selection &selection )
     {
         for (auto &[label, profile] : profiles)
-            profile = MarkovianProfile::filter( std::move( profile ), selection );
+            profile = MP::filter( std::move( profile ), selection );
         return profiles;
     }
 
