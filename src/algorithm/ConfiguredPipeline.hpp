@@ -56,7 +56,6 @@ private:
     using KernelsSeries = typename MP::KernelSeriesByOrder;
     using Selection = typename MP::Selection;
 
-    static constexpr Order MinOrder = MP::MinOrder;
     static constexpr size_t StatesN = MP::StatesN;
     static constexpr double eps = std::numeric_limits<double>::epsilon();
     static constexpr const char *LOADING = "loading";
@@ -81,12 +80,11 @@ public:
             MarkovianProfiles &&targets,
             std::map<std::string, std::vector<std::string >> &&trainingClusters,
             const Selection &selection,
-            Order order )
+            Order mnOrder, Order mxOrder )
     {
         assert( queries.size() == trueLabels.size());
-        const Order mxOrder = MP::maxOrder( targets );
 
-        auto results = predict( queries, targets, std::move( trainingClusters ), selection, order );
+        auto results = predict( queries, targets, std::move( trainingClusters ), selection, mnOrder, mxOrder );
         assert( results.size() == queries.size());
         std::vector<LeaderBoard> classifications;
         for (auto i = 0; i < queries.size(); ++i)
@@ -161,16 +159,18 @@ public:
             const MarkovianProfiles &targets,
             std::map<std::string, std::vector<std::string >> &&trainingClusters,
             const Selection &selection,
+            Order mnOrder,
             Order mxOrder )
     {
         const auto relevance =
-                MF::minMaxScale( MF::histogramRelevance_ALL2WITHIN_WEIGHTED( trainingClusters, mxOrder, selection ));
+                MF::minMaxScale(
+                        MF::histogramRelevance_ALL2WITHIN_WEIGHTED( trainingClusters, mnOrder, mxOrder, selection ));
         std::vector<PriorityQueue> results;
         for (auto &seq : queries)
         {
             std::map<std::string, double> voter;
 
-            if ( auto query = MP::filter( MP( {seq}, mxOrder ), selection ); query )
+            if ( auto query = MP::filter( MP( {seq}, mnOrder , mxOrder ), selection ); query )
                 for (const auto &[order, isoKernels] : query->kernels())
                 {
                     for (const auto &[id, k1] : isoKernels.get())
@@ -193,7 +193,6 @@ public:
                     }
                 }
 
-            std::pair<std::string, double> maxVotes = *voter.begin();
             PriorityQueue vPQ( targets.size());
             for (const auto &[id, votes]: voter)
                 vPQ.emplace( id, votes );
@@ -207,18 +206,19 @@ public:
                           const MarkovianProfiles &targets,
                           std::map<std::string, std::vector<std::string >> &&trainingClusters,
                           const Selection &selection,
+                          Order mnOrder,
                           Order mxOrder )
     {
         auto relevance =
                 MF::minMaxScaleByOrder( MF::histogramRelevance_MAX2MIN_WEIGHTED( trainingClusters,
-                                                                                 mxOrder, selection ));
+                                                                                 mnOrder , mxOrder , selection ));
 
         std::vector<PriorityQueue> results;
         for (auto &seq : queries)
         {
             PriorityQueue matchSet( targets.size());
 
-            auto queryOpt = MP::filter( MP( {seq}, mxOrder ), selection );
+            auto queryOpt = MP::filter( MP( {seq}, mnOrder, mxOrder ), selection );
             if ( queryOpt )
             {
                 for (const auto &[clusterId, profile] : targets)
@@ -234,11 +234,10 @@ public:
                                 sum += Criteria::measure( kernel1, k2.value().get()) + score;
                             }
                         }
-                    matchSet.emplace( clusterId, sum  );
+                    matchSet.emplace( clusterId, sum );
                 }
-                results.emplace_back( std::move( matchSet ));
             }
-
+            results.emplace_back( std::move( matchSet ));
         }
 
         return results;
@@ -249,28 +248,29 @@ public:
              const MarkovianProfiles &targets,
              std::map<std::string, std::vector<std::string >> &&trainingClusters,
              const Selection &selection,
-             Order order )
+             Order mnOrder, Order mxOrder )
     {
         if ( std::is_same<Strategy, Voting>::value )
-            return predict_VOTING2( queries, targets, std::move( trainingClusters ), selection, order );
+            return predict_VOTING2( queries, targets, std::move( trainingClusters ), selection, mnOrder, mxOrder );
         else if ( std::is_same<Strategy, Accumulative>::value )
-            return predict_ACCUMULATIVE( queries, targets, std::move( trainingClusters ), selection, order );
+            return predict_ACCUMULATIVE( queries, targets, std::move( trainingClusters ), selection, mnOrder, mxOrder );
         else throw std::runtime_error( "Undefined Strategy!" );
     }
 
     static std::pair<Selection, MarkovianProfiles>
     featureSelection( const std::map<std::string, std::vector<std::string> > &trainingClusters,
-                      Order order )
+                      Order mnOrder, Order mxOrder )
     {
-        auto selection = MF::withinJointAllUnionKernels( trainingClusters, order, 0.05 );
+        auto selection = MF::withinJointAllUnionKernels( trainingClusters, mnOrder, mxOrder, 0.05 );
 //        auto scoredFeatures = MF::histogramRelevance_ALL2WITHIN_UNIFORM( trainingClusters, order, selection );
 //        auto scoredSelection = MF::filter( scoredFeatures, 0.75 );
-        auto trainedProfiles = MP::train( std::move( trainingClusters ), order , selection );
+        auto trainedProfiles = MP::train( std::move( trainingClusters ), mnOrder, mxOrder, selection );
         return std::make_pair( std::move( selection ), std::move( trainedProfiles ));
     }
 
     void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries,
-                                 Order order,
+                                 Order mnOrder,
+                                 Order mxOrder,
                                  size_t k )
     {
         std::set<std::string> labels;
@@ -312,16 +312,20 @@ public:
         {
             auto trainingClusters = joinFoldsExceptK( folds, i );
             auto[test, tLabels] = extractTest( folds.at( i ));
-            auto trainedProfiles = MP::train( trainingClusters, order );
-            auto[selection, filteredProfiles] = featureSelection( trainingClusters, order );
+            auto trainedProfiles = MP::train( trainingClusters, mnOrder, mxOrder );
+            auto[selection, filteredProfiles] = featureSelection( trainingClusters, mnOrder, mxOrder );
             auto classificationResults = classify_VALIDATION( test, tLabels, std::move( filteredProfiles ),
                                                               std::move( trainingClusters ),
-                                                              selection, order );
+                                                              selection, mnOrder, mxOrder );
 
             for (const auto &classification : classificationResults)
             {
-                ++histogram[classification.trueClusterRank()];
-                validation.countInstance( i, classification.bestMatch(), classification.trueCluster());
+                if( auto prediction = classification.bestMatch() ;prediction )
+                {
+                    ++histogram[classification.trueClusterRank()];
+                    validation.countInstance( i, prediction.value(), classification.trueCluster());
+                }
+                else ++histogram[-1];
             }
         }
 
@@ -389,6 +393,10 @@ PipelineVariant getConfiguredPipeline( CriteriaEnum criteria, StrategyEnum strat
             return getConfiguredPipeline<AAGrouping, DensityPowerDivergence3>( strategy );
         case CriteriaEnum::ItakuraSaitu :
             return getConfiguredPipeline<AAGrouping, ItakuraSaitu>( strategy );
+        case CriteriaEnum::Bhattacharyya :
+            return getConfiguredPipeline<AAGrouping, Bhattacharyya>( strategy );
+        case CriteriaEnum::Hellinger :
+            return getConfiguredPipeline<AAGrouping, Hellinger>( strategy );
         default:
             throw std::runtime_error( "Undefined Strategy" );
     }

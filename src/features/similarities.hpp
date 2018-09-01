@@ -213,7 +213,7 @@ struct DensityPowerDivergence : public Criteria<DensityPowerDivergence<Alpha>>, 
      * @param pLast
      * @return
      */
-    template<typename Iterator, uint8_t Alpha_ = Alpha, typename std::enable_if<( Alpha_>0 ), void>::type * = nullptr>
+    template<typename Iterator, uint8_t Alpha_ = Alpha, typename std::enable_if<(Alpha_ > 0), void>::type * = nullptr>
     static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
     {
         assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
@@ -221,22 +221,15 @@ struct DensityPowerDivergence : public Criteria<DensityPowerDivergence<Alpha>>, 
         double sum = 0;
         for (auto qIt = qFirst, pIt = pFirst; qIt != qLast; ++qIt, ++pIt)
         {
-            double u = (*pIt + 1.0 / n) / (*qIt + 1.0 / n);
-            sum += (*qIt) * (std::pow( u, 1 + Alpha ) - u);
+            double p = *pIt;
+            double q = *qIt;
+
+            double t1 = std::pow( q, 1 + Alpha );
+            double t2 = (Alpha + 1) * q * std::pow( p, Alpha );
+            double t3 = Alpha * std::pow( p, Alpha + 1 );
+            sum += (t1 - t2 + t3);
         }
         sum *= 1.f / Alpha;
-        return -sum;
-    }
-
-    template<typename Iterator, uint8_t Alpha_ = Alpha, typename std::enable_if<Alpha_ == 0, void>::type * = nullptr>
-    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
-    {
-        assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
-        auto n = std::distance( qFirst, qLast );
-        double sum = 0;
-        for (auto qIt = qFirst, pIt = pFirst; qIt != qLast; ++qIt, ++pIt)
-            sum += (*qIt) * std::log((*qIt + 1.0 / n) / (*pIt + 1.0 / n));
-
         return -sum;
     }
 
@@ -282,8 +275,9 @@ struct ItakuraSaitu : public Criteria<ItakuraSaitu>, Score
         double sum = 0;
         for (auto qIt = qFirst, pIt = pFirst; qIt != qLast; ++qIt, ++pIt)
         {
-            double u = (*qIt + 1.0 / n) / (*pIt + 1.0 / n);
-            sum += u - std::log(u) - 1;
+            double u = (*qIt + eps) / (*pIt + eps);
+            double v = (*qIt + 0.1 / n) / (*pIt + 0.1 / n);
+            sum += u - std::log( v ) - 1;
         }
 
         return -sum;
@@ -292,6 +286,75 @@ struct ItakuraSaitu : public Criteria<ItakuraSaitu>, Score
     static constexpr auto combine = combineEuclidean;
 private:
     ItakuraSaitu() = default;
+};
+
+
+struct Bhattacharyya : public Criteria<Bhattacharyya>, Score
+{
+    static constexpr const char *label = "bhat";
+
+    /**
+     * @brief Bhattacharyya Distance: https://en.wikipedia.org/wiki/Bhattacharyya_distance
+     * @tparam Iterator
+     * @param qFirst
+     * @param qLast
+     * @param pFirst
+     * @param pLast
+     * @return
+     */
+    template<typename Iterator>
+    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
+    {
+        assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
+        auto n = std::distance( qFirst, qLast );
+        double sum = 0;
+        for (auto qIt = qFirst, pIt = pFirst; qIt != qLast; ++qIt, ++pIt)
+        {
+            sum += std::sqrt( *qIt * *pIt + eps );
+        }
+        double distance = (-std::log( sum + eps ));
+        return -distance;
+    }
+
+    static constexpr auto combine = combineEuclidean;
+private:
+    Bhattacharyya() = default;
+};
+
+
+struct Hellinger : public Criteria<Hellinger>, Score
+{
+    static constexpr const char *label = "hell";
+
+    /**
+     * @brief Hellinger Distance: https://en.wikipedia.org/wiki/Hellinger_distance
+     * @tparam Iterator
+     * @param qFirst
+     * @param qLast
+     * @param pFirst
+     * @param pLast
+     * @return
+     */
+    template<typename Iterator>
+    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
+    {
+        assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
+        auto n = std::distance( qFirst, qLast );
+        double sum = 0;
+        for (auto qIt = qFirst, pIt = pFirst; qIt != qLast; ++qIt, ++pIt)
+        {
+            double u = std::sqrt( *qIt ) - std::sqrt( *pIt );
+            sum += u * u;
+        }
+        constexpr double factor = 1.0 / std::sqrt( 2 );
+
+        double distance = factor * std::sqrt( sum );
+        return -distance;
+    }
+
+    static constexpr auto combine = combineEuclidean;
+private:
+    Hellinger() = default;
 };
 
 struct Measurement
@@ -390,23 +453,25 @@ struct PriorityQueueFixed
         std::for_each( std::crbegin( _q ), lastIt, op );
     }
 
-    void forTopK( size_t k, const std::function<void( T , size_t )> &op )
+    void forTopK( size_t k, const std::function<void( T, size_t )> &op )
     {
         auto lastIt = (size() < k) ?
                       std::crend( _q ) :
                       std::next( std::crbegin( _q ), k );
 
         size_t index = 0;
-        for( auto it = _q.crbegin() ; it != lastIt ; ++it )
+        for (auto it = _q.crbegin(); it != lastIt; ++it)
         {
-            op( *it , index );
+            op( *it, index );
             ++index;
         }
     }
 
-    const T &top() const
+    const std::optional<std::reference_wrapper<const T >> top() const
     {
-        return *_q.crbegin();
+        if ( !empty())
+            return *_q.crbegin();
+        else return std::nullopt;
     }
 
     bool empty() const
@@ -486,9 +551,11 @@ struct ClassificationCandidates
             : _trueLabel( std::move( trueLabel )), _bestMatches( std::move( q ))
     {}
 
-    std::string bestMatch() const
+    std::optional< std::string > bestMatch() const
     {
-        return _bestMatches.top().getLabel();
+        if( auto match = _bestMatches.top() ; match )
+            return match.value().get().getLabel();
+        else return std::nullopt;
     }
 
     long trueClusterRank() const
@@ -526,7 +593,9 @@ enum class CriteriaEnum
     DensityPowerDivergence1,
     DensityPowerDivergence2,
     DensityPowerDivergence3,
-    ItakuraSaitu
+    ItakuraSaitu,
+    Bhattacharyya,
+    Hellinger
 };
 
 const std::map<std::string, CriteriaEnum> CriteriaLabels{
@@ -538,7 +607,9 @@ const std::map<std::string, CriteriaEnum> CriteriaLabels{
         {DensityPowerDivergence1::label,   CriteriaEnum::DensityPowerDivergence1},
         {DensityPowerDivergence2::label,   CriteriaEnum::DensityPowerDivergence2},
         {DensityPowerDivergence3::label,   CriteriaEnum::DensityPowerDivergence3},
-        {ItakuraSaitu::label,   CriteriaEnum::ItakuraSaitu}
+        {ItakuraSaitu::label,              CriteriaEnum::ItakuraSaitu},
+        {Bhattacharyya::label,             CriteriaEnum::Bhattacharyya},
+        {Hellinger::label,                 CriteriaEnum::Hellinger}
 };
 
 template<typename...>
@@ -546,7 +617,7 @@ struct CriteriaList
 {
 };
 using SupportedCriteria = CriteriaList<ChiSquared, Cosine, KullbackLeiblerDivergence, Intersection, Gaussian,
-        DensityPowerDivergence1, DensityPowerDivergence2, DensityPowerDivergence3 , ItakuraSaitu>;
+        DensityPowerDivergence1, DensityPowerDivergence2, DensityPowerDivergence3, ItakuraSaitu, Bhattacharyya, Hellinger>;
 
 
 #endif //MARKOVIAN_FEATURES_DISTANCES_HPP

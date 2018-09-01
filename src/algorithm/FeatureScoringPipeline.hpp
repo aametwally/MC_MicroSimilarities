@@ -36,7 +36,6 @@ private:
     using KernelsSeries = typename MarkovianProfile::KernelSeriesByOrder;
     using KernelsSelection = std::unordered_map<Order, std::set<KernelID >>;
 
-    static constexpr Order MinOrder = MarkovianProfile::MinOrder;
     static constexpr size_t StatesN = MarkovianProfile::StatesN;
     static constexpr double eps = std::numeric_limits<double>::epsilon();
     static constexpr double inf = std::numeric_limits<double>::infinity();
@@ -395,7 +394,7 @@ public:
 
     }
 
-    static void registerKernelsScores( Order order,
+    static void registerKernelsScores( Order mnOrder, Order mxOrder ,
                                        const MarkovianProfiles &targets,
                                        const std::map<std::string, std::vector<std::string >> &trainingSequences,
                                        const Selection &selection )
@@ -403,25 +402,31 @@ public:
         auto &correlator = PredictionFeatureCorrelator::getFeatureCorrelator();
         correlator.addFeatureScoring( "ALL2WITHIN_WEIGHTED",
                                       MF::minMaxScale(
-                                              MF::histogramRelevance_ALL2WITHIN_WEIGHTED( trainingSequences, order,
+                                              MF::histogramRelevance_ALL2WITHIN_WEIGHTED( trainingSequences,
+                                                                                          mnOrder , mxOrder ,
                                                                                           selection )));
         correlator.addFeatureScoring( "ALL2WITHIN_UNIFORM",
                                       MF::minMaxScale(
-                                              MF::histogramRelevance_ALL2WITHIN_UNIFORM( trainingSequences, order,
+                                              MF::histogramRelevance_ALL2WITHIN_UNIFORM( trainingSequences,
+                                                                                         mnOrder , mxOrder ,
                                                                                          selection )));
         correlator.addFeatureScoring( "ALL2MIN_WEIGHTED",
                                       MF::minMaxScale(
-                                              MF::histogramRelevance_ALL2MIN_WEIGHTED( trainingSequences, order,
+                                              MF::histogramRelevance_ALL2MIN_WEIGHTED( trainingSequences,
+                                                                                       mnOrder , mxOrder ,
                                                                                        selection )));
         correlator.addFeatureScoring( "ALL2MIN_UNIFORM",
-                                      MF::minMaxScale( MF::histogramRelevance_ALL2MIN_UNIFORM( trainingSequences, order,
+                                      MF::minMaxScale( MF::histogramRelevance_ALL2MIN_UNIFORM( trainingSequences,
+                                                                                               mnOrder , mxOrder ,
                                                                                                selection )));
         correlator.addFeatureScoring( "MAX2MIN_WEIGHTED",
                                       MF::minMaxScale(
-                                              MF::histogramRelevance_MAX2MIN_WEIGHTED( trainingSequences, order,
+                                              MF::histogramRelevance_MAX2MIN_WEIGHTED( trainingSequences,
+                                                                                       mnOrder , mxOrder ,
                                                                                        selection )));
         correlator.addFeatureScoring( "MAX2MIN_UNIFORM",
-                                      MF::minMaxScale( MF::histogramRelevance_MAX2MIN_UNIFORM( trainingSequences, order,
+                                      MF::minMaxScale( MF::histogramRelevance_MAX2MIN_UNIFORM( trainingSequences,
+                                                                                               mnOrder , mxOrder ,
                                                                                                selection )));
 
         correlator.addFeatureScoring( "informationRadius_WEIGHTED",
@@ -536,7 +541,7 @@ public:
 
 
     void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries,
-                                 Order order,
+                                 Order mnOrder , Order mxOrder ,
                                  size_t k,
                                  const std::string &outputFile )
     {
@@ -579,8 +584,8 @@ public:
         {
             auto trainingClusters = joinFoldsExceptK( folds, i );
             auto[test, tLabels] = extractTest( folds.at( i ));
-            auto selection = MF::withinJointAllUnionKernels( trainingClusters, order, 0.05 );
-            auto trainedProfiles = MP::train( trainingClusters , order , selection );
+            auto selection = MF::withinJointAllUnionKernels( trainingClusters, mnOrder , mxOrder , 0.05 );
+            auto trainedProfiles = MP::train( trainingClusters , mnOrder , mxOrder , selection );
             classify_VALIDATION_SAMPLER( test, tLabels, std::move( trainedProfiles ),
                                          std::move( trainingClusters ), std::move( selection ));
         }

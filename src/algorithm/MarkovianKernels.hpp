@@ -33,7 +33,6 @@ public:
     static constexpr size_t StatesN = AAGrouping::StatesN;
     static constexpr std::array<char, StatesN> ReducedAlphabet = reducedAlphabet<StatesN>();
     static constexpr std::array<char, 256> ReducedAlphabetIds = reducedAlphabetIds( AAGrouping::Grouping );
-    static constexpr Order MinOrder = 3;
     static constexpr double PseudoCounts = double( 1 ) / StatesN;
 
     using Buffer = std::array<double, StatesN>;
@@ -64,6 +63,10 @@ public:
             }
 
         private:
+
+            using OrderIterator = Selection::const_iterator;
+            using IDIterator = std::set<KernelID>::const_iterator;
+
             std::optional<Order> _currentOrder() const
             {
                 if ( _orderIt )
@@ -94,11 +97,35 @@ public:
                 else return _data.get()._s1Ref->get();
             }
 
-            const Selection &_s2() const
+            std::optional<std::reference_wrapper<const Selection>> _s2() const
             {
                 if ( _data.get()._s2 )
                     return _data.get()._s2.value();
-                else return _data.get()._s2Ref->get();
+                else if ( _data.get()._s2Ref )
+                    return _data.get()._s2Ref;
+                else return std::nullopt;
+            }
+
+            std::optional<IDIterator> findFirstIt( Order order,
+                                                   const std::set<KernelID> &ids1,
+                                                   const std::optional<IDIterator> &start )
+            {
+                if ( auto s2Opt = _s2(); s2Opt )
+                {
+                    auto &s2 = s2Opt.value().get();
+                    if ( auto s2It = s2.find( order ); s2It != s2.cend())
+                    {
+                        const auto &ids2 = s2It->second;
+                        auto it = std::find_if( start.value_or( ids1.cbegin()),
+                                                ids1.cend(),
+                                                [&]( const KernelID id ) {
+                                                    return ids2.find( id ) != ids2.cend();
+                                                } );
+
+                        if ( it != ids1.cend()) return it;
+                    }
+                }
+                return std::nullopt;
             }
 
             void _init()
@@ -123,20 +150,9 @@ public:
                     {
                         auto order = _orderIt.value()->first;
                         auto &ids1 = _orderIt.value()->second;
-
-                        if ( auto s2It = _s2().find( order ); s2It != _s2().cend())
-                        {
-                            const auto &ids2 = s2It->second;
-                            _idIt = std::find_if( _idIt.value_or( ids1.cbegin()),
-                                                  ids1.cend(),
-                                                  [&]( const KernelID id ) {
-                                                      return ids2.find( id ) != ids2.cend();
-                                                  } );
-
-                            if ( _idIt != ids1.cend()) return;
-                        }
-                        ++_orderIt.value();
-                        _idIt = std::nullopt;
+                        if( _idIt = findFirstIt( order , ids1 , _idIt ); _idIt )
+                            return;
+                        else ++_orderIt.value();
                     }
                     _orderIt = std::nullopt;
                     _idIt = std::nullopt;
@@ -172,8 +188,7 @@ public:
             { return _orderIt != rhs._orderIt || _idIt != rhs._idIt; }
 
         private:
-            using OrderIterator = Selection::const_iterator;
-            using IDIterator = std::set<KernelID>::const_iterator;
+
             std::reference_wrapper<const LazySelectionsIntersection> _data;
             std::optional<OrderIterator> _orderIt;
             std::optional<IDIterator> _idIt;
@@ -275,6 +290,11 @@ public:
             return true;
         }
 
+        static size_t size( const MarkovianKernels &p )
+        {
+            return p.kernelsCount();
+        }
+
         static size_t size( const Selection &s1 )
         {
             size_t sum = 0;
@@ -283,15 +303,15 @@ public:
             return sum;
         }
 
-        template<typename Select1, typename Select2>
-        static LazySelectionsIntersection intersection( Select1 &&s1, Select2 &&s2 )
+        template<typename Set1, typename Set2>
+        static LazySelectionsIntersection intersection( Set1 &&s1, Set2 &&s2 )
         {
             auto n1 = size( s1 );
             auto n2 = size( s2 );
             if ( n1 * std::log2( n2 ) < n2 * std::log2( n1 ))
             {
-                return LazySelectionsIntersection( std::forward<Select1>( s1 ), std::forward<Select2>( s2 ));
-            } else return LazySelectionsIntersection( std::forward<Select1>( s1 ), std::forward<Select2>( s2 ));
+                return LazySelectionsIntersection( std::forward<Set1>( s1 ), std::forward<Set2>( s2 ));
+            } else return LazySelectionsIntersection( std::forward<Set2>( s2 ), std::forward<Set1>( s1 ));
         }
 
     private:
@@ -299,7 +319,6 @@ public:
         std::optional<std::reference_wrapper<const Selection>> _s2Ref;
         std::optional<const Selection> _s1;
         std::optional<const Selection> _s2;
-
     };
 
 
@@ -451,16 +470,22 @@ public:
 
     using MarkovianProfiles = std::map<std::string, MarkovianKernels>;
 public:
-    explicit MarkovianKernels( Order order ) :
-            _maxOrder( order ), _characters( 0 )
+    explicit MarkovianKernels( Order mnOrder , Order mxOrder ) :
+            _order( mnOrder , mxOrder ), _characters( 0 )
     {
-        assert( order >= MinOrder );
+        assert( mxOrder >= mnOrder );
     }
 
-    explicit MarkovianKernels( const std::vector<std::string> &sequences, Order order ) :
-            _maxOrder( order ), _characters( 0 )
+    explicit MarkovianKernels( const std::pair<Order,Order> &order ) :
+            _order( order ), _characters( 0 )
     {
-        assert( order >= MinOrder );
+        assert( maxOrder() >= minOrder() );
+    }
+
+    explicit MarkovianKernels( const std::vector<std::string> &sequences, Order mnOrder , Order mxOrder ) :
+            _order( mnOrder , mxOrder ), _characters( 0 )
+    {
+        assert( maxOrder() >= minOrder() );
         train( sequences );
     }
 
@@ -469,15 +494,15 @@ public:
     MarkovianKernels( const MarkovianKernels &mE ) = default;
 
     MarkovianKernels( MarkovianKernels &&mE ) noexcept
-            : _maxOrder( mE.maxOrder()), _kernels( std::move( mE._kernels )), _characters( mE._characters )
+            : _order( mE.order()), _kernels( std::move( mE._kernels )), _characters( mE._characters )
     {
 
     }
 
     MarkovianKernels &operator=( const MarkovianKernels &mE )
     {
-        assert( _maxOrder == mE._maxOrder );
-        if ( _maxOrder != mE._maxOrder )
+        assert( _order == mE._order );
+        if ( _order != mE._order )
             throw std::runtime_error( "Orders mismatch!" );
         _kernels = mE._kernels;
         _characters = mE._characters;
@@ -486,18 +511,41 @@ public:
 
     MarkovianKernels &operator=( MarkovianKernels &&mE )
     {
-        assert( _maxOrder == mE._maxOrder );
-        if ( _maxOrder != mE._maxOrder )
+        assert( _order == mE._order );
+        if ( _order != mE._order )
             throw std::runtime_error( "Orders mismatch!" );
         _kernels = std::move( mE._kernels );
         _characters = mE._characters;
         return *this;
     }
 
+    size_t kernelsCount() const
+    {
+        size_t sum = 0;
+        for (auto &[order, isoKernels] : _kernels)
+            sum += isoKernels.size();
+        return sum;
+    }
+
+    bool contains( Order order ) const
+    {
+        auto isoKernelsIt = _kernels.find( order );
+        return isoKernelsIt != _kernels.cend();
+    }
+
+    bool contains( Order order, KernelID id ) const
+    {
+        if ( auto isoKernelsIt = _kernels.find( order ); isoKernelsIt != _kernels.cend())
+        {
+            auto kernelIt = isoKernelsIt->second.find( id );
+            return kernelIt != isoKernelsIt->second.cend();
+        } else return false;
+    }
+
     Selection featureSpace() const noexcept
     {
         Selection features;
-        for (auto order = MinOrder; order <= _maxOrder; ++order)
+        for (auto order = minOrder(); order <= maxOrder(); ++order)
             if ( auto isoKernels = kernels( order ); isoKernels )
             {
                 for (auto &[id, histogram] : isoKernels.value().get())
@@ -508,10 +556,10 @@ public:
         return features;
     }
 
-    static Selection union_( const Selection &s1, const Selection &s2, Order mxOrder )
+    static Selection union_( const Selection &s1, const Selection &s2, Order mnOrder , Order mxOrder )
     {
         Selection _union;
-        for (Order order = MinOrder; order <= mxOrder; ++order)
+        for (auto order = mnOrder; order <= mxOrder; ++order)
         {
             auto ids1It = s1.find( order );
             auto ids2It = s2.find( order );
@@ -532,12 +580,12 @@ public:
         return _union;
     }
 
-    static Selection union_( const std::vector<Selection> &sets, Order mxOrder )
+    static Selection union_( const std::vector<Selection> &sets, Order mnOrder , Order mxOrder )
     {
         Selection scannedKernels;
         for (const auto &selection : sets)
         {
-            scannedKernels = union_( scannedKernels, selection, mxOrder );
+            scannedKernels = union_( scannedKernels, selection, mnOrder , mxOrder );
         }
         return scannedKernels;
     }
@@ -577,10 +625,10 @@ public:
         return s1;
     }
 
-    static Selection intersection( const Selection &s1, const Selection &s2, Order mxOrder ) noexcept
+    static Selection intersection( const Selection &s1, const Selection &s2, Order minOrder , Order maxOrder ) noexcept
     {
         Selection _intersection;
-        for (Order order = MinOrder; order <= mxOrder; ++order)
+        for (auto order = minOrder ; order <= maxOrder ; ++order)
         {
             try
             {
@@ -596,16 +644,17 @@ public:
     }
 
     static Selection
-    intersection( const std::vector<Selection> sets, Order mxOrder, std::optional<double> minCoverage = std::nullopt )
+    intersection( const std::vector<Selection> sets, Order mnOrder, Order mxOrder,
+                  std::optional<double> minCoverage = std::nullopt )
     {
         const size_t k = sets.size();
         if ( minCoverage && minCoverage == 0.0 )
         {
-            return union_( sets, mxOrder );
+            return union_( sets, mnOrder, mxOrder );
         }
         if ( minCoverage && minCoverage > 0.0 )
         {
-            const Selection scannedKernels = union_( sets, mxOrder );
+            const Selection scannedKernels = union_( sets, mnOrder, mxOrder );
             Selection result;
             for (const auto &[order, ids] : scannedKernels)
             {
@@ -628,7 +677,7 @@ public:
             Selection result = sets.front();
             for (auto i = 1; i < sets.size(); ++i)
             {
-                result = intersection( result, sets[i], mxOrder );
+                result = intersection( result, sets[i], mnOrder, mxOrder );
             }
             return result;
         }
@@ -653,6 +702,11 @@ public:
         return profiles.cbegin()->second.maxOrder();
     }
 
+    static Order minOrder( const MarkovianProfiles &profiles )
+    {
+        return profiles.cbegin()->second.minOrder();
+    }
+
     static Order maxOrder( const HeteroKernelsFeatures &features )
     {
         return std::accumulate( std::cbegin( features ),
@@ -662,19 +716,30 @@ public:
                                 } );
     }
 
+    static Order minOrder( const HeteroKernelsFeatures &features )
+    {
+        return std::accumulate( std::cbegin( features ),
+                                std::cend( features ), Order( features.cbegin()->first ),
+                                []( Order minOrder , const auto &p ) {
+                                    return std::min( minOrder, p.first );
+                                } );
+    }
+
     static Selection
     jointFeatures( const MarkovianProfiles &profiles,
                    const std::unordered_map<Order, std::set<KernelID >> &allFeatures,
                    std::optional<double> minSharedPercentage = std::nullopt )
     {
         const Order mxOrder = maxOrder( profiles );
+        const Order mnOrder = minOrder( profiles );
+
         Selection joint;
         if ( minSharedPercentage )
         {
             assert( minSharedPercentage > 0.0 );
 
             const size_t minShared = size_t( profiles.size() * minSharedPercentage.value());
-            for (auto order = MinOrder; order <= mxOrder; ++order)
+            for (auto order = mnOrder; order <= mxOrder; ++order)
                 for (const auto id : allFeatures.at( order ))
                 {
                     auto shared = std::count_if( std::cbegin( profiles ), std::cend( profiles ),
@@ -688,7 +753,7 @@ public:
                 }
         } else
         {
-            for (auto order = MinOrder; order <= mxOrder; ++order)
+            for (auto order = mnOrder; order <= mxOrder; ++order)
                 for (const auto id : allFeatures.at( order ))
                 {
                     bool isJoint = std::all_of( std::cbegin( profiles ), std::cend( profiles ),
@@ -705,12 +770,12 @@ public:
     }
 
     static std::pair<Selection, Selection>
-    coveredFeatures( const std::map<std::string, std::vector<std::string >> &train, Order maxOrder )
+    coveredFeatures( const std::map<std::string, std::vector<std::string >> &train, Order minOrder, Order maxOrder )
     {
         std::map<std::string, MarkovianKernels> profiles;
         for (const auto &[label, seqs] : train)
         {
-            profiles.emplace( label, MarkovianKernels( maxOrder ));
+            profiles.emplace( label, MarkovianKernels( minOrder , maxOrder ));
             profiles.at( label ).train( seqs );
         }
         auto _allFeatures = featureSpace( profiles );
@@ -801,7 +866,7 @@ public:
             return std::nullopt;
         else
         {
-            MarkovianKernels filteredProfiles( other._maxOrder );
+            MarkovianKernels filteredProfiles( other._order );
             filteredProfiles._kernels = std::move( selectedKernels );
             filteredProfiles._characters = other._characters;
             return std::make_optional( filteredProfiles );
@@ -813,21 +878,21 @@ public:
         for (const auto &s : sequences)
             _countInstance( s );
 
-        for (Order order = MinOrder; order <= _maxOrder; ++order)
+        for (Order order = minOrder(); order <= maxOrder(); ++order)
             for (auto &[id, kernel] : _kernels.at( order ))
                 kernel.normalize();
     }
 
     static std::map<std::string, MarkovianKernels>
     train( const std::map<std::string, std::vector<std::string >> &training,
-           Order markovianOrder,
+           Order mnOrder, Order mxOrder ,
            std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt )
     {
         MarkovianProfiles trainedProfiles;
 
         for (const auto &[label, sequences] : training)
         {
-            MarkovianKernels kernel( markovianOrder );
+            MarkovianKernels kernel( mnOrder , mxOrder );
             kernel.train( sequences );
 
             if ( selection )
@@ -877,7 +942,7 @@ public:
     std::vector<std::pair<Order, std::reference_wrapper<const IsoKernels >>> kernels() const
     {
         std::vector<std::pair<Order, std::reference_wrapper<const IsoKernels >>> kernelsRef;
-        for (Order order = MinOrder; order <= maxOrder(); ++order)
+        for (Order order = minOrder(); order <= maxOrder(); ++order)
         {
             auto isoKernels = kernels( order );
             if ( isoKernels ) kernelsRef.emplace_back( order, isoKernels.value());
@@ -900,9 +965,19 @@ public:
         return std::nullopt;
     }
 
+    const std::pair<Order,Order> &order() const
+    {
+        return _order;
+    }
+
+    Order minOrder() const
+    {
+        return _order.first;
+    }
+
     Order maxOrder() const
     {
-        return _maxOrder;
+        return _order.second;
     }
 
     static constexpr inline KernelID lowerOrderID( KernelID id )
@@ -913,6 +988,7 @@ public:
     {
     public:
         KernelsFeaturesByOrder( const HeteroKernelsFeatures &features,
+                                std::pair< Order , Order > range ,
                                 Order order,
                                 KernelID id )
                 : _features( std::cref( features )),
@@ -921,7 +997,7 @@ public:
 
         inline bool isEmpty() const
         {
-            return currentOrder() < MinOrder;
+            return currentOrder() < _range.first;
         }
 
         inline void popTerm()
@@ -937,7 +1013,7 @@ public:
         {
             if ( !isEmpty())
             {
-                return currentOrder() + 1 - MinOrder;
+                return currentOrder() + 1 - _range.first;
             } else return 0;
         }
 
@@ -968,6 +1044,7 @@ public:
 
     protected:
         std::reference_wrapper<const HeteroKernelsFeatures> _features;
+        std::pair<Order,Order> _range;
         std::pair<Order, KernelID> _mutables;
     };
 
@@ -976,15 +1053,16 @@ public:
     {
     public:
         ObjectSeriesByOrder( const MarkovianKernels &kernels,
+                             std::pair< Order , Order > range,
                              Order order,
                              KernelID id )
-                : _kernels( std::cref( kernels )),
+                : _kernels( std::cref( kernels )), _range( range ),
                   _mutables( order, id )
         {}
 
         inline bool isEmpty() const
         {
-            return currentOrder() < MinOrder;
+            return currentOrder() < _range.first;
         }
 
         inline void popTerm()
@@ -1000,7 +1078,7 @@ public:
         {
             if ( !isEmpty())
             {
-                return currentOrder() + 1 - MinOrder;
+                return currentOrder() + 1 - _range.first;
             } else return 0;
         }
 
@@ -1018,6 +1096,7 @@ public:
 
     protected:
         std::reference_wrapper<const MarkovianKernels> _kernels;
+        std::pair<Order,Order> _range;
         std::pair<Order, KernelID> _mutables;
     };
 
@@ -1025,9 +1104,10 @@ public:
     {
     public:
         KernelSeriesByOrder( const MarkovianKernels &kernels,
+                             std::pair<Order,Order> range,
                              Order order,
                              KernelID id )
-                : ObjectSeriesByOrder<KernelSeriesByOrder, std::reference_wrapper<const Kernel >>( kernels, order, id )
+                : ObjectSeriesByOrder<KernelSeriesByOrder, std::reference_wrapper<const Kernel >>( kernels, range , order, id )
         {}
 
         std::optional<std::reference_wrapper<const Kernel >> currentTerm() const noexcept override
@@ -1046,6 +1126,7 @@ public:
     {
     public:
         ProbabilitisByOrder( const MarkovianKernels &kernels,
+                             std::pair<Order,Order> range,
                              Order order,
                              KernelID id ) : ObjectSeriesByOrder<ProbabilitisByOrder, double>( kernels, order, id )
         {}
@@ -1069,17 +1150,17 @@ public:
 
     inline KernelSeriesByOrder kernelsByOrder( KernelID id ) const
     {
-        return KernelSeriesByOrder( *this, _maxOrder, id );
+        return KernelSeriesByOrder( *this, _order , _order.second , id );
     }
 
     inline KernelSeriesByOrder kernelsByOrder( Order order, KernelID id ) const
     {
-        return KernelSeriesByOrder( *this, order, id );
+        return KernelSeriesByOrder( *this, _order, _order.second ,  id );
     }
 
     inline ProbabilitisByOrder probabilitisByOrder( Order order, KernelID id ) const
     {
-        return ProbabilitisByOrder( *this, order, id );
+        return ProbabilitisByOrder( *this, _order, _order.second , id );
     }
 
     inline size_t totalCharacters() const noexcept
@@ -1101,7 +1182,7 @@ private:
     void _countInstance( const std::string &sequence )
     {
         _characters += sequence.length();
-        for (auto order = MinOrder; order <= _maxOrder; ++order)
+        for (auto order = minOrder(); order <= maxOrder(); ++order)
             for (auto i = 0; i < sequence.size() - order; ++i)
                 _incrementInstance( sequence.cbegin() + i, sequence.cbegin() + i + order, order );
     }
@@ -1141,7 +1222,7 @@ private:
 
 
 private:
-    const Order _maxOrder;
+    const std::pair<Order,Order> _order;
     HeteroKernels _kernels;
     size_t _characters;
 };

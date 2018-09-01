@@ -14,7 +14,8 @@ int main( int argc, char *argv[] )
     using io::join;
     std::string input, testFile;
     std::string fastaFormat = keys( FormatLabels ).front();
-    std::string markovianOrder = "3";
+    std::string minOrder = "3";
+    std::string maxOrder = "5";
     size_t k = 10;
     bool showHelp = false;
     std::string grouping = keys( GroupingLabels ).front();
@@ -39,9 +40,12 @@ int main( int argc, char *argv[] )
               | clara::Opt( strategy, join( keys( ClassificationStrategyLabel ), "|" ))
               ["-s"]["--strategy"]
                       ( fmt::format( "Classification Strategy, default:{}", strategy ))
-              | clara::Opt( markovianOrder, "order" )
-              ["-o"]["--order"]
-                      ( fmt::format( "Markovian order, default:{}", markovianOrder ))
+              | clara::Opt( minOrder, "minimum order" )
+              ["-l"]["--min-order"]
+                      ( fmt::format( "Markovian lower order, default:{}", minOrder ))
+              | clara::Opt( maxOrder, "maximum order" )
+              ["-h"]["--max-order"]
+                      ( fmt::format( "Markovian higher order, default:{}", maxOrder ))
               | clara::Opt( k, "k-fold" )
               ["-k"]["--k-fold"]
                       ( fmt::format( "cross validation k-fold, default:{}", k ))
@@ -57,39 +61,48 @@ int main( int argc, char *argv[] )
         cli.writeToStream( std::cout );
     } else if ( !testFile.empty())
     {
-        fmt::print( "[Args][input:{}][testFile:{}][order:{}][kfold:{}]\n",
-                    input, testFile, markovianOrder, k );
+        fmt::print( "[Args][input:{}][testFile:{}][order:{}-{}][kfold:{}]\n",
+                    input, testFile, minOrder, maxOrder, k );
 
 
     } else
     {
         fmt::print( "[Args][input:{}]"
                     "[fformat:{}]"
-                    "[order:{}]"
+                    "[order:{}-{}]"
                     "[k-fold:{}]"
                     "[criteria:{}]"
                     "[grouping:{}]"
                     "[strategy:{}]\n",
-                    input, fastaFormat, markovianOrder,
+                    input, fastaFormat, minOrder, maxOrder,
                     k, criteria, grouping, strategy );
 
-        for (auto &c : splitParameters( criteria ))
-            for (auto &g : splitParameters( grouping ))
-                for (auto &s: splitParameters( strategy ))
-                    for (auto &o : splitParameters( markovianOrder ))
-                    {
-                        fmt::print( "[Params]"
-                                    "[order:{}]"
-                                    "[criteria:{}]"
-                                    "[grouping:{}]"
-                                    "[strategy:{}]\n", o, c, g, s );
-                        std::visit( [&]( auto &&p ) {
-                            p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ),
-                                                      std::stoi( o ), k );
-                        }, getConfiguredPipeline( g, c, s ));
-                    }
+        for (auto &min : splitParameters( minOrder ))
+            for (auto &max : splitParameters( maxOrder ))
+            {
+                auto mnOrder = std::stoi( min );
+                auto mxOrder = std::stoi( max );
+                if ( mxOrder >= mnOrder )
+                {
+                    for (auto &c : splitParameters( criteria ))
+                        for (auto &g : splitParameters( grouping ))
+                            for (auto &s: splitParameters( strategy ))
+                            {
+
+                                fmt::print( "[Params]"
+                                            "[order:{}-{}]"
+                                            "[criteria:{}]"
+                                            "[grouping:{}]"
+                                            "[strategy:{}]\n", mnOrder, mxOrder, c, g, s );
+                                std::visit( [&]( auto &&p ) {
+                                    p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ),
+                                                              mnOrder, mxOrder, k );
+                                }, getConfiguredPipeline( g, c, s ));
+                            }
 
 
+                }
+            }
     }
     return 0;
 }

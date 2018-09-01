@@ -28,7 +28,6 @@ class MarkovianModelFeatures
     static constexpr double eps = std::numeric_limits<double>::epsilon();
     static constexpr double nan = std::numeric_limits<double>::quiet_NaN();
     static constexpr double inf = std::numeric_limits<double>::infinity();
-    static constexpr Order MinOrder = MP::MinOrder;
     static constexpr size_t StatesN = MP::StatesN;
 
 
@@ -100,13 +99,14 @@ public:
     meanHistograms( const MarkovianProfiles &profiles,
                     const std::map<std::string, HeteroKernelsFeatures> &kernelWeights )
     {
+        const Order mnOrder = MP::minOrder( profiles );
         const Order mxOrder = MP::maxOrder( profiles );
         HeteroKernels means;
 
         for (const auto &[cluster, profile] : profiles)
         {
             const auto &weights = kernelWeights.at( cluster );
-            for (auto order = MinOrder; order <= mxOrder; ++order)
+            for (auto order = mnOrder; order <= mxOrder; ++order)
                 if ( auto isoKernels = profile.kernels( order ); isoKernels )
                 {
                     for (auto &[id, kernel] : isoKernels.value().get())
@@ -126,6 +126,7 @@ public:
     static std::vector<HeteroKernelsFeatures>
     histogramWeights( const std::vector<MP> &profiles )
     {
+        const Order mnOrder = profiles.front().minOrder();
         const Order mxOrder = profiles.front().maxOrder();
 
         std::vector<HeteroKernelsFeatures> weights;
@@ -135,7 +136,7 @@ public:
         {
             weights.emplace_back();
             auto &w = weights.back();
-            for (auto order = MinOrder; order <= mxOrder; ++order)
+            for (auto order = mnOrder; order <= mxOrder; ++order)
             {
                 if ( auto isoKernels = profile.kernels( order ); isoKernels )
                 {
@@ -148,7 +149,7 @@ public:
             }
         }
 
-        for (auto order = MinOrder; order <= mxOrder; ++order)
+        for (auto order = mnOrder; order <= mxOrder; ++order)
             for (auto id : scannedIDs.at( order ))
             {
                 double sum = 0;
@@ -166,6 +167,7 @@ public:
     histogramWeights( const MarkovianProfiles &profiles )
     {
         const Order mxOrder = MP::maxOrder( profiles );
+        const Order mnOrder = MP::minOrder( profiles );
 
         std::map<std::string, HeteroKernelsFeatures> weights;
         std::unordered_map<Order, std::set<KernelID >> scannedIDs;
@@ -173,7 +175,7 @@ public:
         for (const auto &[cluster, profile] : profiles)
         {
             auto &w = weights[cluster];
-            for (auto order = MinOrder; order <= mxOrder; ++order)
+            for (auto order = mnOrder; order <= mxOrder; ++order)
             {
                 if ( auto isoKernels = profile.kernels( order ); isoKernels )
                 {
@@ -286,7 +288,7 @@ public:
 
     static HeteroKernelsFeatures
     histogramRelevance_ALL2WITHIN_WEIGHTED( const std::map<std::string, std::vector<std::string >> &trainingItems,
-                                            Order maxOrder,
+                                            Order minOrder , Order maxOrder,
                                             const Selection &selection )
     {
 
@@ -302,7 +304,7 @@ public:
         {
             for (auto &s : sequences)
             {
-                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                if ( auto profile = MP::filter( MP( {s}, minOrder , maxOrder ), selection ); profile )
                 {
                     withinClassCounters[label].emplace_back( std::move( profile->hits()));
                     withinClassProfiles[label].emplace_back( std::move( profile.value()));
@@ -397,7 +399,7 @@ public:
 
     static HeteroKernelsFeatures
     histogramRelevance_ALL2WITHIN_UNIFORM( const std::map<std::string, std::vector<std::string >> &trainingItems,
-                                           Order maxOrder,
+                                           Order minOrder , Order maxOrder,
                                            const Selection &selection )
     {
 
@@ -413,7 +415,7 @@ public:
         {
             auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
-                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                if ( auto profile = MP::filter( MP( {s}, minOrder , maxOrder ), selection ); profile )
                     _profiles.emplace_back( std::move( profile.value()));
         }
 
@@ -481,7 +483,7 @@ public:
 
     static HeteroKernelsFeatures
     histogramRelevance_ALL2MIN_WEIGHTED( const std::map<std::string, std::vector<std::string >> &trainingItems,
-                                         Order maxOrder,
+                                         Order minOrder , Order maxOrder,
                                          const Selection &selection )
     {
 
@@ -498,7 +500,7 @@ public:
             auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
             {
-                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                if ( auto profile = MP::filter( MP( {s}, minOrder , maxOrder ), selection ); profile )
                 {
                     _counter.emplace_back( std::move( profile->hits()));
                     _profiles.emplace_back( std::move( profile.value()));
@@ -590,7 +592,7 @@ public:
 
     static HeteroKernelsFeatures
     histogramRelevance_MAX2MIN_WEIGHTED( const std::map<std::string, std::vector<std::string >> &trainingItems,
-                                         Order maxOrder,
+                                         Order minOrder , Order maxOrder,
                                          const Selection &selection )
     {
 
@@ -607,7 +609,7 @@ public:
             auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
             {
-                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                if ( auto profile = MP::filter( MP( {s}, minOrder , maxOrder ), selection ); profile )
                 {
                     _counter.emplace_back( std::move( profile->hits()));
                     _profiles.emplace_back( std::move( profile.value()));
@@ -698,7 +700,7 @@ public:
 
     static HeteroKernelsFeatures
     histogramRelevance_MAX2MIN_UNIFORM( const std::map<std::string, std::vector<std::string >> &trainingItems,
-                                        Order maxOrder,
+                                        Order minOrder , Order maxOrder,
                                         const Selection &selection )
     {
 
@@ -710,7 +712,7 @@ public:
         {
             auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
-                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                if ( auto profile = MP::filter( MP( {s}, minOrder , maxOrder ), selection ); profile )
                     _profiles.emplace_back( std::move( profile.value()));
         }
 
@@ -772,7 +774,7 @@ public:
 
     static HeteroKernelsFeatures
     histogramRelevance_ALL2MIN_UNIFORM( const std::map<std::string, std::vector<std::string >> &trainingItems,
-                                        Order maxOrder,
+                                        Order minOrder , Order maxOrder,
                                         const Selection &selection )
     {
         const auto k = trainingItems.size();
@@ -785,7 +787,7 @@ public:
         {
             auto &_profiles = withinClassProfiles[label];
             for (auto &s : sequences)
-                if ( auto profile = MP::filter( MP( {s}, maxOrder ), selection ); profile )
+                if ( auto profile = MP::filter( MP( {s}, minOrder , maxOrder ), selection ); profile )
                     _profiles.emplace_back( std::move( profile.value()));
         }
 
@@ -1046,6 +1048,8 @@ public:
     informationRadius_UNIFORM( const MarkovianProfiles &profiles )
     {
         const Order mxOrder = MP::maxOrder( profiles );
+        const Order mnOrder = MP::minOrder( profiles );
+
         const size_t k = profiles.size();
 
         HeteroKernelsFeatures meanEntropies;
@@ -1078,7 +1082,7 @@ public:
                         Order order,
                         double minSharedPercentage = 0.75 )
     {
-        assert( percentage > 0 && percentage <= 1 );
+        assert( minSharedPercentage > 0 && minSharedPercentage <= 1 );
         return filterJointKernels( MP::train( trainingClusters, order ), minSharedPercentage );
     }
 
@@ -1094,9 +1098,10 @@ public:
     static std::pair<Selection, MarkovianProfiles>
     filterJointKernels( MarkovianProfiles &&profiles, double minSharedPercentage = 0.75 )
     {
-        assert( percentage >= 0 && percentage <= 1 );
+        assert( minSharedPercentage >= 0 && minSharedPercentage <= 1 );
         const size_t k = profiles.size();
         const Order mxOrder = MP::maxOrder( profiles );
+        const Order mnOrder = MP::minOrder( profiles );
         auto allFeatures = MP::featureSpace( profiles );
         auto commonFeatures = MP::jointFeatures( profiles, allFeatures, minSharedPercentage );
 
@@ -1108,7 +1113,8 @@ public:
 
     static Selection
     withinJointAllUnionKernels( const std::map<std::string, std::vector<std::string>> &trainingClusters,
-                                Order order,
+                                Order mnOrder ,
+                                Order mxOrder ,
                                 double withinCoverage = 0.5 )
     {
         const size_t k = trainingClusters.size();
@@ -1119,12 +1125,12 @@ public:
             Selection allKernels;
             for (const auto &s : sequences)
             {
-                MP p ( {s}, order );
+                MP p ( {s}, mnOrder , mxOrder );
                 clusterJointKernels.emplace_back( p.featureSpace());
             }
-            withinKernels.emplace_back( MP::intersection( clusterJointKernels, order, withinCoverage ));
+            withinKernels.emplace_back( MP::intersection( clusterJointKernels, mnOrder , mxOrder , withinCoverage ));
         }
-        return MP::union_( withinKernels, order );
+        return MP::union_( withinKernels, mnOrder , mxOrder );
     }
 
     static MarkovianProfiles
