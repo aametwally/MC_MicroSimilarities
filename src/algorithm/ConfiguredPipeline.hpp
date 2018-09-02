@@ -67,10 +67,11 @@ private:
 
 public:
 
+    template< typename Entries >
     static std::vector<LabeledEntry>
-    reducedAlphabetEntries( const std::vector<LabeledEntry> &entries )
+    reducedAlphabetEntries( Entries &&entries )
     {
-        return LabeledEntry::reducedAlphabetEntries<Grouping>( entries );
+        return LabeledEntry::reducedAlphabetEntries<Grouping>( std::forward<Entries>( entries ));
     }
 
     static std::vector<LeaderBoard>
@@ -279,21 +280,14 @@ public:
 
         using Folds = std::vector<std::vector<std::pair<std::string, std::string >>>;
 
-        const Folds folds = Timers::reported_invoke_s( [&]() {
-            fmt::print( "[All Sequences:{}]\n", entries.size());
-            entries = reducedAlphabetEntries( entries );
-            auto groupedEntries = LabeledEntry::groupSequencesByLabels( std::move( entries ));
-
-            auto labels = keys( groupedEntries );
-            for (auto &l : labels) l = fmt::format( "{}({})", l, groupedEntries.at( l ).size());
-
-            fmt::print( "[Clusters:{}][{}]\n",
-                        groupedEntries.size(),
-                        io::join( labels, "|" ));
-
-            return kFoldStratifiedSplit( std::move( groupedEntries ), k );
-        }, PREPROCESSING );
-
+        auto groupedEntries = LabeledEntry::groupSequencesByLabels( reducedAlphabetEntries( std::move( entries )));
+//            fmt::print( "[All Sequences:{}]\n", entries.size());
+//            auto labels = keys( groupedEntries );
+//            for (auto &l : labels) l = fmt::format( "{}({})", l, groupedEntries.at( l ).size());
+//            fmt::print( "[Clusters:{}][{}]\n",
+//                        groupedEntries.size(),
+//                        io::join( labels, "|" ));
+        const Folds folds = kFoldStratifiedSplit( std::move( groupedEntries ), k );
 
         auto extractTest = []( const std::vector<std::pair<std::string, std::string >> &items ) {
             std::vector<std::string> sequences, labels;
@@ -336,10 +330,11 @@ public:
         for (auto &[k, v] : histogram)
         {
             if ( k == -1 )
-                fmt::print( "{:<20}Count:{}\n", "Unclassified", v );
+                fmt::print( "[{}:{}]", "Unclassified", v );
             else
-                fmt::print( "{:<20}Count:{}\n", fmt::format( "Rank:{}", k ), v );
+                fmt::print( "[{}:{}]", fmt::format( "Rank{}", k ), v );
         }
+        fmt::print("\n");
     }
 
 };

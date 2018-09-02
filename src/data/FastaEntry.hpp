@@ -36,9 +36,10 @@ public:
         return _sequence;
     }
 
-    void setSequence( const std::string &sequence )
+    template< typename Sequence >
+    void setSequence( Sequence &&sequence )
     {
-        _sequence = sequence;
+        _sequence = std::forward<Sequence>(sequence);
     }
 
     static std::vector<FastaEntry>

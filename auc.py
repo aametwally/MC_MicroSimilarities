@@ -20,14 +20,14 @@ filename_all2minu_dpd3 = '[eqn:differential_ALL2MIN_UNIFORM][sim:dpd3][auc:0.582
 filename_all2minu_gaussian = '[eqn:differential_ALL2MIN_UNIFORM][sim:gaussian][auc:0.630849][n=1444][tp=0.72][fn=0.28][range=236.937][nans=0]'
 filename_all2minu_intersection = '[eqn:differential_ALL2MIN_UNIFORM][sim:intersection][auc:0.610062][n=1444][tp=0.72][fn=0.28][range=236.937][nans=0]'
 filename_all2minu_kl = '[eqn:differential_ALL2MIN_UNIFORM][sim:kl][auc:0.650455][n=1444][tp=0.74][fn=0.26][range=236.937][nans=0]'
-files_all2minu = { 'chi': filename_all2minu_chi , 
-                  'cos': filename_all2minu_cos,
-                  'dpd1': filename_all2minu_dpd1,
-                  'dpd2': filename_all2minu_dpd2,
-                  'dpd3': filename_all2minu_dpd3,
-                  'gaussian': filename_all2minu_gaussian ,
-                  'intersection': filename_all2minu_intersection,
-                  'kl': filename_all2minu_kl}
+files_all2minu = { 'Chi-squared': filename_all2minu_chi , 
+                  'Cosine': filename_all2minu_cos,
+                  'DPD (α=1)': filename_all2minu_dpd1,
+                  'DPD (α=2)': filename_all2minu_dpd2,
+                  'DPD (α=3)': filename_all2minu_dpd3,
+                  'Gaussian RBF': filename_all2minu_gaussian ,
+                  'Intersection': filename_all2minu_intersection,
+                  'Kullback-Leibler': filename_all2minu_kl}
     
 filename_all2withinu_chi = '[eqn:differential_ALL2WITHIN_UNIFORM][sim:chi][auc:0.649963][n=1444][tp=0.67][fn=0.33][range=86.5823][nans=0]'
 filename_all2withinu_cos = '[eqn:differential_ALL2WITHIN_UNIFORM][sim:cos][auc:0.668784][n=1444][tp=0.74][fn=0.26][range=86.5823][nans=0]'
@@ -37,14 +37,14 @@ filename_all2withinu_dpd3 = '[eqn:differential_ALL2WITHIN_UNIFORM][sim:dpd3][auc
 filename_all2withinu_gaussian = '[eqn:differential_ALL2WITHIN_UNIFORM][sim:gaussian][auc:0.653653][n=1444][tp=0.72][fn=0.28][range=86.5823][nans=0]'
 filename_all2withinu_intersection = '[eqn:differential_ALL2WITHIN_UNIFORM][sim:intersection][auc:0.633883][n=1444][tp=0.72][fn=0.28][range=86.5823][nans=0]'
 filename_all2withinu_kl = '[eqn:differential_ALL2WITHIN_UNIFORM][sim:kl][auc:0.672029][n=1444][tp=0.74][fn=0.26][range=86.5823][nans=0]'
-files_all2withinu = { 'chi': filename_all2withinu_chi , 
-                  'cos': filename_all2withinu_cos,
-                  'dpd1': filename_all2withinu_dpd1,
-                  'dpd2': filename_all2withinu_dpd2,
-                  'dpd3': filename_all2withinu_dpd3,
-                  'gaussian': filename_all2withinu_gaussian ,
-                  'intersection': filename_all2withinu_intersection,
-                  'kl': filename_all2withinu_kl}
+files_all2withinu = { 'Chi-squared': filename_all2withinu_chi , 
+                  'Cosine': filename_all2withinu_cos,
+                  'DPD (α=1)': filename_all2withinu_dpd1,
+                  'DPD (α=2)': filename_all2withinu_dpd2,
+                  'DPD (α=3)': filename_all2withinu_dpd3,
+                  'Gaussian RBF': filename_all2withinu_gaussian ,
+                  'Intersection': filename_all2withinu_intersection,
+                  'Kullback-Leibler': filename_all2withinu_kl}
 
 filename_max2minu_chi = '[eqn:differential_MAX2MIN_UNIFORM][sim:chi][auc:0.63114][n=1444][tp=0.67][fn=0.33][range=270.396][nans=0]'
 filename_max2minu_cos = '[eqn:differential_MAX2MIN_UNIFORM][sim:cos][auc:0.66106][n=1444][tp=0.74][fn=0.26][range=270.396][nans=0]'
@@ -54,14 +54,14 @@ filename_max2minu_dpd3 = '[eqn:differential_MAX2MIN_UNIFORM][sim:dpd3][auc:0.580
 filename_max2minu_gaussian = '[eqn:differential_MAX2MIN_UNIFORM][sim:gaussian][auc:0.641584][n=1444][tp=0.72][fn=0.28][range=270.396][nans=0]'
 filename_max2minu_intersection = '[eqn:differential_MAX2MIN_UNIFORM][sim:intersection][auc:0.621761][n=1444][tp=0.72][fn=0.28][range=270.396][nans=0]'
 filename_max2minu_kl = '[eqn:differential_MAX2MIN_UNIFORM][sim:kl][auc:0.663091][n=1444][tp=0.74][fn=0.26][range=270.396][nans=0]'
-files_max2minu = { 'chi': filename_max2minu_chi , 
-                  'cos': filename_max2minu_cos,
-                  'dpd1': filename_max2minu_dpd1,
-                  'dpd2': filename_max2minu_dpd2,
-                  'dpd3': filename_max2minu_dpd3,
-                  'gaussian': filename_max2minu_gaussian ,
-                  'intersection': filename_max2minu_intersection,
-                  'kl': filename_max2minu_kl}
+files_max2minu = { 'Chi-squared': filename_max2minu_chi , 
+                  'Cosine': filename_max2minu_cos,
+                  'DPD (α=1)': filename_max2minu_dpd1,
+                  'DPD (α=2)': filename_max2minu_dpd2,
+                  'DPD (α=3)': filename_max2minu_dpd3,
+                  'Gaussian RBF': filename_max2minu_gaussian ,
+                  'Intersection': filename_max2minu_intersection,
+                  'Kullback-Leibler': filename_max2minu_kl}
 
 filename_iru_chi = '[eqn:differential_informationRadius_UNIFORM][sim:chi][auc:0.640075][n=1444][tp=0.67][fn=0.33][range=405.507][nans=0]'
 filename_iru_cos = '[eqn:differential_informationRadius_UNIFORM][sim:cos][auc:0.655541][n=1444][tp=0.74][fn=0.26][range=405.507][nans=0]'
@@ -71,18 +71,18 @@ filename_iru_dpd3 = '[eqn:differential_informationRadius_UNIFORM][sim:dpd3][auc:
 filename_iru_gaussian = '[eqn:differential_informationRadius_UNIFORM][sim:gaussian][auc:0.639796][n=1444][tp=0.72][fn=0.28][range=405.507][nans=0]'
 filename_iru_intersection = '[eqn:differential_informationRadius_UNIFORM][sim:intersection][auc:0.612661][n=1444][tp=0.72][fn=0.28][range=405.507][nans=0]'
 filename_iru_kl = '[eqn:differential_informationRadius_UNIFORM][sim:kl][auc:0.65575][n=1444][tp=0.74][fn=0.26][range=405.507][nans=0]'
-files_iru = { 'chi': filename_iru_chi , 
-                  'cos': filename_iru_cos,
-                  'dpd1': filename_iru_dpd1,
-                  'dpd2': filename_iru_dpd2,
-                  'dpd3': filename_iru_dpd3,
-                  'gaussian': filename_iru_gaussian ,
-                  'intersection': filename_iru_intersection,
-                  'kl': filename_iru_kl}
+files_iru = { 'Chi-squared': filename_iru_chi , 
+                  'Cosine': filename_iru_cos,
+                  'DPD (α=1)': filename_iru_dpd1,
+                  'DPD (α=2)': filename_iru_dpd2,
+                  'DPD (α=3)': filename_iru_dpd3,
+                  'Gaussian RBF': filename_iru_gaussian ,
+                  'Intersection': filename_iru_intersection,
+                  'Kullback-Leibler': filename_iru_kl}
 
 def make_dataframe_from_files( dictionary , dirname ):
     x_axis = np.arange(0,1,0.01)
-    new_dict = { 'fpr' : x_axis }
+    new_dict = { 'FPR' : x_axis }
 
     for k,v in dictionary.items():
         input = np.loadtxt( dirname + '/' + v , dtype = np.float32 )
@@ -97,25 +97,35 @@ def make_dataframe_from_files( dictionary , dirname ):
         
         
     df = pd.DataFrame(new_dict)
-    return pd.melt( df , id_vars = ['fpr'] , value_name = 'tpr' , var_name ='metric' )
+    return pd.melt( df , id_vars = ['FPR'] , value_name = 'TPR' , var_name ='Metric' )
 
+
+def get_theme():
+    t = theme_gray()
+    t._rcParams['font.size'] = 32 # Legend font size
+    t._rcParams['xtick.labelsize'] = 20 # xaxis tick label size
+    t._rcParams['ytick.labelsize'] = 20 # yaxis tick label size
+    t._rcParams['axes.labelsize'] = 24  # axis label size
+    return t
 
 df = make_dataframe_from_files(files_all2minu , dirname )
-g = ggplot(df, aes(x='fpr', y='tpr', color='metric')) + geom_line() + \
- ggtitle("All-to-min (UNIFORM)")
+g = ggplot(df, aes(x='FPR', y='TPR', color='Metric')) + geom_line() + \
+ ggtitle("All-to-min (UNIFORM)") + get_theme()
+
 g.show()
 
 df = make_dataframe_from_files(files_all2withinu , dirname )
-g = ggplot(df, aes(x='fpr', y='tpr', color='metric')) + geom_line() + \
- ggtitle("All-to-within (UNIFORM)")
+g = ggplot(df, aes(x='FPR', y='TPR', color='Metric')) + geom_line() + \
+ ggtitle("All-to-within (UNIFORM)")  + get_theme()
 g.show()
 
 df = make_dataframe_from_files(files_max2minu , dirname )
-g = ggplot(df, aes(x='fpr', y='tpr', color='metric')) + geom_line() + \
- ggtitle("Max-to-min (UNIFORM)")
+g = ggplot(df, aes(x='FPR', y='TPR', color='Metric')) + geom_line() + \
+ ggtitle("Max-to-min (UNIFORM)") + get_theme()
 g.show()
 
 df = make_dataframe_from_files(files_iru , dirname )
-g = ggplot(df, aes(x='fpr', y='tpr', color='metric')) + geom_line() + \
- ggtitle("Information Radius (Jensen-Shannon) (UNIFORM)")
+g = ggplot(df, aes(x='FPR', y='TPR', color='Metric')) + geom_line() + \
+ ggtitle("Information Radius (Jensen-Shannon) (UNIFORM)") + get_theme()
+g = g + t
 g.show()

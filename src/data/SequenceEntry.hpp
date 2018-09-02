@@ -113,16 +113,14 @@ public:
         return reducedSequence;
     }
 
-    template<typename AAGrouping>
+    template<typename AAGrouping, typename Entries>
     static std::vector<T>
-    reducedAlphabetEntries( const std::vector<T> &unirefEntries )
+    reducedAlphabetEntries( Entries &&unirefEntries )
     {
-        std::vector<T> reducedEntries;
-        for (const T &ui : unirefEntries)
+        std::vector<T> reducedEntries = std::forward<Entries>(unirefEntries);
+        for ( T &ui : reducedEntries)
         {
-            auto reduced = ui;
-            reduced.setSequence( reduceAlphabets<AAGrouping>( ui.getSequence()));
-            reducedEntries.emplace_back( reduced );
+            ui.setSequence( reduceAlphabets<AAGrouping>( ui.getSequence()));
         }
         return reducedEntries;
     }
