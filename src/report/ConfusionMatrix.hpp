@@ -14,6 +14,7 @@ private:
     using Row = std::vector<T>;
     using Matrix = std::vector<Row>;
     static constexpr double eps = std::numeric_limits<double>::epsilon();
+    static constexpr char unclassified[] = "Unclassified";
 public:
 
     explicit ConfusionMatrix( const std::set<Label> &labels ) :
@@ -24,40 +25,24 @@ public:
 
     }
 
-    explicit ConfusionMatrix( const std::vector<Label> &labels, const std::vector<Label> &prediction )
-            : _dictionary( _makeDictionary( labels, prediction )),
-              _order( _dictionary.size()),
-              _matrix( Matrix( _order, Row( _order, 0 )))
-    {
-        assert( labels.size() == prediction.size());
-
-        if ( labels.size() != prediction.size())
-            throw std::length_error( "Labels size should match predictions size" );
-        else
-        {
-            for (auto i = 0; i < labels.size(); ++i)
-                countInstance( prediction.at( i ), labels.at( i ));
-        }
-    }
-
     void countInstance( const Label &prediction, const Label &actual )
     {
         assert( !_dictionary.empty());
-        size_t actualIdx = _dictionary.at( actual );
-        size_t outputIdx = _dictionary.at( prediction );
+        size_t actualIdx = _getClassIdx( actual );
+        size_t outputIdx = _getClassIdx( prediction );
         ++_matrix[actualIdx][outputIdx];
     }
 
     T truePositives( const Label &cl ) const
     {
         assert( !_dictionary.empty());
-        size_t classIdx = _dictionary.at( cl );
+        size_t classIdx = _getClassIdx( cl );
         return _matrix.at( classIdx ).at( classIdx );
     }
 
     T falsePositives( const Label &cl ) const
     {
-        size_t classIdx = _dictionary.at( cl );
+        size_t classIdx = _getClassIdx( cl );
         T fp = 0;
         for (auto i = 0; i < _order; ++i)
             fp += _matrix.at( i ).at( classIdx );
@@ -66,7 +51,7 @@ public:
 
     T falseNegatives( const Label &cl ) const
     {
-        size_t classIdx = _dictionary.at( cl );
+        size_t classIdx = _getClassIdx( cl );
         T fn = 0;
         for (auto i = 0; i < _order; ++i)
             fn += _matrix.at( classIdx ).at( i );
@@ -75,13 +60,13 @@ public:
 
     T trueNegatives( const Label &cl ) const
     {
-        auto classIdx = _dictionary.at( cl );
+        auto classIdx = _getClassIdx( cl );
         return _trueNegatives( classIdx );
     }
 
     T population( const Label &cl ) const
     {
-        size_t classIdx = _dictionary.at( cl );
+        size_t classIdx = _getClassIdx( cl );
         return _population( classIdx );
     }
 
@@ -95,13 +80,13 @@ public:
 
     double accuracy( const Label &cl ) const
     {
-        size_t classIdx = _dictionary.at( cl );
+        size_t classIdx = _getClassIdx( cl );
         return _accuracy( classIdx );
     }
 
     double auc( const Label &cl ) const
     {
-        size_t classIdx = _dictionary.at( cl );
+        size_t classIdx = _getClassIdx( cl );
         return _auc( classIdx );
     }
 
@@ -128,7 +113,7 @@ public:
 
     double precision( const Label &cl ) const
     {
-        auto classIdx = _dictionary.at( cl );
+        auto classIdx = _getClassIdx( cl );
         return _precision( classIdx );
     }
 
@@ -140,7 +125,7 @@ public:
 
     double recall( const Label &cl )
     {
-        auto classIdx = _dictionary.at( cl );
+        auto classIdx = _getClassIdx( cl );
         return _recall( classIdx );
     }
 
@@ -152,7 +137,7 @@ public:
 
     double fScore( const Label &cl, double beta = 1 ) const
     {
-        auto classIdx = _dictionary.at( cl );
+        auto classIdx = _getClassIdx( cl );
         return _fScore( classIdx, beta );
     }
 
@@ -272,7 +257,7 @@ public:
     template<size_t indentation = 0>
     void printClassReport( const Label &cl ) const
     {
-        auto classIdx = _dictionary.at( cl );
+        auto classIdx = _getClassIdx( cl );
         fmt::print( "{:<{}}General Statistics for class[{}]:[{}]\n",
                     "", indentation, classIdx, cl );
         auto printRow = _printRowFunction<indentation + 2>();
@@ -289,6 +274,17 @@ public:
     }
 
 private:
+    size_t _getClassIdx( const Label &cl ) const
+    {
+        try{
+            auto idx = _dictionary.at( cl );
+            return idx;
+        } catch( const std::out_of_range &)
+        {
+            return _dictionary.at( unclassified );
+        }
+    }
+
     template<size_t indentation, size_t col1Width = 50>
     static auto _printRowFunction()
     {
@@ -304,27 +300,11 @@ private:
         size_t i = 0;
         for (auto &label : labels)
             dic.emplace( label, i++ );
+        dic.emplace( unclassified , i );
 
         return dic;
     }
 
-    static std::map<Label, size_t> _makeDictionary( const std::vector<Label> &labels,
-                                                    const std::vector<Label> &prediction )
-    {
-        std::map<Label, size_t> dic;
-        size_t i = 0;
-        for (auto &label : labels)
-        {
-            auto res = dic.emplace( label, i );
-            i += res.second;
-        }
-        for (auto &p : prediction)
-        {
-            auto res = dic.emplace( p, i );
-            i += res.second;
-        }
-        return dic;
-    }
 
     double _accuracy( size_t classIdx ) const
     {

@@ -319,7 +319,10 @@ public:
                     ++histogram[classification.trueClusterRank()];
                     validation.countInstance( i, prediction.value(), classification.trueCluster());
                 }
-                else ++histogram[-1];
+                else {
+                    ++histogram[-1];
+                    validation.countInstance( i, "unclassified", classification.trueCluster());
+                }
             }
         }
 

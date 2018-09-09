@@ -2,12 +2,12 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true" buildAllGenerated="true">
     <generated>
-      <config projectName="markovian_features" targetName="dlib" />
       <config projectName="markovian_features" targetName="markovian_features" />
       <config projectName="markovian_features" targetName="markovian_features_svm" />
       <config projectName="markovian_features" targetName="confusionMatrix" />
       <config projectName="markovian_features" targetName="subsetDataset" />
       <config projectName="markovian_features" targetName="markovian_features_scoring" />
+      <config projectName="markovian_features" targetName="dlib" />
       <config projectName="markovian_features" targetName="fmt" />
     </generated>
   </component>
@@ -34,11 +34,8 @@
   <component name="ChangeListManager">
     <list default="true" id="3f0d2b72-853a-4e53-a27b-7098811840a8" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auc.py" beforeDir="false" afterPath="$PROJECT_DIR$/auc.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/FastaEntry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/FastaEntry.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/LabeledEntry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/LabeledEntry.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/cmake-build-release/" />
@@ -55,7 +52,7 @@
       <file leaf-file-name="MarkovianKernels.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/algorithm/MarkovianKernels.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="134">
+            <state relative-caret-position="13600">
               <caret line="850" column="5" selection-start-line="850" selection-start-column="5" selection-end-line="850" selection-end-column="5" />
               <folding>
                 <element signature="e#62#83#0" expanded="true" />
@@ -68,7 +65,7 @@
       <file leaf-file-name="FeatureScoringPipeline.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-86">
+            <state relative-caret-position="3424">
               <caret line="214" column="13" selection-start-line="214" selection-start-column="13" selection-end-line="214" selection-end-column="13" />
               <folding>
                 <element signature="e#148#175#0" expanded="true" />
@@ -80,17 +77,17 @@
       <file leaf-file-name="aminoacids_grouping.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="304">
-              <caret line="70" column="39" lean-forward="true" selection-start-line="70" selection-start-column="39" selection-end-line="70" selection-end-column="39" />
+            <state relative-caret-position="1120">
+              <caret line="70" column="39" selection-start-line="70" selection-start-column="39" selection-end-line="70" selection-end-column="39" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ConfiguredPipeline.hpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="ConfiguredPipeline.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="118">
-              <caret line="334" column="57" lean-forward="true" selection-start-line="334" selection-start-column="57" selection-end-line="334" selection-end-column="57" />
+            <state relative-caret-position="5168">
+              <caret line="323" column="59" selection-start-line="323" selection-start-column="59" selection-end-line="323" selection-end-column="59" />
               <folding>
                 <element signature="e#140#158#0" expanded="true" />
                 <element signature="e#2010#2030#0" expanded="true" />
@@ -99,11 +96,35 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="FeatureScoreAUC.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/features/FeatureScoreAUC.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2640">
+              <caret line="165" column="22" selection-start-line="165" selection-start-column="22" selection-end-line="165" selection-end-column="22" />
+              <folding>
+                <element signature="e#134#155#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ConfusionMatrix.hpp" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/report/ConfusionMatrix.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="224">
+              <caret line="14" column="22" lean-forward="true" selection-start-line="14" selection-start-column="22" selection-end-line="14" selection-end-column="22" />
+              <folding>
+                <element signature="e#165#217#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="SequenceEntry.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/data/SequenceEntry.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="518">
-              <caret line="117" column="53" lean-forward="true" selection-start-line="117" selection-start-column="53" selection-end-line="117" selection-end-column="53" />
+            <state relative-caret-position="1872">
+              <caret line="117" column="53" selection-start-line="117" selection-start-column="53" selection-end-line="117" selection-end-column="53" />
               <folding>
                 <element signature="e#3818#3857#0" expanded="true" />
               </folding>
@@ -114,7 +135,7 @@
       <file leaf-file-name="FastaEntry.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/data/FastaEntry.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="288">
+            <state relative-caret-position="688">
               <caret line="43" selection-start-line="43" selection-end-line="43" />
               <folding>
                 <element signature="e#698#719#0" expanded="true" />
@@ -126,7 +147,7 @@
       <file leaf-file-name="LabeledEntry.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/data/LabeledEntry.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="224">
+            <state relative-caret-position="2144">
               <caret line="134" column="5" selection-start-line="134" selection-start-column="5" selection-end-line="134" selection-end-column="5" />
               <folding>
                 <element signature="e#3622#3643#0" expanded="true" />
@@ -203,12 +224,12 @@
         <option value="$PROJECT_DIR$/src/algorithm/MarkovianModelFeatures.hpp" />
         <option value="$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp" />
         <option value="$PROJECT_DIR$/src/app/markovian_features.cpp" />
-        <option value="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" />
         <option value="$PROJECT_DIR$/src/features/similarities.hpp" />
         <option value="$PROJECT_DIR$/src/data/FastaEntry.hpp" />
         <option value="$PROJECT_DIR$/src/data/LabeledEntry.hpp" />
         <option value="$PROJECT_DIR$/src/data/SequenceEntry.hpp" />
         <option value="$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp" />
+        <option value="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" />
       </list>
     </option>
   </component>
@@ -230,7 +251,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -299,6 +319,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -364,11 +385,14 @@
       <workItem from="1534873512688" duration="136536000" />
       <workItem from="1535189753205" duration="34655000" />
       <workItem from="1535384702495" duration="25898000" />
+      <workItem from="1536337752550" duration="1351000" />
+      <workItem from="1536403942576" duration="3339000" />
+      <workItem from="1536466458431" duration="826000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="678080000" />
+    <option name="totallyTimeSpent" value="683596000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -385,7 +409,6 @@
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24458204" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.3295082" />
-      <window_info active="true" anchor="bottom" id="Messages" order="7" visible="true" weight="0.3262295" />
       <window_info anchor="bottom" id="CMake" order="8" sideWeight="0.499226" weight="0.31967214" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.50077397" side_tool="true" weight="0.52786887" />
       <window_info anchor="bottom" id="Version Control" order="10" weight="0.3295082" />
@@ -399,28 +422,29 @@
       <window_info anchor="bottom" id="Inspection Results" order="12" weight="0.3295082" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info active="true" anchor="bottom" id="Messages" order="7" visible="true" weight="0.3262295" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.74590164" />
     </layout>
     <layout-to-restore>
-      <window_info anchor="bottom" id="CMake" order="11" sideWeight="0.499226" weight="0.5277778" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2004644" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.3295082" />
+      <window_info anchor="bottom" id="Version Control" order="10" weight="0.3295082" />
       <window_info anchor="bottom" id="Run" order="2" sideWeight="0.499226" weight="0.29344264" />
-      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32786885" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.38196722" />
+      <window_info active="true" anchor="bottom" id="Messages" order="7" visible="true" weight="0.44590163" />
       <window_info anchor="bottom" id="Terminal" order="8" weight="0.3295082" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.50077397" side_tool="true" weight="0.52786887" />
-      <window_info anchor="bottom" id="Version Control" order="10" weight="0.3295082" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32786885" />
-      <window_info active="true" anchor="bottom" id="Messages" order="7" visible="true" weight="0.44590163" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="CMake" order="11" sideWeight="0.499226" weight="0.5277778" />
       <window_info id="Favorites" order="2" side_tool="true" />
     </layout-to-restore>
   </component>
@@ -446,16 +470,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/features/FeatureScoreAUC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1220">
-          <caret line="165" column="22" selection-start-line="165" selection-start-column="22" selection-end-line="165" selection-end-column="22" />
-          <folding>
-            <element signature="e#134#155#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/GP/fmt/include/fmt/format-inl.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="89">
@@ -467,10 +481,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="138">
           <caret line="81" column="19" selection-start-line="81" selection-start-column="19" selection-end-line="81" selection-end-column="19" />
-          <folding>
-            <element signature="e#190#246#0" expanded="true" />
-            <element signature="e#3065#3089#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -635,9 +645,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="256">
           <caret line="16" column="1" selection-start-line="16" selection-start-column="1" selection-end-line="16" selection-end-column="1" />
-          <folding>
-            <element signature="e#79#116#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -711,13 +718,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/report/ConfusionMatrix.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="154">
-          <caret line="300" column="35" selection-start-line="300" selection-start-column="35" selection-end-line="300" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/MarkovianModelFeatures.hpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-76">
@@ -729,10 +729,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="138">
           <caret line="58" selection-start-line="58" selection-end-line="58" />
-          <folding>
-            <element signature="e#55#72#0" expanded="true" />
-            <element signature="e#5757#5805#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -750,16 +746,12 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="106">
           <caret line="507" column="9" selection-start-line="507" selection-start-column="9" selection-end-line="507" selection-end-column="9" />
-          <folding>
-            <element signature="e#5496#5511#0" expanded="true" />
-            <element signature="e#5834#5940#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/MarkovianKernels.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="134">
+        <state relative-caret-position="13600">
           <caret line="850" column="5" selection-start-line="850" selection-start-column="5" selection-end-line="850" selection-end-column="5" />
           <folding>
             <element signature="e#62#83#0" expanded="true" />
@@ -770,14 +762,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="304">
-          <caret line="70" column="39" lean-forward="true" selection-start-line="70" selection-start-column="39" selection-end-line="70" selection-end-column="39" />
+        <state relative-caret-position="1120">
+          <caret line="70" column="39" selection-start-line="70" selection-start-column="39" selection-end-line="70" selection-end-column="39" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-86">
+        <state relative-caret-position="3424">
           <caret line="214" column="13" selection-start-line="214" selection-start-column="13" selection-end-line="214" selection-end-column="13" />
           <folding>
             <element signature="e#148#175#0" expanded="true" />
@@ -794,7 +786,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/data/FastaEntry.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="288">
+        <state relative-caret-position="688">
           <caret line="43" selection-start-line="43" selection-end-line="43" />
           <folding>
             <element signature="e#698#719#0" expanded="true" />
@@ -804,7 +796,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/data/LabeledEntry.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="224">
+        <state relative-caret-position="2144">
           <caret line="134" column="5" selection-start-line="134" selection-start-column="5" selection-end-line="134" selection-end-column="5" />
           <folding>
             <element signature="e#3622#3643#0" expanded="true" />
@@ -819,21 +811,41 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/data/SequenceEntry.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="518">
-          <caret line="117" column="53" lean-forward="true" selection-start-line="117" selection-start-column="53" selection-end-line="117" selection-end-column="53" />
+        <state relative-caret-position="1872">
+          <caret line="117" column="53" selection-start-line="117" selection-start-column="53" selection-end-line="117" selection-end-column="53" />
           <folding>
             <element signature="e#3818#3857#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/features/FeatureScoreAUC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2640">
+          <caret line="165" column="22" selection-start-line="165" selection-start-column="22" selection-end-line="165" selection-end-column="22" />
+          <folding>
+            <element signature="e#134#155#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="118">
-          <caret line="334" column="57" lean-forward="true" selection-start-line="334" selection-start-column="57" selection-end-line="334" selection-end-column="57" />
+        <state relative-caret-position="5168">
+          <caret line="323" column="59" selection-start-line="323" selection-start-column="59" selection-end-line="323" selection-end-column="59" />
           <folding>
             <element signature="e#140#158#0" expanded="true" />
             <element signature="e#2010#2030#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/report/ConfusionMatrix.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="224">
+          <caret line="14" column="22" lean-forward="true" selection-start-line="14" selection-start-column="22" selection-end-line="14" selection-end-column="22" />
+          <folding>
+            <element signature="e#165#217#0" expanded="true" />
           </folding>
         </state>
       </provider>
