@@ -609,10 +609,10 @@ FeatureScoringPipelineVariant getFeatureScoringPipeline( const std::string &grou
             return FeatureScoringPipeline<AAGrouping_NOGROUPING20>();
         case AminoAcidGroupingEnum::DIAMOND11 :
             return FeatureScoringPipeline<AAGrouping_DIAMOND11>();
-        case AminoAcidGroupingEnum::OLFER8 :
-            return FeatureScoringPipeline<AAGrouping_OLFER8>();
-        case AminoAcidGroupingEnum::OLFER15 :
-            return FeatureScoringPipeline<AAGrouping_OLFER15>();
+        case AminoAcidGroupingEnum::OFER8 :
+            return FeatureScoringPipeline<AAGrouping_OFER8>();
+        case AminoAcidGroupingEnum::OFER15 :
+            return FeatureScoringPipeline<AAGrouping_OFER15>();
     }
 };
 

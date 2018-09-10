@@ -150,10 +150,10 @@ ZYipelineVariant getZYPipeline( const std::string &groupingLabel )
             return ZYPipeline<AAGrouping_NOGROUPING20>();
         case AminoAcidGroupingEnum::DIAMOND11 :
             return ZYPipeline<AAGrouping_DIAMOND11>();
-        case AminoAcidGroupingEnum::OLFER8 :
-            return ZYPipeline<AAGrouping_OLFER8>();
-        case AminoAcidGroupingEnum::OLFER15 :
-            return ZYPipeline<AAGrouping_OLFER15>();
+        case AminoAcidGroupingEnum::OFER8 :
+            return ZYPipeline<AAGrouping_OFER8>();
+        case AminoAcidGroupingEnum::OFER15 :
+            return ZYPipeline<AAGrouping_OFER15>();
     }
 };
 

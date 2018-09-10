@@ -119,7 +119,7 @@ public:
                 for (const auto &[id, k1] : isoKernels.get())
                 {
                     const auto p1 = query.probabilitisByOrder( mxOrder, id );
-                    const auto s1 = query.kernelsByOrder( mxOrder, id );
+                    const auto s1 = query.histogramsByOrder( mxOrder, id );
                     PriorityQueue pq( targets.size());
 
                     for (const auto &[clusterName, profile] : targets)
@@ -180,7 +180,7 @@ public:
                         PriorityQueue pq( targets.size());
                         for (const auto &[clusterName, profile] : targets)
                         {
-                            if ( auto k2Opt = profile.kernel( order, id ); k2Opt )
+                            if ( auto k2Opt = profile.histogram( order, id ); k2Opt )
                             {
                                 auto val = Criteria::measure( k1, k2Opt.value().get());
                                 pq.emplace( clusterName, val );
@@ -229,7 +229,7 @@ public:
                         for (const auto &[id, kernel1] : isoKernels.get())
                         {
                             double score = getOr( relevance, order, id, double( 0 ));
-                            auto k2 = profile.kernel( order, id );
+                            auto k2 = profile.histogram( order, id );
                             if ( k2 )
                             {
                                 sum += Criteria::measure( kernel1, k2.value().get()) + score;
@@ -407,10 +407,10 @@ PipelineVariant getConfiguredPipeline( AminoAcidGroupingEnum grouping, CriteriaE
             return getConfiguredPipeline<AAGrouping_NOGROUPING20>( criteria, strategy );
         case AminoAcidGroupingEnum::DIAMOND11 :
             return getConfiguredPipeline<AAGrouping_DIAMOND11>( criteria, strategy );
-        case AminoAcidGroupingEnum::OLFER8 :
-            return getConfiguredPipeline<AAGrouping_OLFER8>( criteria, strategy );
-        case AminoAcidGroupingEnum::OLFER15 :
-            return getConfiguredPipeline<AAGrouping_OLFER15>( criteria, strategy );
+        case AminoAcidGroupingEnum::OFER8 :
+            return getConfiguredPipeline<AAGrouping_OFER8>( criteria, strategy );
+        case AminoAcidGroupingEnum::OFER15 :
+            return getConfiguredPipeline<AAGrouping_OFER15>( criteria, strategy );
         default:
             throw std::runtime_error( "Undefined Strategy" );
 

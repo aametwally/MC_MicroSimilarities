@@ -47,7 +47,7 @@ int main( int argc, char *argv[] )
     {
         fmt::print( "[Args][input:{}]"
                     "[fformat:{}]"
-                    "[order:{}-{}]"
+                    "[order:{}]"
                     "[k-fold:{}]"
                     "[grouping:{}]\n",
                     input, fastaFormat, order,

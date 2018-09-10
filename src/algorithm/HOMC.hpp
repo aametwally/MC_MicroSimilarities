@@ -98,23 +98,23 @@ namespace MC {
         size_t histogramsCount() const
         {
             size_t sum = 0;
-            for (auto &[order, isoKernels] : _histograms)
-                sum += isoKernels.size();
+            for (auto &[order, isoHistograms] : _histograms)
+                sum += isoHistograms.size();
             return sum;
         }
 
         bool contains( Order order ) const
         {
-            auto isoKernelsIt = _histograms.find( order );
-            return isoKernelsIt != _histograms.cend();
+            auto isoHistogramsIt = _histograms.find( order );
+            return isoHistogramsIt != _histograms.cend();
         }
 
         bool contains( Order order, HistogramID id ) const
         {
-            if ( auto isoKernelsIt = _histograms.find( order ); isoKernelsIt != _histograms.cend())
+            if ( auto isoHistogramsIt = _histograms.find( order ); isoHistogramsIt != _histograms.cend())
             {
-                auto kernelIt = isoKernelsIt->second.find( id );
-                return kernelIt != isoKernelsIt->second.cend();
+                auto histogramIt = isoHistogramsIt->second.find( id );
+                return histogramIt != isoHistogramsIt->second.cend();
             } else return false;
         }
 
@@ -122,9 +122,9 @@ namespace MC {
         {
             Selection features;
             for (auto order = minOrder(); order <= maxOrder(); ++order)
-                if ( auto isoKernels = histograms( order ); isoKernels )
+                if ( auto isoHistograms = histograms( order ); isoHistograms )
                 {
-                    for (auto &[id, histogram] : isoKernels.value().get())
+                    for (auto &[id, histogram] : isoHistograms.value().get())
                     {
                         features[order].insert( id );
                     }
@@ -146,11 +146,11 @@ namespace MC {
 
             for (auto &[order, ids] : select)
             {
-                auto &isoKernels = histograms( order );
+                auto &isoHistograms = histograms( order );
                 for (auto id : ids)
                 {
-                    if ( auto kernelIt = isoKernels.find( id ); kernelIt != isoKernels.cend())
-                        features.insert( std::end( features ), std::cbegin( *kernelIt ), std::cend( *kernelIt ));
+                    if ( auto histogramIt = isoHistograms.find( id ); histogramIt != isoHistograms.cend())
+                        features.insert( std::end( features ), std::cbegin( *histogramIt ), std::cend( *histogramIt ));
                     else
                         features.insert( std::end( features ), MC::StatesN, missingVals );
 
@@ -168,14 +168,14 @@ namespace MC {
 
             for (auto &[order, ids] : select)
             {
-                auto &isoKernels = histograms( order );
+                auto &isoHistograms = histograms( order );
                 for (auto id : ids)
                 {
-                    if ( auto kernelIt = isoKernels.find( id ); kernelIt != isoKernels.cend())
+                    if ( auto histogramIt = isoHistograms.find( id ); histogramIt != isoHistograms.cend())
                     {
                         size_t offset = order * id * MC::StatesN;
                         for (auto i = 0; i < MC::StatesN; ++i)
-                            features[offset + i] = (*kernelIt)[i];
+                            features[offset + i] = (*histogramIt)[i];
                     }
                 }
             }
@@ -190,17 +190,17 @@ namespace MC {
                 _countInstance( s );
 
             for (Order order = minOrder(); order <= maxOrder(); ++order)
-                for (auto &[id, kernel] : _histograms.at( order ))
-                    kernel.normalize();
+                for (auto &[id, histogram] : _histograms.at( order ))
+                    histogram.normalize();
         }
 
 
         std::unordered_map<Order, std::unordered_map<HistogramID, size_t >> hits() const
         {
             std::unordered_map<Order, std::unordered_map<HistogramID, size_t >> allHits;
-            for (auto &[order, isoKernels] : _histograms)
-                for (auto &[id, kernel] : isoKernels)
-                    allHits[order][id] = kernel.hits();
+            for (auto &[order, isoHistograms] : _histograms)
+                for (auto &[id, histogram] : isoHistograms)
+                    allHits[order][id] = histogram.hits();
             assert( !allHits.empty());
             return allHits;
         }
@@ -217,29 +217,29 @@ namespace MC {
                       const std::string &prefix,
                       const std::string &id ) const
         {
-            std::ofstream kernelFile;
+            std::ofstream histogramFile;
             std::vector<std::string> names1 = {prefix, "profile", id};
-            kernelFile.open( dir + "/" + io::join( names1, "_" ) + ".array" );
-            for (const auto &[id, kernel] : histograms())
-                kernelFile << kernel.toString() << std::endl;
-            kernelFile.close();
+            histogramFile.open( dir + "/" + io::join( names1, "_" ) + ".array" );
+            for (const auto &[id, histogram] : histograms())
+                histogramFile << histogram.toString() << std::endl;
+            histogramFile.close();
         }
 
         std::vector<std::pair<Order, std::reference_wrapper<const IsoHistograms >>> histograms() const
         {
-            std::vector<std::pair<Order, std::reference_wrapper<const IsoHistograms >>> kernelsRef;
+            std::vector<std::pair<Order, std::reference_wrapper<const IsoHistograms >>> histogramsRef;
             for (Order order = minOrder(); order <= maxOrder(); ++order)
             {
-                auto isoKernels = histograms( order );
-                if ( isoKernels ) kernelsRef.emplace_back( order, isoKernels.value());
+                auto isoHistograms = histograms( order );
+                if ( isoHistograms ) histogramsRef.emplace_back( order, isoHistograms.value());
             }
-            return kernelsRef;
+            return histogramsRef;
         }
 
         std::optional<std::reference_wrapper<const IsoHistograms>> histograms( Order order ) const
         {
-            if ( auto kernelsIt = _histograms.find( order ); kernelsIt != _histograms.cend())
-                return std::cref( kernelsIt->second );
+            if ( auto histogramsIt = _histograms.find( order ); histogramsIt != _histograms.cend())
+                return std::cref( histogramsIt->second );
             return std::nullopt;
         }
 
@@ -271,10 +271,10 @@ namespace MC {
         { return id / MC::StatesN; }
 
 
-        class KernelsFeaturesByOrder : public Series<double, KernelsFeaturesByOrder>
+        class HistogramsFeaturesByOrder : public Series<double, HistogramsFeaturesByOrder>
         {
         public:
-            KernelsFeaturesByOrder( const HeteroHistogramsFeatures &features,
+            HistogramsFeaturesByOrder( const HeteroHistogramsFeatures &features,
                                     std::pair<Order, Order> range,
                                     Order order,
                                     HistogramID id )
@@ -339,11 +339,11 @@ namespace MC {
         class ObjectSeriesByOrder : public Series<ReturnType, Derived, ObjectSeriesByOrder<Derived, ReturnType>>
         {
         public:
-            ObjectSeriesByOrder( const HOMC &kernels,
+            ObjectSeriesByOrder( const HOMC &histograms,
                                  std::pair<Order, Order> range,
                                  Order order,
                                  HistogramID id )
-                    : _histograms( std::cref( kernels )), _range( range ),
+                    : _histograms( std::cref( histograms )), _range( range ),
                       _mutables( order, id )
             {}
 
@@ -391,11 +391,11 @@ namespace MC {
                 : public ObjectSeriesByOrder<HistogramSeriesByOrder, std::reference_wrapper<const Histogram >>
         {
         public:
-            HistogramSeriesByOrder( const HOMC &kernels,
+            HistogramSeriesByOrder( const HOMC &histograms,
                                     std::pair<Order, Order> range,
                                     Order order,
                                     HistogramID id )
-                    : ObjectSeriesByOrder<HistogramSeriesByOrder, std::reference_wrapper<const Histogram >>( kernels,
+                    : ObjectSeriesByOrder<HistogramSeriesByOrder, std::reference_wrapper<const Histogram >>( histograms,
                                                                                                              range,
                                                                                                              order,
                                                                                                              id )
@@ -416,11 +416,11 @@ namespace MC {
         class ProbabilitisByOrder : public ObjectSeriesByOrder<ProbabilitisByOrder, double>
         {
         public:
-            ProbabilitisByOrder( const HOMC &kernels,
+            ProbabilitisByOrder( const HOMC &histograms,
                                  std::pair<Order, Order> range,
                                  Order order,
                                  HistogramID id )
-                    : ObjectSeriesByOrder<ProbabilitisByOrder, double>( kernels, order, id )
+                    : ObjectSeriesByOrder<ProbabilitisByOrder, double>( histograms, order, id )
             {}
 
             std::optional<double> currentTerm() const noexcept override
@@ -430,22 +430,22 @@ namespace MC {
 
                     auto order = this->currentOrder();
                     auto id = this->currentID();
-                    const auto &kernels = this->_histograms.get();
-                    const auto &isoKernels = kernels.histograms( order );
-                    if ( auto kernelIt = isoKernels.find( id ); kernelIt != isoKernels.cend())
-                        return double( kernelIt->second.hits()) / kernels.hits( order );
+                    const auto &histograms = this->_histograms.get();
+                    const auto &isoHistograms = histograms.histograms( order );
+                    if ( auto histogramIt = isoHistograms.find( id ); histogramIt != isoHistograms.cend())
+                        return double( histogramIt->second.hits()) / histograms.hits( order );
 
                 }
                 return std::nullopt;
             }
         };
 
-        inline HistogramSeriesByOrder kernelsByOrder( HistogramID id ) const
+        inline HistogramSeriesByOrder histogramsByOrder( HistogramID id ) const
         {
             return HistogramSeriesByOrder( *this, _order, _order.second, id );
         }
 
-        inline HistogramSeriesByOrder kernelsByOrder( Order order, HistogramID id ) const
+        inline HistogramSeriesByOrder histogramsByOrder( Order order, HistogramID id ) const
         {
             return HistogramSeriesByOrder( *this, _order, _order.second, id );
         }

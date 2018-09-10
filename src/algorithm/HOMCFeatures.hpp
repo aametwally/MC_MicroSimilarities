@@ -29,9 +29,9 @@ namespace MC {
             for (auto &[cluster, profile] : profiles)
             {
                 auto &_p = p[cluster];
-                if ( auto isoKernels = profile.kernels( order ); isoKernels )
+                if ( auto isoKernels = profile.histograms( order ); isoKernels )
                 {
-                    for (auto &[id, kernel] : isoKernels.value().get())
+                    for (auto &[id, histogram] : isoKernels.value().get())
                         _p[id] = profile.probabilitisByOrder( order, id ).product();
                 }
             }
@@ -41,19 +41,19 @@ namespace MC {
         static HeteroHistogramsFeatures
         minMaxScaleByOrder( HeteroHistogramsFeatures &&features )
         {
-            for (auto &[order, isokernels] : features)
+            for (auto &[order, isohistograms] : features)
             {
                 double sum = 0;
                 double min = std::numeric_limits<double>::infinity();
                 double max = -std::numeric_limits<double>::infinity();
 
-                for (auto &[id, feature] : isokernels)
+                for (auto &[id, feature] : isohistograms)
                 {
                     min = std::min( min, feature );
                     max = std::max( max, feature );
                 }
 
-                for (auto &[id, feature] : isokernels)
+                for (auto &[id, feature] : isohistograms)
                     feature = (feature - min) / (max - min + eps);
             }
 
@@ -65,9 +65,9 @@ namespace MC {
         {
             double min = inf;
             double max = -inf;
-            for (auto &[order, isokernels] : features)
+            for (auto &[order, isohistograms] : features)
             {
-                for (auto &[id, feature] : isokernels)
+                for (auto &[id, feature] : isohistograms)
                 {
                     if ( !std::isnan( feature ))
                     {
@@ -78,8 +78,8 @@ namespace MC {
             }
 
             assert( max != min );
-            for (auto &[order, isokernels] : features)
-                for (auto &[id, feature] : isokernels)
+            for (auto &[order, isohistograms] : features)
+                for (auto &[id, feature] : isohistograms)
                     feature = (feature - min) / (max - min + eps);
 
             return features;
@@ -87,7 +87,7 @@ namespace MC {
 
         static HeteroHistograms
         meanHistograms( const BackboneProfiles &profiles,
-                        const std::map<std::string, HeteroHistogramsFeatures> &kernelWeights )
+                        const std::map<std::string, HeteroHistogramsFeatures> &histogramWeights )
         {
             const Order mnOrder = HOMCOps::minOrder( profiles );
             const Order mxOrder = HOMCOps::maxOrder( profiles );
@@ -95,12 +95,12 @@ namespace MC {
 
             for (const auto &[cluster, profile] : profiles)
             {
-                const auto &weights = kernelWeights.at( cluster );
+                const auto &weights = histogramWeights.at( cluster );
                 for (auto order = mnOrder; order <= mxOrder; ++order)
-                    if ( auto isoKernels = profile.kernels( order ); isoKernels )
+                    if ( auto isoKernels = profile.histograms( order ); isoKernels )
                     {
-                        for (auto &[id, kernel] : isoKernels.value().get())
-                            means[order][id] += (kernel * weights.at( order ).at( id ));
+                        for (auto &[id, histogram] : isoKernels.value().get())
+                            means[order][id] += (histogram * weights.at( order ).at( id ));
                     }
             }
             return means;
@@ -128,7 +128,7 @@ namespace MC {
                 auto &w = weights.back();
                 for (auto order = mnOrder; order <= mxOrder; ++order)
                 {
-                    if ( auto isoKernels = profile.kernels( order ); isoKernels )
+                    if ( auto isoKernels = profile.histograms( order ); isoKernels )
                     {
                         for (auto &[id, histogram] : isoKernels.value().get())
                         {
@@ -167,7 +167,7 @@ namespace MC {
                 auto &w = weights[cluster];
                 for (auto order = mnOrder; order <= mxOrder; ++order)
                 {
-                    if ( auto isoKernels = profile.kernels( order ); isoKernels )
+                    if ( auto isoKernels = profile.histograms( order ); isoKernels )
                     {
                         for (auto &[id, histogram] : isoKernels.value().get())
                         {
@@ -1020,7 +1020,7 @@ namespace MC {
             for (const auto &[cluster, profile] : profiles)
             {
                 const auto &weights = histogramsWeights.at( cluster );
-                for (const auto[order, isoKernels] : profile.kernels())
+                for (const auto[order, isoKernels] : profile.histograms())
                     for (const auto &[id, histogram] : isoKernels.get())
                     {
                         double b = weights.at( order ).at( id );
@@ -1051,7 +1051,7 @@ namespace MC {
 
             for (const auto &[cluster, profile] : profiles)
             {
-                for (auto &[order, isoKernels] : profile.kernels())
+                for (auto &[order, isoKernels] : profile.histograms())
 
                     for (const auto &[id, histogram] : isoKernels.get())
                     {

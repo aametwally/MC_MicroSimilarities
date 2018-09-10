@@ -469,7 +469,7 @@ namespace MC
             std::unordered_map<Order, std::set<HistogramID >> allFeatureSpace;
 
             for (const auto &[cluster, profile] : profiles)
-                for (const auto &[order, isoHistograms] : profile.kernels())
+                for (const auto &[order, isoHistograms] : profile.histograms())
                     for (const auto &[id, histogram] : isoHistograms.get())
                         allFeatureSpace[order].insert( id );
             return allFeatureSpace;
@@ -493,8 +493,8 @@ namespace MC
                     {
                         auto shared = std::count_if( std::cbegin( profiles ), std::cend( profiles ),
                                                      [order, id]( const auto &p ) {
-                                                         const auto kernel = p.second.kernel( order, id );
-                                                         return kernel.has_value();
+                                                         const auto histogram = p.second.histogram( order, id );
+                                                         return histogram.has_value();
                                                      } );
                         if ( shared >= minShared )
                             joint[order].insert( id );
@@ -507,8 +507,8 @@ namespace MC
                     {
                         bool isJoint = std::all_of( std::cbegin( profiles ), std::cend( profiles ),
                                                     [order, id]( const auto &p ) {
-                                                        const auto kernel = p.second.kernel( order, id );
-                                                        return kernel.has_value();
+                                                        const auto histogram = p.second.histogram( order, id );
+                                                        return histogram.has_value();
                                                     } );
                         if ( isJoint )
                             joint[order].insert( id );

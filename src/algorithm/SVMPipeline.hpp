@@ -98,10 +98,10 @@ SVMPipelineVariant getSVMPipeline( const std::string &groupingLabel )
             return SVMPipeline<AAGrouping_NOGROUPING20>();
         case AminoAcidGroupingEnum::DIAMOND11 :
             return SVMPipeline<AAGrouping_DIAMOND11>();
-        case AminoAcidGroupingEnum::OLFER8 :
-            return SVMPipeline<AAGrouping_OLFER8>();
-        case AminoAcidGroupingEnum::OLFER15 :
-            return SVMPipeline<AAGrouping_OLFER15>();
+        case AminoAcidGroupingEnum::OFER8 :
+            return SVMPipeline<AAGrouping_OFER8>();
+        case AminoAcidGroupingEnum::OFER15 :
+            return SVMPipeline<AAGrouping_OFER15>();
     }
 };
 
