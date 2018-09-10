@@ -6,7 +6,8 @@
 #define MARKOVIAN_FEATURES_SVMMODEL_HPP
 
 #include "common.hpp"
-#include "MarkovianKernels.hpp"
+#include "HOMC.hpp"
+#include "HOMCDefs.hpp"
 #include "dlib/svm_threaded.h"
 #include "dlib_utilities.hpp"
 #include "dlib/statistics/dpca.h"
@@ -15,15 +16,13 @@ template<typename Grouping>
 class SVMMarkovianModel
 {
 public:
-    using MarkovianProfile = MarkovianKernels<Grouping>;
-    using Kernel = typename MarkovianProfile::Kernel;
+    using MarkovianProfile = MC::HetroOrderMarkovianChains<Grouping>;
+    using Kernel = typename MarkovianProfile::Histogram;
     using MarkovianProfiles = std::map<std::string, MarkovianProfile>;
-    using KernelID = typename MarkovianProfile::KernelID;
-    using Order = typename MarkovianProfile::Order;
     using KernelsSet = std::unordered_map<Order, std::set<KernelID >>;
 
-    using HeteroKernels =  typename MarkovianProfile::HeteroKernels;
-    using HeteroKernelsFeatures =  typename MarkovianProfile::HeteroKernelsFeatures;
+    using HeteroKernels =  typename MarkovianProfile::HeteroHistograms;
+    using HeteroKernelsFeatures =  typename MarkovianProfile::HeteroHistogramsFeatures;
 
     using DoubleSeries = typename MarkovianProfile::ProbabilitisByOrder;
     using KernelsSeries = typename MarkovianProfile::KernelSeriesByOrder;

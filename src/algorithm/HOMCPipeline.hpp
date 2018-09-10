@@ -14,8 +14,9 @@
 #include "ConfusionMatrix.hpp"
 #include "CrossValidationStatistics.hpp"
 #include "crossvalidation.hpp"
-#include "MarkovianKernels.hpp"
-#include "MarkovianModelFeatures.hpp"
+#include "Histogram.hpp"
+#include "HOMC.hpp"
+#include "HOMCFeatures.hpp"
 
 struct Voting
 {
@@ -33,31 +34,32 @@ static const std::map<std::string, StrategyEnum> ClassificationStrategyLabel = {
         {"acc",    StrategyEnum::Accumulative}
 };
 
+
+using MC::Selection;
+
 template<typename Grouping, typename Criteria, typename Strategy>
-class ConfiguredPipeline
+class HOMCPipeline
 {
 public:
 
 private:
 
     using PriorityQueue = typename MatchSet<Score>::Queue;
-    using MF =  MarkovianModelFeatures<Grouping>;
-    using MP = MarkovianKernels<Grouping>;
 
-    using Kernel = typename MP::Kernel;
-    using MarkovianProfiles = std::map<std::string, MP>;
-    using KernelID = typename MP::KernelID;
-    using Order = typename MP::Order;
 
-    using HeteroKernels =  typename MP::HeteroKernels;
-    using HeteroKernelsFeatures =  typename MP::HeteroKernelsFeatures;
 
-    using DoubleSeries = typename MP::ProbabilitisByOrder;
-    using KernelsSeries = typename MP::KernelSeriesByOrder;
-    using Selection = typename MP::Selection;
+    using HOMCF = MC::HOMCFeatures<Grouping>;
+    using HOMCP =  MC::HOMC<Grouping>;
+    using HOMCOps = MC::Ops<Grouping>;
 
-    static constexpr size_t StatesN = MP::StatesN;
-    static constexpr double eps = std::numeric_limits<double>::epsilon();
+    using BackboneProfiles =  typename HOMCP::BackboneProfiles;
+    using Histogram = typename HOMCP::Histogram;
+    using DoubleSeries = typename HOMCP::ProbabilitisByOrder;
+    using KernelsSeries = typename HOMCP::HistogramSeriesByOrder;
+
+    using HeteroHistograms = typename HOMCP::HeteroHistograms;
+    using HeteroHistogramsFeatures = typename HOMCP::HeteroHistogramsFeatures;
+
     static constexpr const char *LOADING = "loading";
     static constexpr const char *PREPROCESSING = "preprocessing";
     static constexpr const char *TRAINING = "training";
@@ -78,7 +80,7 @@ public:
     classify_VALIDATION(
             const std::vector<std::string> &queries,
             const std::vector<std::string> &trueLabels,
-            MarkovianProfiles &&targets,
+            BackboneProfiles &&targets,
             std::map<std::string, std::vector<std::string >> &&trainingClusters,
             const Selection &selection,
             Order mnOrder, Order mxOrder )
@@ -100,7 +102,7 @@ public:
     static std::vector<PriorityQueue>
     predict_VOTING(
             const std::vector<std::string> &queries,
-            const MarkovianProfiles &targets,
+            const BackboneProfiles &targets,
             std::map<std::string, std::vector<std::string >> &&kernelRelevance,
             const Selection &selection,
             Order mxOrder )
@@ -108,13 +110,12 @@ public:
         std::vector<PriorityQueue> results;
         for (auto &seq : queries)
         {
-            using FeatureSeries = typename MP::KernelsFeaturesByOrder;
             std::map<std::string, double> accumulator;
 
-            MP query( mxOrder );
+            HOMCP query( mxOrder );
             query.train( {seq} );
 //            query = MP::filter( std::move( query ), selection );
-            for (const auto &[order, isoKernels] : query.kernels())
+            for (const auto &[order, isoKernels] : query.histograms())
                 for (const auto &[id, k1] : isoKernels.get())
                 {
                     const auto p1 = query.probabilitisByOrder( mxOrder, id );
@@ -127,7 +128,7 @@ public:
 
 
                         auto val = KernelsSeries::sum( s1, s2,
-                                                       [=]( const Kernel &t1, const Kernel &t2 ) {
+                                                       [=]( const Histogram &t1, const Histogram &t2 ) {
                                                            return Criteria::measure( t1, t2 );
                                                        } );
                         pq.emplace( clusterName, val );
@@ -135,7 +136,7 @@ public:
                     }
                     pq.forTopK( 1, [&]( const auto &candidate ) {
                         std::string label = candidate.getLabel();
-                        FeatureSeries relevance( kernelRelevance, mxOrder, id );
+//                        FeatureSeries relevance( kernelRelevance, mxOrder, id );
 //                    FeatureSeries radius( histogramsRadius, mxOrder, id );
 //                    double val = radius.dot( relevance );
 //                    double val = radius.product()  relevance.product();
@@ -157,22 +158,22 @@ public:
     static std::vector<PriorityQueue>
     predict_VOTING2(
             const std::vector<std::string> &queries,
-            const MarkovianProfiles &targets,
+            const BackboneProfiles &targets,
             std::map<std::string, std::vector<std::string >> &&trainingClusters,
             const Selection &selection,
             Order mnOrder,
             Order mxOrder )
     {
         const auto relevance =
-                MF::minMaxScale(
-                        MF::histogramRelevance_ALL2WITHIN_WEIGHTED( trainingClusters, mnOrder, mxOrder, selection ));
+                HOMCF::minMaxScale(
+                        HOMCF::histogramRelevance_ALL2WITHIN_WEIGHTED( trainingClusters, mnOrder, mxOrder, selection ));
         std::vector<PriorityQueue> results;
         for (auto &seq : queries)
         {
             std::map<std::string, double> voter;
 
-            if ( auto query = MP::filter( MP( {seq}, mnOrder , mxOrder ), selection ); query )
-                for (const auto &[order, isoKernels] : query->kernels())
+            if ( auto query = HOMCOps::filter( HOMCP( {seq}, mnOrder , mxOrder ), selection ); query )
+                for (const auto &[order, isoKernels] : query->histograms())
                 {
                     for (const auto &[id, k1] : isoKernels.get())
                     {
@@ -204,14 +205,14 @@ public:
 
     static std::vector<PriorityQueue>
     predict_ACCUMULATIVE( const std::vector<std::string> &queries,
-                          const MarkovianProfiles &targets,
+                          const BackboneProfiles &targets,
                           std::map<std::string, std::vector<std::string >> &&trainingClusters,
                           const Selection &selection,
                           Order mnOrder,
                           Order mxOrder )
     {
         auto relevance =
-                MF::minMaxScaleByOrder( MF::histogramRelevance_MAX2MIN_WEIGHTED( trainingClusters,
+                HOMCF::minMaxScaleByOrder( HOMCF::histogramRelevance_MAX2MIN_WEIGHTED( trainingClusters,
                                                                                  mnOrder , mxOrder , selection ));
 
         std::vector<PriorityQueue> results;
@@ -219,13 +220,12 @@ public:
         {
             PriorityQueue matchSet( targets.size());
 
-            auto queryOpt = MP::filter( MP( {seq}, mnOrder, mxOrder ), selection );
-            if ( queryOpt )
+            if ( auto queryOpt = HOMCOps::filter( HOMCP( {seq}, mnOrder, mxOrder ), selection ); queryOpt )
             {
                 for (const auto &[clusterId, profile] : targets)
                 {
                     double sum = 0;
-                    for (const auto &[order, isoKernels] : queryOpt->kernels())
+                    for (const auto &[order, isoKernels] : queryOpt->histograms())
                         for (const auto &[id, kernel1] : isoKernels.get())
                         {
                             double score = getOr( relevance, order, id, double( 0 ));
@@ -246,7 +246,7 @@ public:
 
     static std::vector<PriorityQueue>
     predict( const std::vector<std::string> &queries,
-             const MarkovianProfiles &targets,
+             const BackboneProfiles &targets,
              std::map<std::string, std::vector<std::string >> &&trainingClusters,
              const Selection &selection,
              Order mnOrder, Order mxOrder )
@@ -258,21 +258,18 @@ public:
         else throw std::runtime_error( "Undefined Strategy!" );
     }
 
-    static std::pair<Selection, MarkovianProfiles>
+    static std::pair<Selection, BackboneProfiles>
     featureSelection( const std::map<std::string, std::vector<std::string> > &trainingClusters,
                       Order mnOrder, Order mxOrder )
     {
-        auto selection = MF::withinJointAllUnionKernels( trainingClusters, mnOrder, mxOrder, 0.05 );
+        auto selection = HOMCOps::withinJointAllUnionKernels( trainingClusters, mnOrder, mxOrder, 0.05 );
 //        auto scoredFeatures = MF::histogramRelevance_ALL2WITHIN_UNIFORM( trainingClusters, order, selection );
 //        auto scoredSelection = MF::filter( scoredFeatures, 0.75 );
-        auto trainedProfiles = MP::train( std::move( trainingClusters ), mnOrder, mxOrder, selection );
+        auto trainedProfiles = HOMCOps::train( std::move( trainingClusters ), mnOrder, mxOrder, selection );
         return std::make_pair( std::move( selection ), std::move( trainedProfiles ));
     }
 
-    void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries,
-                                 Order mnOrder,
-                                 Order mxOrder,
-                                 size_t k )
+    void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries,  Order mnOrder, Order mxOrder, size_t k )
     {
         std::set<std::string> labels;
         for (const auto &entry : entries)
@@ -306,7 +303,7 @@ public:
         {
             auto trainingClusters = joinFoldsExceptK( folds, i );
             auto[test, tLabels] = extractTest( folds.at( i ));
-            auto trainedProfiles = MP::train( trainingClusters, mnOrder, mxOrder );
+            auto trainedProfiles = HOMCOps::train( trainingClusters, mnOrder, mxOrder );
             auto[selection, filteredProfiles] = featureSelection( trainingClusters, mnOrder, mxOrder );
             auto classificationResults = classify_VALIDATION( test, tLabels, std::move( filteredProfiles ),
                                                               std::move( trainingClusters ),
@@ -349,7 +346,7 @@ struct StrategiesList
 using SupportedStrategies = StrategiesList<Voting, Accumulative>;
 
 
-using PipelineVariant = MakeVariantType<ConfiguredPipeline,
+using PipelineVariant = MakeVariantType<HOMCPipeline,
         SupportedAAGrouping,
         SupportedCriteria,
         SupportedStrategies>;
@@ -360,9 +357,9 @@ PipelineVariant getConfiguredPipeline( StrategyEnum strategy )
     switch (strategy)
     {
         case StrategyEnum::Accumulative :
-            return ConfiguredPipeline<AAGrouping, Criteria, Accumulative>();
+            return HOMCPipeline<AAGrouping, Criteria, Accumulative>();
         case StrategyEnum::Voting :
-            return ConfiguredPipeline<AAGrouping, Criteria, Voting>();
+            return HOMCPipeline<AAGrouping, Criteria, Voting>();
         default:
             throw std::runtime_error( "Undefined Strategy" );
     }

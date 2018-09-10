@@ -12,37 +12,41 @@
 #include "crossvalidation.hpp"
 #include "FeatureScoreAUC.hpp"
 #include "VariantGenerator.hpp"
-#include "MarkovianKernels.hpp"
-#include "MarkovianModelFeatures.hpp"
+#include "HOMC.hpp"
+#include "HOMCFeatures.hpp"
 
 template<typename Grouping>
 class FeatureScoringPipeline
 {
-    using MF = MarkovianModelFeatures<Grouping>;
-    using MP = MarkovianKernels<Grouping>;
+    using MF = MC::HOMCFeatures<Grouping>;
+    using MP = MC::HOMC<Grouping>;
 public:
 
 private:
-    using MarkovianProfile = MarkovianKernels<Grouping>;
-    using Kernel = typename MarkovianProfile::Kernel;
-    using MarkovianProfiles = std::map<std::string, MarkovianProfile>;
-    using KernelID = typename MarkovianProfile::KernelID;
-    using Order = typename MarkovianProfile::Order;
 
-    using HeteroKernels =  typename MarkovianProfile::HeteroKernels;
-    using HeteroKernelsFeatures =  typename MarkovianProfile::HeteroKernelsFeatures;
+    using MC::Selection;
+    using MC::KernelIdentifier;
 
-    using DoubleSeries = typename MarkovianProfile::ProbabilitisByOrder;
-    using KernelsSeries = typename MarkovianProfile::KernelSeriesByOrder;
-    using KernelsSelection = std::unordered_map<Order, std::set<KernelID >>;
+    using HOMCP = MC::HOMC<Grouping>;
+    using HOMCP::Histogram;
+    using HOMCP::StatesN;
 
-    static constexpr size_t StatesN = MarkovianProfile::StatesN;
-    static constexpr double eps = std::numeric_limits<double>::epsilon();
-    static constexpr double inf = std::numeric_limits<double>::infinity();
+    using HOMCF = MC::HOMCFeatures<Grouping>;
+    using HOMCF::HeteroHistograms;
+    using HOMCF::HeteroHistogramsFeatures;
+    using HOMCF::eps;
+    using HOMCF::nan;
+    using HOMCF::inf;
 
-    using Selection = typename MarkovianProfile::Selection;
-    using SimilarityFunction = std::function<double( const Kernel &, const Kernel & )>;
-    using KernelIdentifier = typename MarkovianProfile::KernelIdentifier;
+    using BackboneProfiles = std::map<std::string, HOMCP>;
+
+    using DoubleSeries = typename HOMCP::ProbabilitisByOrder;
+    using KernelsSeries = typename HOMCP::HistogramSeriesByOrder;
+    using KernelsSelection = std::unordered_map<Order, std::set<HistogramID >>;
+
+
+
+    using SimilarityFunction = std::function<double( const Histogram &, const Histogram & )>;
 
     struct KernelPrediction
     {
@@ -181,7 +185,7 @@ private:
             return correlator;
         }
 
-        std::optional<std::string> assert_feature( Order order, KernelID id )
+        std::optional<std::string> assert_feature( Order order, HistogramID id )
         {
             for (const auto &[scoreLabel, features] : _featuresScores)
             {
@@ -206,7 +210,7 @@ private:
             getAUCRecorder().reportToFile( prefix );
         }
 
-        void addFeatureScoring( std::string &&label, HeteroKernelsFeatures &&scoring )
+        void addFeatureScoring( std::string &&label, HeteroHistogramsFeatures &&scoring )
         {
             _featuresScores.insert_or_assign( std::move( label ), std::move( scoring ));
         }
@@ -259,7 +263,7 @@ private:
             for (const KernelPrediction &p : predictions)
             {
                 Order order = p.kernel.order;
-                KernelID id = p.kernel.id;
+                HistogramID id = p.kernel.id;
                 bool tp = trueLabel == p.predicted;
 
                 for (auto &[scoringLabel, features] : _featuresScores)
@@ -286,7 +290,7 @@ private:
             for (const KernelPrediction &p : predictions)
             {
                 Order order = p.kernel.order;
-                KernelID id = p.kernel.id;
+                HistogramID id = p.kernel.id;
                 auto predicted = p.predicted;
                 totalOrders += order;
                 voter[p.predicted] += p.similarity;
@@ -317,7 +321,7 @@ private:
     private:
         PredictionFeatureCorrelator() = default;
 
-        std::map<std::string, HeteroKernelsFeatures> _featuresScores;
+        std::map<std::string, HeteroHistogramsFeatures> _featuresScores;
     };
 
 public:
@@ -337,33 +341,33 @@ public:
 
         static std::map<std::string, SimilarityFunction> m{
                 {Cosine::label,
-                        []( const Kernel &k1, const Kernel &k2 ) { return Cosine::measure( k1, k2 ); }},
+                        []( const Histogram &k1, const Histogram &k2 ) { return Cosine::measure( k1, k2 ); }},
                 {KullbackLeiblerDivergence::label,
-                        []( const Kernel &k1, const Kernel &k2 ) {
+                        []( const Histogram &k1, const Histogram &k2 ) {
                             return KullbackLeiblerDivergence::measure( k1, k2 );
                         }},
                 {ChiSquared::label,
-                        []( const Kernel &k1, const Kernel &k2 ) { return ChiSquared::measure( k1, k2 ); }},
+                        []( const Histogram &k1, const Histogram &k2 ) { return ChiSquared::measure( k1, k2 ); }},
                 {Intersection::label,
-                        []( const Kernel &k1, const Kernel &k2 ) { return Intersection::measure( k1, k2 ); }},
+                        []( const Histogram &k1, const Histogram &k2 ) { return Intersection::measure( k1, k2 ); }},
                 {Gaussian::label,
-                        []( const Kernel &k1, const Kernel &k2 ) { return Gaussian::measure( k1, k2 ); }},
+                        []( const Histogram &k1, const Histogram &k2 ) { return Gaussian::measure( k1, k2 ); }},
                 {DensityPowerDivergence1::label,
-                        []( const Kernel &k1, const Kernel &k2 ) {
+                        []( const Histogram &k1, const Histogram &k2 ) {
                             return DensityPowerDivergence1::measure( k1, k2 );
                         }},
                 {DensityPowerDivergence2::label,
-                        []( const Kernel &k1, const Kernel &k2 ) {
+                        []( const Histogram &k1, const Histogram &k2 ) {
                             return DensityPowerDivergence2::measure( k1, k2 );
                         }},
                 {DensityPowerDivergence3::label,
-                        []( const Kernel &k1, const Kernel &k2 ) {
+                        []( const Histogram &k1, const Histogram &k2 ) {
                             return DensityPowerDivergence3::measure( k1, k2 );
                         }},
                 {ItakuraSaitu::label,
-                        []( const Kernel &k1, const Kernel &k2 ) { return ItakuraSaitu::measure( k1, k2 ); }},
+                        []( const Histogram &k1, const Histogram &k2 ) { return ItakuraSaitu::measure( k1, k2 ); }},
                 {"dummy",
-                        [&]( const Kernel &k1, const Kernel &k2 ) {
+                        [&]( const Histogram &k1, const Histogram &k2 ) {
                             return dis( gen );
                         }}
         };
@@ -373,7 +377,7 @@ public:
 
     static void classify_VALIDATION_SAMPLER( const std::vector<std::string> &queries,
                                              const std::vector<std::string> &trueLabels,
-                                             MarkovianProfiles &&targets,
+                                             BackboneProfiles &&targets,
                                              std::map<std::string, std::vector<std::string >> &&trainingSequences,
                                              Selection &&selection )
     {
@@ -382,7 +386,7 @@ public:
 //            Selection newSelection;
 //            for (auto &[order, ids] : selection)
 //            {
-//                std::set<KernelID> newIds;
+//                std::set<HistogramID> newIds;
 //                std::sample( ids.cbegin(), ids.cend(),
 //                             std::inserter( newIds, std::begin( newIds )), size_t( 0.4 * ids.size()),
 //                             std::mt19937{std::random_device{}()} );
@@ -395,7 +399,7 @@ public:
     }
 
     static void registerKernelsScores( Order mnOrder, Order mxOrder ,
-                                       const MarkovianProfiles &targets,
+                                       const BackboneProfiles &targets,
                                        const std::map<std::string, std::vector<std::string >> &trainingSequences,
                                        const Selection &selection )
     {
@@ -438,8 +442,8 @@ public:
 
 
     static std::pair<std::string, double>
-    nearestProfile( const MarkovianProfile &query,
-                    const MarkovianProfiles &targets,
+    nearestProfile( const HOMCP &query,
+                    const BackboneProfiles &targets,
                     const SimilarityFunction &similarityFunction )
     {
 
@@ -447,13 +451,10 @@ public:
         for (const auto &[clusterName, profile] : targets)
         {
             double totalSimilarity = 0;
-            for (const auto &[order, isoKernels1] : query.kernels())
+            for (const auto &[order, isoKernels1] : query.histograms())
             {
                 for (auto &[id, k1] : isoKernels1.get())
                 {
-
-                    const double p1 = double( k1.hits()) / query.totalCharacters();
-
                     if ( auto kernel2Opt = profile.kernel( order, id ); kernel2Opt )
                     {
                         double similarityScore = similarityFunction( k1, kernel2Opt.value().get());
@@ -472,13 +473,13 @@ public:
     }
 
     static std::vector<KernelPrediction>
-    nearestKernels( const MarkovianProfile &query,
-                    const MarkovianProfiles &targets,
+    nearestKernels( const HOMCP &query,
+                    const BackboneProfiles &targets,
                     const SimilarityFunction &similarityFunction )
     {
         std::vector<KernelPrediction> kernelPredictions;
 
-        for (const auto &[order, isoKernels1] : query.kernels())
+        for (const auto &[order, isoKernels1] : query.histograms())
         {
             for (auto &[id, k1] : isoKernels1.get())
             {
@@ -509,12 +510,12 @@ public:
 
     static void classify_VALIDATION( const std::vector<std::string> &queries,
                                      const std::vector<std::string> &trueLabels,
-                                     const MarkovianProfiles &targets,
+                                     const BackboneProfiles &targets,
                                      const std::map<std::string, std::vector<std::string >> &trainingSequences,
                                      Selection &&selection )
     {
         assert( queries.size() == trueLabels.size());
-        const Order mxOrder = MarkovianProfile::maxOrder( targets );
+        const Order mxOrder = HOMCP::maxOrder( targets );
         auto &correlator = PredictionFeatureCorrelator::getFeatureCorrelator();
         registerKernelsScores( mxOrder, targets, trainingSequences, selection );
         for (auto[similarityLabel, similarity] : getSimilarityFunctions())
@@ -524,7 +525,7 @@ public:
                 const auto &q = queries.at( queryIdx );
                 const auto &trueLabel = trueLabels.at( queryIdx );
 
-                if ( auto queryOpt = MarkovianProfile::filter( MarkovianProfile( {q}, mxOrder ), selection ); queryOpt )
+                if ( auto queryOpt = HOMCF::filter( HOMCP( {q}, mxOrder ), selection ); queryOpt )
                 {
                     auto &query = queryOpt.value();
                     std::vector<KernelPrediction> kernelPredictions = nearestKernels( query, targets, similarity );
