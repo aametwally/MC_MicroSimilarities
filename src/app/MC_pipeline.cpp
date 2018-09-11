@@ -1,5 +1,5 @@
 
-#include "HOMCPipeline.hpp"
+#include "Pipeline.hpp"
 #include "clara.hpp"
 
 
@@ -11,16 +11,20 @@ std::vector<std::string> splitParameters( std::string params )
 
 int main( int argc, char *argv[] )
 {
+    using namespace MC;
     using io::join;
     std::string input, testFile;
     std::string fastaFormat = keys( FormatLabels ).front();
     std::string minOrder = "3";
     std::string maxOrder = "5";
+    std::string order = "";
+
     size_t k = 10;
     bool showHelp = false;
     std::string grouping = keys( GroupingLabels ).front();
     std::string criteria = keys( CriteriaLabels ).front();
-    std::string strategy = keys( ClassificationStrategyLabel ).front();
+    std::string strategy = keys( ClassificationMethodLabel ).front();
+    std::string model = keys( MCModelLabels ).front();
 
     auto cli
             = clara::Arg( input, "input" )
@@ -28,6 +32,9 @@ int main( int argc, char *argv[] )
               | clara::Opt( testFile, "test" )
               ["-T"]["--test"]
                       ( "test file" )
+              | clara::Opt( model, join( keys( MCModelLabels ), "|" ))
+              ["-m"]["--model"]
+                      ( fmt::format( "Markov Chains model, default:{}", model ))
               | clara::Opt( grouping, join( keys( GroupingLabels ), "|" ))
               ["-G"]["--grouping"]
                       ( fmt::format( "grouping method, default:{}", grouping ))
@@ -37,9 +44,12 @@ int main( int argc, char *argv[] )
               | clara::Opt( criteria, join( keys( CriteriaLabels ), "|" ))
               ["-c"]["--criteria"]
                       ( fmt::format( "Similarity Criteria, default:{}", criteria ))
-              | clara::Opt( strategy, join( keys( ClassificationStrategyLabel ), "|" ))
+              | clara::Opt( strategy, join( keys( ClassificationMethodLabel ), "|" ))
               ["-s"]["--strategy"]
                       ( fmt::format( "Classification Strategy, default:{}", strategy ))
+              | clara::Opt( order, "MC order" )
+              ["-o"]["--order"]
+                      ( fmt::format( "Specify MC of higher order o, default:{}", maxOrder ))
               | clara::Opt( minOrder, "minimum order" )
               ["-l"]["--min-order"]
                       ( fmt::format( "Markovian lower order, default:{}", minOrder ))
@@ -51,6 +61,7 @@ int main( int argc, char *argv[] )
                       ( fmt::format( "cross validation k-fold, default:{}", k ))
               | clara::Help( showHelp );
 
+
     auto result = cli.parse( clara::Args( argc, argv ));
     if ( !result )
     {
@@ -61,48 +72,59 @@ int main( int argc, char *argv[] )
         cli.writeToStream( std::cout );
     } else if ( !testFile.empty())
     {
-        fmt::print( "[Args][input:{}][testFile:{}][order:{}-{}][kfold:{}]\n",
-                    input, testFile, minOrder, maxOrder, k );
+        if ( !order.empty())
+            maxOrder = order;
+
+        fmt::print( "[Args][input:{}][testFile:{}][model:{}][order:{}-{}][kfold:{}]\n",
+                    input, testFile, model, minOrder, maxOrder, k );
 
 
     } else
     {
+        if ( !order.empty())
+            maxOrder = order;
         fmt::print( "[Args][input:{}]"
                     "[fformat:{}]"
+                    "[model:{}]"
                     "[order:{}-{}]"
                     "[k-fold:{}]"
                     "[criteria:{}]"
                     "[grouping:{}]"
                     "[strategy:{}]\n",
-                    input, fastaFormat, minOrder, maxOrder,
+                    input, fastaFormat, model, minOrder, maxOrder,
                     k, criteria, grouping, strategy );
 
-        for (auto &min : splitParameters( minOrder ))
-            for (auto &max : splitParameters( maxOrder ))
-            {
-                auto mnOrder = std::stoi( min );
-                auto mxOrder = std::stoi( max );
-                if ( mxOrder >= mnOrder )
+        for (auto &m : splitParameters( model ))
+            for (auto &min : splitParameters( minOrder ))
+                for (auto &max : splitParameters( maxOrder ))
                 {
-                    for (auto &c : splitParameters( criteria ))
-                        for (auto &g : splitParameters( grouping ))
-                            for (auto &s: splitParameters( strategy ))
-                            {
+                    auto mnOrder = std::stoi( min );
+                    auto mxOrder = std::stoi( max );
+                    if ( mxOrder >= mnOrder )
+                    {
+                        for (auto &c : splitParameters( criteria ))
+                            for (auto &g : splitParameters( grouping ))
+                                for (auto &s: splitParameters( strategy ))
+                                {
 
-                                fmt::print( "[Params]"
-                                            "[order:{}-{}]"
-                                            "[criteria:{}]"
-                                            "[grouping:{}]"
-                                            "[strategy:{}]\n", mnOrder, mxOrder, c, g, s );
-                                std::visit( [&]( auto &&p ) {
-                                    p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ),
-                                                              mnOrder, mxOrder, k );
-                                }, getConfiguredPipeline( g, c, s ));
-                            }
+                                    fmt::print( "[Params]"
+                                                "[model:{}]"
+                                                "[order:{}-{}]"
+                                                "[criteria:{}]"
+                                                "[grouping:{}]"
+                                                "[strategy:{}]\n", m , mnOrder, mxOrder, c, g, s );
 
 
+                                    std::visit( [&]( auto &&p ) {
+                                        auto classificationMethod = ClassificationMethodLabel.at( s );
+                                        p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ),  k ,
+                                        classificationMethod );
+                                    }, getConfiguredPipeline( g, c, m , mnOrder , mxOrder ));
+                                }
+
+
+                    }
                 }
-            }
     }
     return 0;
 }

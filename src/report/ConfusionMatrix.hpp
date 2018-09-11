@@ -10,11 +10,12 @@
 template<typename Label = std::string, typename T = int64_t>
 class ConfusionMatrix
 {
+
+
 private:
     using Row = std::vector<T>;
     using Matrix = std::vector<Row>;
     static constexpr double eps = std::numeric_limits<double>::epsilon();
-    static constexpr char unclassified[] = "Unclassified";
 public:
 
     explicit ConfusionMatrix( const std::set<Label> &labels ) :
@@ -281,7 +282,7 @@ private:
             return idx;
         } catch( const std::out_of_range &)
         {
-            return _dictionary.at( unclassified );
+            return _dictionary.at( _unclassifiedLabel() );
         }
     }
 
@@ -300,7 +301,7 @@ private:
         size_t i = 0;
         for (auto &label : labels)
             dic.emplace( label, i++ );
-        dic.emplace( unclassified , i );
+        dic.emplace( _unclassifiedLabel() , i );
 
         return dic;
     }
@@ -419,6 +420,18 @@ private:
         auto fn = _falseNegatives( classIdx );
 
         return (double( tp + eps ) / (tp + fn + eps) + double( tn + eps ) / (tn + fp + eps)) / 2;
+    }
+
+    template< typename L = Label, typename std::enable_if<std::is_same<L,std::string>::value, void>::type * = nullptr>
+    static Label _unclassifiedLabel()
+    {
+        return "Unclassified";
+    }
+
+    template< typename L = Label, typename std::enable_if<std::is_same<L,int64_t >::value, void>::type * = nullptr>
+    static Label _unclassifiedLabel()
+    {
+        return -1;
     }
 
 private:

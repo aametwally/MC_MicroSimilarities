@@ -34,7 +34,7 @@ public:
     {
         std::map<std::string, std::vector<T >> clusters;
 
-        for (auto &entry : entries)
+        for (auto &&entry : entries)
             clusters[entry.getLabel()].emplace_back( std::move( entry ));
 
         return clusters;
@@ -42,7 +42,7 @@ public:
 
     static std::pair<std::vector<T>, std::vector<T >>
     separationExcludingClustersWithLowSequentialData(
-            const std::vector<T> &entries,
+            std::vector<T> &&entries,
             double percentage = 0.1f,
             double threshold = 10.f )
     {
@@ -55,7 +55,7 @@ public:
             return count;
         };
 
-        auto clusters = groupEntriesByLabels( entries );
+        auto clusters = groupEntriesByLabels( std::move( entries ));
 
         size_t populationSequenceLength = 0;
         for (const auto &[clusterId, cluster] : clusters)

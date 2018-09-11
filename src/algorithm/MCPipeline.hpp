@@ -2,28 +2,27 @@
 // Created by asem on 10/09/18.
 //
 
-#ifndef MARKOVIAN_FEATURES_ZYPIPELINE_HPP
-#define MARKOVIAN_FEATURES_ZYPIPELINE_HPP
+#ifndef MARKOVIAN_FEATURES_MCPIPELINE_HPP
+#define MARKOVIAN_FEATURES_MCPIPELINE_HPP
+
 #include "common.hpp"
 #include "VariantGenerator.hpp"
 #include "LabeledEntry.hpp"
 #include "ConfusionMatrix.hpp"
 #include "CrossValidationStatistics.hpp"
 #include "crossvalidation.hpp"
-#include "ZYMC.hpp"
+#include "MC.hpp"
 #include "similarities.hpp"
 
 template< typename Grouping = AAGrouping_NOGROUPING20 >
-class ZYPipeline
+class MCPipeline
 {
-public:
-
 private:
     using PriorityQueue = typename MatchSet<Score>::Queue;
     using LeaderBoard = ClassificationCandidates<Score>;
 
-    using ZYMC = MC::ZYMC<Grouping>;
-    using BackboneProfiles =  typename ZYMC::BackboneProfiles;
+    using MCP = MC::MC<Grouping>;
+    using BackboneProfiles =  typename MCP::BackboneProfiles;
 
 public:
 
@@ -74,7 +73,7 @@ public:
     {
         BackboneProfiles profiles;
         for( auto &[label,sequences] : trainingData )
-            profiles.emplace( label , ZYMC( sequences , order ));
+            profiles.emplace( label , MCP( sequences , order ));
         return profiles;
     }
 
@@ -138,23 +137,23 @@ public:
 };
 
 
-using ZYPipelineVariant = MakeVariantType<ZYPipeline,
+using MCPipelineVariant = MakeVariantType<MCPipeline,
         SupportedAAGrouping>;
 
-ZYPipelineVariant getZYPipeline( const std::string &groupingLabel )
+MCPipelineVariant getMCPipeline( const std::string &groupingLabel )
 {
     const AminoAcidGroupingEnum grouping = GroupingLabels.at( groupingLabel );
     switch (grouping)
     {
         case AminoAcidGroupingEnum::NoGrouping20:
-            return ZYPipeline<AAGrouping_NOGROUPING20>();
+            return MCPipeline<AAGrouping_NOGROUPING20>();
         case AminoAcidGroupingEnum::DIAMOND11 :
-            return ZYPipeline<AAGrouping_DIAMOND11>();
+            return MCPipeline<AAGrouping_DIAMOND11>();
         case AminoAcidGroupingEnum::OFER8 :
-            return ZYPipeline<AAGrouping_OFER8>();
+            return MCPipeline<AAGrouping_OFER8>();
         case AminoAcidGroupingEnum::OFER15 :
-            return ZYPipeline<AAGrouping_OFER15>();
+            return MCPipeline<AAGrouping_OFER15>();
     }
 };
 
-#endif //MARKOVIAN_FEATURES_ZYPIPELINE_HPP
+#endif //MARKOVIAN_FEATURES_MCPIPELINE_HPP

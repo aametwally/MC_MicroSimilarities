@@ -2,27 +2,15 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true" buildAllGenerated="true">
     <generated>
-      <config projectName="markovian_features" targetName="subsetDataset" />
       <config projectName="markovian_features" targetName="fmt" />
-      <config projectName="markovian_features" targetName="homc_pipeline" />
-      <config projectName="markovian_features" targetName="dlib" />
-      <config projectName="markovian_features" targetName="ZhengYuan_pipeline" />
-      <config projectName="markovian_features" targetName="markovian_features_svm" />
+      <config projectName="markovian_features" targetName="MC_pipeline" />
       <config projectName="markovian_features" targetName="markovian_features_scoring" />
       <config projectName="markovian_features" targetName="confusionMatrix" />
     </generated>
   </component>
   <component name="CMakeSettings" AUTO_RELOAD="true">
     <configurations>
-      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" GENERATION_OPTIONS="-DCMAKE_PREFIX_PATH=/media/asem/store/experimental/dlib-install-debug/lib/cmake;/usr/local/cuda -DDEBUG_MODE=1">
-        <ADDITIONAL_GENERATION_ENVIRONMENT>
-          <envs>
-            <env name="FMT_SOURCE" value="$USER_HOME$/GP/fmt" />
-            <env name="DLIB_SOURCE" value="$USER_HOME$/GP/dlib" />
-          </envs>
-        </ADDITIONAL_GENERATION_ENVIRONMENT>
-      </configuration>
-      <configuration PROFILE_NAME="Release" CONFIG_NAME="Release" GENERATION_OPTIONS="-DCMAKE_PREFIX_PATH=/media/asem/store/experimental/dlib-install-release/lib/cmake;/usr/local/cuda">
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" GENERATION_OPTIONS="-DCMAKE_PREFIX_PATH=/media/asem/store/experimental/dlib-install-debug -DDLIB_PREFIX=/media/asem/store/experimental/dlib-install-debug">
         <ADDITIONAL_GENERATION_ENVIRONMENT>
           <envs>
             <env name="FMT_SOURCE" value="$USER_HOME$/GP/fmt" />
@@ -33,19 +21,36 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3f0d2b72-853a-4e53-a27b-7098811840a8" name="Default" comment="">
+    <list default="true" id="029ea99b-3622-4c30-a791-005fa27d1bef" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/src/algorithm/MC.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/algorithm/MCPipeline.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/algorithm/Pipeline.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/HOMC.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCFeatures.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/HOMCFeatures.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCOperations.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/HOMCOperations.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCPipeline.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/HOMCPipeline.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/SVMPipeline.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/SVMPipeline.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/RangedOrderMC.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCDefs.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCFeatures.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/MCFeatures.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCOperations.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/MCOperations.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCPipeline.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/MarkovChains.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/AbstractMC.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/SVMPipeline.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/ZYMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/ZYMC.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/algorithm/ZYPipeline.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/ZYPipeline.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/ZhengYuan_pipeline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/ZhengYuan_pipeline.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/HOMC_pipeline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/MC_pipeline.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/ZhengYuan_pipeline.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/confusionMatrix.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/confusionMatrix.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/markovian_features_analysis.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/markovian_features_analysis.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/markovian_features_svm.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/subsetDataset.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
-    <ignored path="$PROJECT_DIR$/cmake-build-release/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -53,68 +58,56 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Release" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="HOMC.hpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/algorithm/HOMC.hpp">
+    <leaf>
+      <file leaf-file-name="FeatureScoringPipeline.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3542">
-              <caret line="439" column="13" selection-start-line="439" selection-start-column="13" selection-end-line="439" selection-end-column="13" />
+            <state relative-caret-position="-314">
+              <caret line="16" selection-start-line="16" selection-end-line="16" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SVMMarkovianModel.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="563">
+              <caret line="91" column="13" selection-start-line="91" selection-start-column="13" selection-end-line="91" selection-end-column="13" />
               <folding>
-                <element signature="e#62#83#0" expanded="true" />
-                <element signature="e#498#519#0" expanded="true" />
-                <element signature="e#11369#11408#0" expanded="true" />
+                <element signature="e#349#368#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="HOMC_pipeline.cpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/app/HOMC_pipeline.cpp">
+      <file leaf-file-name="Pipeline.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/algorithm/Pipeline.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="16">
-              <caret line="34" column="33" selection-start-line="34" selection-start-column="32" selection-end-line="34" selection-end-column="33" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="aminoacids_grouping.hpp" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="21">
-              <caret line="13" column="11" lean-forward="true" selection-start-line="13" selection-start-column="11" selection-end-line="13" selection-end-column="11" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="ZhengYuan_pipeline.cpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/app/ZhengYuan_pipeline.cpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="779">
-              <caret line="57" column="55" selection-start-line="57" selection-start-column="55" selection-end-line="57" selection-end-column="55" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="ZYMC.hpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/algorithm/ZYMC.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="118">
-              <caret line="98" column="35" selection-start-line="98" selection-start-column="35" selection-end-line="98" selection-end-column="35" />
+            <state relative-caret-position="3920">
+              <caret line="245" column="30" selection-start-line="245" selection-start-column="30" selection-end-line="245" selection-end-column="30" />
               <folding>
-                <element signature="e#315#363#0" expanded="true" />
-                <element signature="e#873#904#0" expanded="true" />
+                <element signature="e#140#158#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Histogram.hpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/algorithm/Histogram.hpp">
+      <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/app/CMakeLists.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="493">
-              <caret line="48" column="9" selection-start-line="48" selection-start-column="9" selection-end-line="48" selection-end-column="9" />
+            <state relative-caret-position="318">
+              <caret line="54" column="95" selection-start-line="54" selection-start-column="95" selection-end-line="54" selection-end-column="95" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="MCOperations.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="166">
+              <caret line="475" column="75" selection-start-line="475" selection-start-column="75" selection-end-line="475" selection-end-column="75" />
             </state>
           </provider>
         </entry>
@@ -123,45 +116,16 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>Type</find>
-      <find>FSco</find>
-      <find>'</find>
-      <find>move</find>
-      <find>kernels(</find>
-      <find>nth</find>
-      <find>isNan</find>
-      <find>inter</find>
-      <find>enab</find>
-      <find>enable</find>
-      <find>enable_if</find>
-      <find>intersec</find>
-      <find>MF</find>
-      <find>localtime_s</find>
-      <find>MinOr</find>
-      <find>Order minOrder() const</find>
-      <find>MinOrder</find>
-      <find>filter</find>
-      <find>train(</find>
-      <find>feature</find>
-      <find>intersection</find>
-      <find>states()</find>
-      <find>train</find>
-      <find>.increment</find>
-      <find>kernels</find>
-      <find>kernel</find>
-      <find>.kernel</find>
+      <find>coveredFeatures</find>
+      <find>option</find>
+      <find>std::o</find>
+      <find>extractFlatFeatureVector</find>
+      <find>spar</find>
+      <find>extract</find>
+      <find>flat</find>
     </findStrings>
-    <replaceStrings>
-      <replace />
-      <replace>&quot;</replace>
-      <replace>histogram</replace>
-      <replace>StatesN</replace>
-    </replaceStrings>
     <dirStrings>
-      <dir>$PROJECT_DIR$/src/</dir>
-      <dir>$PROJECT_DIR$/src/report</dir>
       <dir>$PROJECT_DIR$/src/algorithm</dir>
-      <dir>$PROJECT_DIR$/src</dir>
     </dirStrings>
   </component>
   <component name="Git.Settings">
@@ -170,53 +134,17 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/app/subsetDataset.cpp" />
-        <option value="$PROJECT_DIR$/src/report/Timers.hpp" />
-        <option value="$PROJECT_DIR$/src/app/confusionMatrix.cpp" />
-        <option value="$PROJECT_DIR$/src/features/Distances.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/pipeline_configuration.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/draft.hpp" />
-        <option value="$PROJECT_DIR$/src/app/markovian_features_validation.cpp" />
-        <option value="$PROJECT_DIR$/src/data/UniRefEntry.hpp" />
-        <option value="$PROJECT_DIR$/src/report/crossvalidation.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/markovian_features.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/VariantGenerator.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/SVMModel.hpp" />
-        <option value="$PROJECT_DIR$/src/data/dlib_utilities.hpp" />
-        <option value="$PROJECT_DIR$/src/app/markovian_features_svm.cpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/SVMPipeline.hpp" />
-        <option value="$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp" />
-        <option value="$PROJECT_DIR$/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/src/algorithm/Series.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/common.hpp" />
-        <option value="$PROJECT_DIR$/src/features/FeatureScoreAUC.hpp" />
         <option value="$PROJECT_DIR$/src/app/markovian_features_analysis.cpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/MarkovianModelFeatures.hpp" />
-        <option value="$PROJECT_DIR$/src/app/markovian_features.cpp" />
-        <option value="$PROJECT_DIR$/src/features/similarities.hpp" />
-        <option value="$PROJECT_DIR$/src/data/FastaEntry.hpp" />
-        <option value="$PROJECT_DIR$/src/data/LabeledEntry.hpp" />
-        <option value="$PROJECT_DIR$/src/data/SequenceEntry.hpp" />
-        <option value="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/MarkovianKernels.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/HetroOrderMarkovianChains.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/HetroOrderMarkovChains.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/ConfiguredPipeline.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/HeteroOrderMarkovChains.hpp" />
-        <option value="$PROJECT_DIR$/src/app/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/src/algorithm/HOMCDefs.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/AbstractMC.hpp" />
         <option value="$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/MarkovChains.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/ZYPipeline.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/ZYMC.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/Histogram.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/HOMCPipeline.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/HOMC.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/HOMCFeatures.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/HOMCOperations.hpp" />
-        <option value="$PROJECT_DIR$/src/app/ZhengYuan_pipeline.cpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/MCFeatures.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/SVMPipeline.hpp" />
+        <option value="$PROJECT_DIR$/src/app/markovian_features_svm.cpp" />
+        <option value="$PROJECT_DIR$/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/src/algorithm/Pipeline.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/MCOperations.hpp" />
+        <option value="$PROJECT_DIR$/src/app/CMakeLists.txt" />
       </list>
     </option>
   </component>
@@ -226,7 +154,6 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="OCFindUsagesOptions" text="true" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="61" />
     <option name="y" value="47" />
@@ -270,38 +197,6 @@
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="app" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="markovian_features" type="b2602c69:ProjectViewProjectNode" />
-              <item name="markovian_features" type="47feb1d3:ProjectViewModuleNode" />
-              <item name="markovian_features" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="markovian_features" type="b2602c69:ProjectViewProjectNode" />
-              <item name="markovian_features" type="47feb1d3:ProjectViewModuleNode" />
-              <item name="markovian_features" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="features" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="markovian_features" type="b2602c69:ProjectViewProjectNode" />
-              <item name="markovian_features" type="47feb1d3:ProjectViewModuleNode" />
-              <item name="markovian_features" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="include" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="markovian_features" type="b2602c69:ProjectViewProjectNode" />
-              <item name="markovian_features" type="47feb1d3:ProjectViewModuleNode" />
-              <item name="markovian_features" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="report" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="markovian_features" type="b2602c69:ProjectViewProjectNode" />
-              <item name="External Libraries" type="cb654da1:ExternalLibrariesNode" />
-            </path>
           </expand>
           <select />
         </subPane>
@@ -311,8 +206,8 @@
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/CMakeLists.txt" />
-    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
     <property name="settings.editor.selected.configurable" value="CMakeSettings" />
   </component>
   <component name="RunDashboard">
@@ -327,27 +222,17 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Application.ZhengYuan_pipeline">
-    <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Release" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="confusionMatrix" EXPLICIT_BUILD_TARGET_NAME="all" />
-    <configuration name="ZhengYuan_pipeline" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../Caraga_C_2011/psortNeg --fformat psort -G nogrouping -o [1,2,3,4,5,6,7]" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="ZhengYuan_pipeline" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="ZhengYuan_pipeline" />
+  <component name="RunManager" selected="Application.MC_pipeline">
+    <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features_scoring" EXPLICIT_BUILD_TARGET_NAME="all" />
+    <configuration name="MC_pipeline" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../Caraga_C_2011/psortNeg --fformat psort -l [2,3,4] -h [2,3,4] --model [rmc,romc,zymc]  --grouping [ofer15,nogrouping] --criteria [cos,kl,chi] -s [propensity,voting,acc] " PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="MC_pipeline" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="MC_pipeline" />
     <configuration name="confusionMatrix" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="confusionMatrix" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="confusionMatrix" />
-    <configuration name="dlib" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="dlib" CONFIG_NAME="Debug" />
     <configuration name="fmt" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="fmt" CONFIG_NAME="Debug" />
-    <configuration name="homc_pipeline" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../Caraga_C_2011/psortNeg --fformat psort -l 2 -h 5  --grouping olfer15 --criteria [cos,kl,chi,gaussian] -s acc" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="homc_pipeline" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="homc_pipeline" />
-    <configuration name="markovian_features" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../Caraga_C_2011/psortNeg --fformat psort -l 2 -h 5  --grouping olfer15 --criteria [cos,kl,chi,gaussian] -s acc" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="markovian_features" CONFIG_NAME="Release" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features" />
-    <configuration name="markovian_features_scoring" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS=" $PROJECT_DIR$/../Caraga_C_2011/psortNeg --fformat psort --order 5  --grouping olfer15" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="markovian_features_scoring" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features_scoring" />
-    <configuration name="markovian_features_svm" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../Caraga_C_2011/psortNeg --fformat psort --order 5  --grouping olfer15" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="markovian_features_svm" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features_svm" />
-    <configuration name="subsetDataset" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="subsetDataset" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="subsetDataset" />
+    <configuration name="markovian_features_scoring" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="markovian_features_scoring" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features_scoring" />
     <list>
       <item itemvalue="Application.Build All" />
       <item itemvalue="Application.confusionMatrix" />
-      <item itemvalue="Application.homc_pipeline" />
-      <item itemvalue="Application.markovian_features" />
       <item itemvalue="Application.markovian_features_scoring" />
-      <item itemvalue="Application.markovian_features_svm" />
-      <item itemvalue="Application.subsetDataset" />
-      <item itemvalue="Application.ZhengYuan_pipeline" />
-      <item itemvalue="Application.dlib" />
+      <item itemvalue="Application.MC_pipeline" />
       <item itemvalue="Application.fmt" />
     </list>
   </component>
@@ -356,87 +241,42 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="3f0d2b72-853a-4e53-a27b-7098811840a8" name="Default" comment="" />
-      <created>1533015799261</created>
+      <changelist id="029ea99b-3622-4c30-a791-005fa27d1bef" name="Default" comment="" />
+      <created>1536663623527</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1533015799261</updated>
-      <workItem from="1533015804101" duration="13631000" />
-      <workItem from="1533110262702" duration="125269000" />
-      <workItem from="1533571999777" duration="137379000" />
-      <workItem from="1534003495661" duration="21276000" />
-      <workItem from="1534183548165" duration="20742000" />
-      <workItem from="1534247581838" duration="607000" />
-      <workItem from="1534250797571" duration="6737000" />
-      <workItem from="1534260958090" duration="9146000" />
-      <workItem from="1534281120902" duration="18048000" />
-      <workItem from="1534343651301" duration="25126000" />
-      <workItem from="1534437161091" duration="22290000" />
-      <workItem from="1534614197705" duration="80740000" />
-      <workItem from="1534873512688" duration="136536000" />
-      <workItem from="1535189753205" duration="34655000" />
-      <workItem from="1535384702495" duration="25898000" />
-      <workItem from="1536337752550" duration="1351000" />
-      <workItem from="1536403942576" duration="3339000" />
-      <workItem from="1536466458431" duration="35024000" />
+      <updated>1536663623527</updated>
+      <workItem from="1536663624864" duration="505000" />
+      <workItem from="1536664421410" duration="9881000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="717794000" />
-  </component>
-  <component name="TodoView">
-    <todo-panel id="selected-file">
-      <is-autoscroll-to-source value="true" />
-    </todo-panel>
-    <todo-panel id="all">
-      <are-packages-shown value="true" />
-      <is-autoscroll-to-source value="true" />
-    </todo-panel>
+    <option name="totallyTimeSpent" value="10386000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="51" y="25" width="1315" height="743" extended-state="6" />
+    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24458204" />
-      <window_info anchor="bottom" id="TODO" order="6" weight="0.3295082" />
-      <window_info anchor="bottom" id="Messages" order="7" weight="0.3262295" />
-      <window_info anchor="bottom" id="CMake" order="8" sideWeight="0.499226" weight="0.31967214" />
-      <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.50077397" side_tool="true" weight="0.52786887" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.39344263" />
-      <window_info anchor="bottom" id="Version Control" order="10" weight="0.3295082" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.499226" visible="true" weight="0.84918034" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="Messages" visible="true" weight="0.3295082" />
+      <window_info anchor="bottom" id="CMake" weight="0.3295082" />
+      <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Version Control" order="7" weight="0.3295082" />
+      <window_info anchor="bottom" id="Run" order="2" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="11" weight="0.3295082" />
+      <window_info anchor="bottom" id="Terminal" order="7" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.3852459" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="Inspection Results" order="12" weight="0.3295082" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
     </layout>
-    <layout-to-restore>
-      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2004644" />
-      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
-      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
-      <window_info anchor="bottom" id="TODO" order="6" weight="0.3295082" />
-      <window_info anchor="bottom" id="Version Control" order="10" weight="0.3295082" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.499226" weight="0.29344264" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32786885" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.38196722" />
-      <window_info active="true" anchor="bottom" id="Messages" order="7" visible="true" weight="0.44590163" />
-      <window_info anchor="bottom" id="Terminal" order="8" weight="0.3295082" />
-      <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.50077397" side_tool="true" weight="0.52786887" />
-      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="CMake" order="11" sideWeight="0.499226" weight="0.5277778" />
-      <window_info id="Favorites" order="2" side_tool="true" />
-    </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
@@ -444,420 +284,113 @@
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
   </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints-dialog>
-        <breakpoints-dialog />
-      </breakpoints-dialog>
-      <option name="time" value="46" />
-    </breakpoint-manager>
-  </component>
   <component name="editorHistoryManager">
-    <entry file="file:///usr/include/c++/7/optional">
+    <entry file="file://$PROJECT_DIR$/src/algorithm/MCFeatures.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="743" selection-start-line="743" selection-end-line="743" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/variant">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="127">
-          <caret line="1243" column="46" selection-start-line="1243" selection-start-column="46" selection-end-line="1243" selection-end-column="46" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/tuple">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="259">
-          <caret line="1640" column="65" selection-start-line="1640" selection-start-column="65" selection-end-line="1640" selection-end-column="65" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/ext/new_allocator.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="135" selection-start-line="135" selection-end-line="135" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/move.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="99">
-          <caret line="136" selection-start-line="136" selection-end-line="136" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/unordered_map.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="100" selection-start-line="100" selection-end-line="100" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/stl_construct.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="97" selection-start-line="97" selection-end-line="97" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/stl_map.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="94">
-          <caret line="293" selection-start-line="293" selection-end-line="293" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/stl_set.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="500" selection-start-line="500" selection-end-line="500" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/time.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="301">
-          <caret line="132" column="28" selection-start-line="132" selection-start-column="28" selection-end-line="132" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/chrono">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="127">
-          <caret line="829" column="6" selection-start-line="829" selection-start-column="6" selection-end-line="829" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/app/markovian_features_analysis.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="256">
-          <caret line="16" column="1" selection-start-line="16" selection-start-column="1" selection-end-line="16" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/ext/aligned_buffer.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="108" selection-start-line="108" selection-end-line="108" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/alloc_traits.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="461" selection-start-line="461" selection-end-line="461" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/array">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="185" selection-start-line="185" selection-end-line="185" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/hashtable_policy.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="154">
-          <caret line="1290" selection-start-line="1290" selection-end-line="1290" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/stl_tree.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="365" selection-start-line="365" selection-end-line="365" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/refwrap.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="349" selection-start-line="349" selection-end-line="349" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/hashtable.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="1540" selection-start-line="1540" selection-end-line="1540" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/stl_numeric.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="139">
-          <caret line="126" selection-start-line="126" selection-end-line="126" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/basic_string.tcc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="116">
-          <caret line="211" selection-start-line="211" selection-end-line="211" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/common.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="138">
-          <caret line="58" selection-start-line="58" selection-end-line="58" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="144">
-          <caret line="22" column="39" lean-forward="true" selection-start-line="22" selection-start-column="39" selection-end-line="22" selection-end-column="39" />
+        <state relative-caret-position="214">
+          <caret line="356" column="50" selection-start-line="356" selection-start-column="50" selection-end-line="356" selection-end-column="50" />
           <folding>
-            <element signature="e#3826#3850#0" expanded="true" />
+            <element signature="e#1343#1366#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/features/similarities.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="507" column="9" selection-start-line="507" selection-start-column="9" selection-end-line="507" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/FastaEntry.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="688">
-          <caret line="43" selection-start-line="43" selection-end-line="43" />
-          <folding>
-            <element signature="e#698#719#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/LabeledEntry.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2144">
-          <caret line="134" column="5" selection-start-line="134" selection-start-column="5" selection-end-line="134" selection-end-column="5" />
-          <folding>
-            <element signature="e#3622#3643#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/dlib_utilities.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-672" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/SequenceEntry.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1872">
-          <caret line="117" column="53" selection-start-line="117" selection-start-column="53" selection-end-line="117" selection-end-column="53" />
-          <folding>
-            <element signature="e#3818#3857#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/features/FeatureScoreAUC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2640">
-          <caret line="165" column="22" selection-start-line="165" selection-start-column="22" selection-end-line="165" selection-end-column="22" />
-          <folding>
-            <element signature="e#134#155#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/Histogram.cpp">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-16">
-          <caret line="20" column="49" selection-start-line="20" selection-start-column="49" selection-end-line="20" selection-end-column="49" />
-          <folding>
-            <element signature="e#120#141#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/report/ConfusionMatrix.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-736">
-          <caret line="14" column="22" selection-start-line="14" selection-start-column="22" selection-end-line="14" selection-end-column="22" />
-          <folding>
-            <element signature="e#165#217#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/stl_function.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="385" selection-start-line="385" selection-end-line="385" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/predefined_ops.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="78">
-          <caret line="282" selection-start-line="282" selection-end-line="282" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/stl_algo.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="4107" selection-start-line="4107" selection-end-line="4107" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/SVMPipeline.hpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="272">
-          <caret line="105" column="2" lean-forward="true" selection-start-line="87" selection-end-line="105" selection-end-column="2" />
+          <caret line="69" column="24" selection-start-line="69" selection-start-column="24" selection-end-line="69" selection-end-column="24" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/app/CMakeLists.txt">
+    <entry file="file://$PROJECT_DIR$/src/app/markovian_features_svm.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="688">
-          <caret line="43" column="31" selection-start-line="43" selection-start-column="31" selection-end-line="43" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/HOMCDefs.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="160">
-          <caret line="10" column="12" selection-start-line="10" selection-start-column="12" selection-end-line="10" selection-end-column="12" />
+        <state relative-caret-position="-606">
+          <caret line="32" column="22" lean-forward="true" selection-start-line="32" selection-start-column="22" selection-end-line="32" selection-end-column="22" />
           <folding>
-            <element signature="e#120#141#0" expanded="true" />
+            <element signature="e#40#63#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/MarkovChains.hpp">
+    <entry file="file://$PROJECT_DIR$/src/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/app/markovian_features_analysis.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="619">
-          <caret line="64" column="1" selection-start-line="64" selection-start-column="1" selection-end-line="64" selection-end-column="1" />
-          <folding>
-            <element signature="e#128#149#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="144">
+          <caret line="9" column="27" selection-start-line="9" selection-start-column="27" selection-end-line="9" selection-end-column="27" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
+    <entry file="file://$PROJECT_DIR$/../dlib-install-debug/lib/cmake/dlib/dlibConfig.cmake">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="212">
-          <caret line="25" selection-start-line="25" selection-end-line="25" />
-          <folding>
-            <element signature="e#148#175#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="270">
+          <caret line="41" selection-start-line="41" selection-end-line="41" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="816">
-          <caret line="51" selection-start-line="51" selection-end-line="51" />
+        <state relative-caret-position="283">
+          <caret line="55" selection-start-line="55" selection-end-line="55" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/ZYMC.hpp">
+    <entry file="file://$PROJECT_DIR$/src/app/MC_pipeline.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="118">
-          <caret line="98" column="35" selection-start-line="98" selection-start-column="35" selection-end-line="98" selection-end-column="35" />
+        <state relative-caret-position="32">
+          <caret line="2" selection-start-line="2" selection-end-line="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/AbstractMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="108">
+          <caret line="178" column="22" selection-start-line="178" selection-start-column="22" selection-end-line="178" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/RangedOrderMC.hpp">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-314">
+          <caret line="16" selection-start-line="16" selection-end-line="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="563">
+          <caret line="91" column="13" selection-start-line="91" selection-start-column="13" selection-end-line="91" selection-end-column="13" />
           <folding>
-            <element signature="e#315#363#0" expanded="true" />
-            <element signature="e#873#904#0" expanded="true" />
+            <element signature="e#349#368#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/HOMCOperations.hpp">
+    <entry file="file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3744">
-          <caret line="510" column="72" selection-start-line="510" selection-start-column="72" selection-end-line="510" selection-end-column="72" />
-          <folding>
-            <element signature="e#132#155#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="166">
+          <caret line="475" column="75" selection-start-line="475" selection-start-column="75" selection-end-line="475" selection-end-column="75" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/HOMCFeatures.hpp">
+    <entry file="file://$PROJECT_DIR$/src/algorithm/Pipeline.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="13765">
-          <caret line="1053" column="66" selection-start-line="1053" selection-start-column="66" selection-end-line="1053" selection-end-column="66" />
-          <folding>
-            <element signature="e#7044#7056#0" expanded="true" />
-            <element signature="e#7224#7257#0" expanded="true" />
-            <element signature="e#7926#7959#0" expanded="true" />
-            <element signature="e#36700#36773#0" expanded="true" />
-            <element signature="e#39661#39708#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/HOMCPipeline.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="157">
-          <caret line="121" column="52" selection-start-line="121" selection-start-column="52" selection-end-line="121" selection-end-column="52" />
+        <state relative-caret-position="3920">
+          <caret line="245" column="30" selection-start-line="245" selection-start-column="30" selection-end-line="245" selection-end-column="30" />
           <folding>
             <element signature="e#140#158#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/ZYPipeline.hpp">
+    <entry file="file://$PROJECT_DIR$/src/app/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="214">
-          <caret line="65" selection-start-line="65" selection-end-line="65" />
-          <folding>
-            <element signature="e#123#144#0" expanded="true" />
-            <element signature="e#305#352#0" expanded="true" />
-            <element signature="e#1220#1240#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/Histogram.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="493">
-          <caret line="48" column="9" selection-start-line="48" selection-start-column="9" selection-end-line="48" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/HOMC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3542">
-          <caret line="439" column="13" selection-start-line="439" selection-start-column="13" selection-end-line="439" selection-end-column="13" />
-          <folding>
-            <element signature="e#62#83#0" expanded="true" />
-            <element signature="e#498#519#0" expanded="true" />
-            <element signature="e#11369#11408#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/app/HOMC_pipeline.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="16">
-          <caret line="34" column="33" selection-start-line="34" selection-start-column="32" selection-end-line="34" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/app/ZhengYuan_pipeline.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="779">
-          <caret line="57" column="55" selection-start-line="57" selection-start-column="55" selection-end-line="57" selection-end-column="55" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="21">
-          <caret line="13" column="11" lean-forward="true" selection-start-line="13" selection-start-column="11" selection-end-line="13" selection-end-column="11" />
+        <state relative-caret-position="318">
+          <caret line="54" column="95" selection-start-line="54" selection-start-column="95" selection-end-line="54" selection-end-column="95" />
         </state>
       </provider>
     </entry>

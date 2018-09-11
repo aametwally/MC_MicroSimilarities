@@ -33,21 +33,25 @@ std::vector<std::string> splitParameters( std::string params )
 }
 
 std::string prefix( const std::string &input,
-                    const std::string &o,
+                    MC::Order mnOrder, MC::Order mxOrder,
                     const std::string &g )
 {
-    return fmt::format( "[{}][{}][order:{}][grouping:{}]", timeNow(), input, o, g );
+    return fmt::format( "[{}][{}][order:{}-{}][grouping:{}]", timeNow(), input, mnOrder, mxOrder, g );
 }
 
 int main( int argc, char *argv[] )
 {
+    using namespace MC;
     using io::join;
     std::string input, testFile;
     std::string fastaFormat = keys( FormatLabels ).front();
-    std::string markovianOrder = "3";
+    std::string minOrder = "3";
+    std::string maxOrder = "5";
+    std::string order = "";
     size_t k = 10;
     bool showHelp = false;
     std::string grouping = keys( GroupingLabels ).front();
+    std::string model = keys( MCModelLabels ).front();
 
     auto cli
             = clara::Arg( input, "input" )
@@ -56,14 +60,23 @@ int main( int argc, char *argv[] )
               ["-T"]["--test"]
                       ( "test file" )
               | clara::Opt( grouping, join( keys( GroupingLabels ), "|" ))
+              | clara::Opt( model, join( keys( MCModelLabels ), "|" ))
+              ["-m"]["--model"]
+                      ( fmt::format( "Markov Chains model, default:{}", model ))
               ["-G"]["--grouping"]
                       ( fmt::format( "grouping method, default:{}", grouping ))
               | clara::Opt( fastaFormat, join( keys( FormatLabels ), "|" ))
               ["-f"]["--fformat"]
                       ( fmt::format( "input file processor, default:{}", fastaFormat ))
-              | clara::Opt( markovianOrder, "order" )
+              | clara::Opt( order, "MC order" )
               ["-o"]["--order"]
-                      ( fmt::format( "Markovian order, default:{}", markovianOrder ))
+                      ( fmt::format( "Specify MC of higher order o, default:{}", maxOrder ))
+              | clara::Opt( minOrder, "minimum order" )
+              ["-l"]["--min-order"]
+                      ( fmt::format( "Markovian lower order, default:{}", minOrder ))
+              | clara::Opt( maxOrder, "maximum order" )
+              ["-h"]["--max-order"]
+                      ( fmt::format( "Markovian higher order, default:{}", maxOrder ))
               | clara::Opt( k, "k-fold" )
               ["-k"]["--k-fold"]
                       ( fmt::format( "cross validation k-fold, default:{}", k ))
@@ -77,36 +90,45 @@ int main( int argc, char *argv[] )
     } else if ( showHelp )
     {
         cli.writeToStream( std::cout );
-    } else if ( !testFile.empty())
-    {
-        fmt::print( "[Args][input:{}][testFile:{}][order:{}][kfold:{}]\n",
-                    input, testFile, markovianOrder, k );
-
-
     } else
     {
+        if ( !order.empty())
+            maxOrder = order;
+
         fmt::print( "[Args][input:{}]"
                     "[fformat:{}]"
-                    "[order:{}]"
+                    "[model:{}]"
+                    "[order:{}-{}]"
                     "[k-fold:{}]"
                     "[grouping:{}]\n",
                     input, fastaFormat,
-                    markovianOrder,
+                    model ,
+                    minOrder, maxOrder,
                     k, grouping );
         namespace fs = std::experimental::filesystem;
         fs::path p( input.c_str());
         const std::string fname = p.filename();
 
-        for (auto &g : splitParameters( grouping ))
-            for (auto &o : splitParameters( markovianOrder ))
+        for (auto &m : splitParameters( model ))
+        for (auto &min : splitParameters( minOrder ))
+            for (auto &max : splitParameters( maxOrder ))
             {
-                fmt::print( "[Params]"
-                            "[order:{}]"
-                            "[grouping:{}]\n", o, g );
-                std::visit( [&]( auto &&p ) {
-                    p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ),
-                                              std::stoi( o ), k, prefix( fname, o, g ));
-                }, getFeatureScoringPipeline( g ));
+                auto mnOrder = std::stoi( min );
+                auto mxOrder = std::stoi( max );
+                if ( mxOrder >= mnOrder )
+                {
+                    for (auto &g : splitParameters( grouping ))
+                    {
+                        fmt::print( "[Params]"
+                                    "[model:{}]"
+                                    "[order:{}-{}]"
+                                    "[grouping:{}]\n", m , mnOrder, mxOrder, g );
+                        std::visit( [&]( auto &&p ) {
+                            p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ),
+                                                      k, prefix( fname, mnOrder, mxOrder, g ));
+                        }, getFeatureScoringPipeline( g , m , mnOrder , mxOrder ));
+                    }
+                }
             }
 
 

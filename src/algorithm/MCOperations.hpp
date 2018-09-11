@@ -5,11 +5,9 @@
 #ifndef MARKOVIAN_FEATURES_HOMCOPERATIONS_HPP
 #define MARKOVIAN_FEATURES_HOMCOPERATIONS_HPP
 
-#include "HOMCDefs.hpp"
-#include "HOMC.hpp"
+#include "AbstractMC.hpp"
 
-namespace MC
-{
+namespace MC {
 
     struct LazySelectionsIntersection
     {
@@ -287,20 +285,15 @@ namespace MC
         std::optional<const Selection> _s2;
     };
 
-    struct KernelIdentifier
-    {
-        explicit KernelIdentifier( Order o, HistogramID i ) : order( o ), id( i )
-        {}
-        Order order;
-        HistogramID id;
-    };
 
-
-
-    Selection union_( const Selection &s1, const Selection &s2, Order mnOrder, Order mxOrder )
+    Selection union_( const Selection &s1, const Selection &s2 )
     {
         Selection _union;
-        for (auto order = mnOrder; order <= mxOrder; ++order)
+        std::set<Order> orders;
+        for (auto&[order, _] : s1) orders.insert( order );
+        for (auto&[order, _] : s2) orders.insert( order );
+
+        for (auto order : orders)
         {
             auto ids1It = s1.find( order );
             auto ids2It = s2.find( order );
@@ -321,12 +314,12 @@ namespace MC
         return _union;
     }
 
-    Selection union_( const std::vector<Selection> &sets, Order mnOrder, Order mxOrder )
+    Selection union_( const std::vector<Selection> &sets )
     {
         Selection scannedKernels;
         for (const auto &selection : sets)
         {
-            scannedKernels = union_( scannedKernels, selection, mnOrder, mxOrder );
+            scannedKernels = union_( scannedKernels, selection );
         }
         return scannedKernels;
     }
@@ -367,10 +360,13 @@ namespace MC
     }
 
     Selection
-    intersection( const Selection &s1, const Selection &s2, Order minOrder, Order maxOrder ) noexcept
+    intersection( const Selection &s1, const Selection &s2 ) noexcept
     {
         Selection _intersection;
-        for (auto order = minOrder; order <= maxOrder; ++order)
+        std::set<Order> orders;
+        for (auto&[order, _] : s1) orders.insert( order );
+        for (auto&[order, _] : s2) orders.insert( order );
+        for (auto order : orders)
         {
             try
             {
@@ -386,17 +382,17 @@ namespace MC
     }
 
     Selection
-    intersection( const std::vector<Selection> sets, Order mnOrder, Order mxOrder,
+    intersection( const std::vector<Selection> sets,
                   std::optional<double> minCoverage = std::nullopt )
     {
         const size_t k = sets.size();
         if ( minCoverage && minCoverage == 0.0 )
         {
-            return union_( sets, mnOrder, mxOrder );
+            return union_( sets );
         }
         if ( minCoverage && minCoverage > 0.0 )
         {
-            const Selection scannedKernels = union_( sets, mnOrder, mxOrder );
+            const Selection scannedKernels = union_( sets );
             Selection result;
             for (const auto &[order, ids] : scannedKernels)
             {
@@ -419,55 +415,91 @@ namespace MC
             Selection result = sets.front();
             for (auto i = 1; i < sets.size(); ++i)
             {
-                result = intersection( result, sets[i], mnOrder, mxOrder );
+                result = intersection( result, sets[i] );
             }
             return result;
         }
 
     }
 
+
     template<typename Grouping>
-    struct Ops
+    class MCOps
     {
-        using HOMCP = HOMC< Grouping >;
-        using BackboneProfiles = typename HOMCP::BackboneProfiles ;
-        using HeteroHistogramsFeatures = typename HOMCP::HeteroHistogramsFeatures ;
-        using HeteroHistograms = typename HOMCP::HeteroHistograms ;
 
+    public:
+        using Model = AbstractMC<Grouping>;
+        using BackboneProfiles = typename Model::BackboneProfiles;
+        using HeteroHistograms = typename Model::HeteroHistograms;
+        using ModelTrainer = typename Model::ModelTrainer;
+        using HistogramsTrainer = typename Model::HistogramsTrainer;
+    public:
 
-        static Order maxOrder( const BackboneProfiles &profiles )
+        static std::unordered_map<size_t, double>
+        extractSparsedFlatFeatures( const HeteroHistograms &histograms, const Selection &select ) noexcept
         {
-            return profiles.cbegin()->second.maxOrder();
+            std::unordered_map<size_t, double> features;
+
+            for (auto &[order, id] : LazySelectionsIntersection::intersection( MCOps::featureSpace( histograms ),
+                                                                               select ))
+            {
+                auto &histogram = histograms.at( order ).at( id );
+                size_t offset = order * id * Model::StatesN;
+                for (auto i = 0; i < Model::StatesN; ++i)
+                    features[offset + i] = histogram[i];
+            }
+            return features;
         }
 
-        static Order minOrder( const BackboneProfiles &profiles )
+        static std::vector<double> extractFlatFeatureVector(
+                const HeteroHistograms &histograms,
+                const Selection &select,
+                double missingVals = 0 )  noexcept
         {
-            return profiles.cbegin()->second.minOrder();
+            std::vector<double> features;
+
+            features.reserve(
+                    std::accumulate( std::cbegin( select ), std::cend( select ), size_t( 0 ),
+                                     [&]( size_t acc, const auto &pair ) {
+                                         return acc + pair.second.size() * Model::StatesN;
+                                     } ));
+
+            for (auto &[order, ids] : select)
+            {
+                if ( auto isoHistogramsIt = histograms.find( order ); isoHistogramsIt != histograms.cend())
+                {
+                    auto &isoHistograms = isoHistogramsIt->second;
+                    for (auto id : ids)
+                    {
+                        if ( auto histogramIt = isoHistograms.find( id ); histogramIt != isoHistograms.cend())
+                            features.insert( std::end( features ), std::cbegin( histogramIt->second ),
+                                             std::cend( histogramIt->second ));
+                        else
+                            features.insert( std::end( features ), Model::StatesN, missingVals );
+
+                    }
+                } else
+                {
+                    for (auto id : ids)
+                        features.insert( std::end( features ), Model::StatesN, missingVals );
+                }
+            }
+            return features;
         }
 
-        static Order maxOrder( const HeteroHistogramsFeatures &features )
+
+        static Selection featureSpace( const HeteroHistograms &profile )
         {
-            return std::accumulate( std::cbegin( features ),
-                                    std::cend( features ), Order( features.cbegin()->first ),
-                                    []( Order mxOrder, const auto &p ) {
-                                        return std::max( mxOrder, p.first );
-                                    } );
+            Selection allFeatureSpace;
+            for (const auto &[order, isoHistograms] : profile)
+                for (const auto &[id, histogram] : isoHistograms)
+                    allFeatureSpace[order].insert( id );
+            return allFeatureSpace;
         }
 
-        static Order minOrder( const HeteroHistogramsFeatures &features )
+        static Selection populationFeatureSpace( const BackboneProfiles &profiles )
         {
-            return std::accumulate( std::cbegin( features ),
-                                    std::cend( features ), Order( features.cbegin()->first ),
-                                    []( Order minOrder, const auto &p ) {
-                                        return std::min( minOrder, p.first );
-                                    } );
-        }
-
-        static Selection featureSpace( const BackboneProfiles &profiles )
-        {
-            const Order mxOrder = maxOrder( profiles );
             std::unordered_map<Order, std::set<HistogramID >> allFeatureSpace;
-
             for (const auto &[cluster, profile] : profiles)
                 for (const auto &[order, isoHistograms] : profile.histograms())
                     for (const auto &[id, histogram] : isoHistograms.get())
@@ -479,17 +511,14 @@ namespace MC
                                         const std::unordered_map<Order, std::set<HistogramID >> &allFeatures,
                                         std::optional<double> minSharedPercentage = std::nullopt )
         {
-            const Order mxOrder = maxOrder( profiles );
-            const Order mnOrder = minOrder( profiles );
-
             Selection joint;
             if ( minSharedPercentage )
             {
                 assert( minSharedPercentage > 0.0 );
 
                 const size_t minShared = size_t( profiles.size() * minSharedPercentage.value());
-                for (auto order = mnOrder; order <= mxOrder; ++order)
-                    for (const auto id : allFeatures.at( order ))
+                for (auto &[order, isoFeatures] : allFeatures)
+                    for (const auto id : isoFeatures)
                     {
                         auto shared = std::count_if( std::cbegin( profiles ), std::cend( profiles ),
                                                      [order, id]( const auto &p ) {
@@ -502,8 +531,8 @@ namespace MC
                     }
             } else
             {
-                for (auto order = mnOrder; order <= mxOrder; ++order)
-                    for (const auto id : allFeatures.at( order ))
+                for (auto &[order, isoFeatures] : allFeatures)
+                    for (const auto id : isoFeatures)
                     {
                         bool isJoint = std::all_of( std::cbegin( profiles ), std::cend( profiles ),
                                                     [order, id]( const auto &p ) {
@@ -518,72 +547,83 @@ namespace MC
             return joint;
         }
 
-        static std::pair<Selection, Selection>
-        coveredFeatures( const std::map<std::string, std::vector<std::string >> &train, Order minOrder, Order maxOrder )
-        {
-            std::map<std::string, HOMCP> profiles;
-            for (const auto &[label, seqs] : train)
-            {
-                profiles.emplace( label, HOMC( minOrder, maxOrder ));
-                profiles.at( label ).train( seqs );
-            }
-            auto _allFeatures = featureSpace( profiles );
-            auto _jointFeatures = jointFeatures( profiles, _allFeatures );
-            return std::make_pair( std::move( _allFeatures ), std::move( _jointFeatures ));
-        }
-
-        static std::optional<HOMCP>
-        filter( HOMCP &&other, const Selection &select ) noexcept
+        template<typename MCModel>
+        static std::optional<MCModel>
+        filter( MCModel &&other, const Selection &select ) noexcept
         {
             using LazyIntersection = LazySelectionsIntersection;
 
+            MCModel p = std::forward<MCModel>( other );
+            auto profileHistograms = p.convertToHistograms();
             HeteroHistograms selectedHistograms;
-
-            for (auto[order, id] : LazyIntersection::intersection( select, other.featureSpace()))
-                selectedHistograms[order][id] = std::move( other.histogram( order, id ).value());
+            for (auto[order, id] : LazyIntersection::intersection( select, featureSpace( profileHistograms )))
+                selectedHistograms[order][id] = std::move( profileHistograms.at( order ).at( id ));
 
             if ( selectedHistograms.empty())
                 return std::nullopt;
             else
-                return HOMCP( other.getOrder() , std::move( selectedHistograms ) );
+            {
+                p.setHistograms( std::move( selectedHistograms ));
+                return p;
+            }
         }
+
 
         static BackboneProfiles
         train( const std::map<std::string, std::vector<std::string >> &training,
-               Order mnOrder, Order mxOrder,
+               ModelTrainer trainer,
                std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt )
         {
             BackboneProfiles trainedProfiles;
-
             for (const auto &[label, sequences] : training)
             {
-                HOMCP homc( mnOrder, mxOrder );
-                homc.train( sequences );
+                trainedProfiles.emplace( label, trainer( sequences, selection ));
+            }
+            return trainedProfiles;
+        }
 
-                if ( selection )
-                {
-                    if ( auto profile = filter( std::move( homc ), selection->get()); profile )
-                        trainedProfiles.emplace( label, std::move( profile.value()));
+        static std::map<std::string, HeteroHistograms>
+        train( const std::map<std::string, std::vector<std::string >> &training,
+               HistogramsTrainer trainer,
+               std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt )
+        {
+            std::map<std::string, HeteroHistograms> trainedHistograms;
+            for (const auto &[label, sequences] : training)
+            {
+                trainedHistograms.emplace( label, trainer( sequences, selection ));
+            }
+            return trainedHistograms;
+        }
 
-                } else
+
+        static std::map<std::string, std::vector<HeteroHistograms> >
+        trainIndividuals( const std::map<std::string, std::vector<std::string >> &training,
+                          HistogramsTrainer trainer,
+                          std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt )
+        {
+            std::map<std::string, std::vector<HeteroHistograms  >> trainedHistograms;
+            for (const auto &[label, sequences] : training)
+            {
+                auto &_trainedHistograms = trainedHistograms[label];
+                for (const auto &seq : sequences)
                 {
-                    trainedProfiles.emplace( label, std::move( homc ));
+                    auto histograms = trainer( {seq}, selection );
+                    if ( histograms ) _trainedHistograms.emplace_back( std::move( histograms.value()));
                 }
             }
-
-            return trainedProfiles;
+            return trainedHistograms;
         }
 
         static std::pair<Selection, BackboneProfiles>
         filterJointKernels( const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                            Order mnOrder, Order mxOrder ,
+                            ModelTrainer trainer,
                             double minSharedPercentage = 0.75 )
         {
             assert( minSharedPercentage > 0 && minSharedPercentage <= 1 );
-            return filterJointKernels( train( trainingClusters, mnOrder , mxOrder ), minSharedPercentage );
+            return filterJointKernels( train( trainingClusters, trainer ), minSharedPercentage );
         }
 
-        static size_t size( const std::unordered_map<Order, std::set<HistogramID >> &features )
+        static size_t size( const Selection &features )
         {
             return std::accumulate( std::cbegin( features ), std::cend( features ), size_t( 0 ),
                                     []( size_t s, const auto &p ) {
@@ -597,21 +637,33 @@ namespace MC
         {
             assert( minSharedPercentage >= 0 && minSharedPercentage <= 1 );
             const size_t k = profiles.size();
-            const Order mxOrder = maxOrder( profiles );
-            const Order mnOrder = minOrder( profiles );
-            auto allFeatures = featureSpace( profiles );
+
+            auto allFeatures = populationFeatureSpace( profiles );
             auto commonFeatures = jointFeatures( profiles, allFeatures, minSharedPercentage );
 
-//        fmt::print("Join/All:{}\n", double( size(commonFeatures)) / size(allFeatures));
-            profiles = filter( std::move( profiles ), commonFeatures );
+            profiles = filter( std::forward<BackboneProfiles>( profiles ), commonFeatures );
 
-            return std::make_pair( std::move( commonFeatures ), std::move( profiles ));
+            return std::make_pair( std::move( commonFeatures ), std::forward<BackboneProfiles>( profiles ));
         }
+
+
+        static BackboneProfiles
+        filter( BackboneProfiles &&profiles,
+                const Selection &selection )
+        {
+            BackboneProfiles filteredProfiles;
+            for (auto &[cluster, profile] : profiles)
+            {
+                if ( auto filtered = filter( std::move( profile ), selection ); filtered )
+                    filteredProfiles.emplace( cluster, std::move( filtered.value()));
+            }
+            return filteredProfiles;
+        }
+
 
         static Selection
         withinJointAllUnionKernels( const std::map<std::string, std::vector<std::string>> &trainingClusters,
-                                    Order mnOrder,
-                                    Order mxOrder,
+                                    HistogramsTrainer trainer,
                                     double withinCoverage = 0.5 )
         {
             const size_t k = trainingClusters.size();
@@ -622,52 +674,38 @@ namespace MC
                 Selection allKernels;
                 for (const auto &s : sequences)
                 {
-                    HOMCP p( {s}, mnOrder, mxOrder );
-                    clusterJointKernels.emplace_back( p.featureSpace());
+                    auto histograms = trainer( {s}, std::nullopt );
+                    if ( histograms ) clusterJointKernels.emplace_back( featureSpace( histograms.value()));
                 }
-                withinKernels.emplace_back( intersection( clusterJointKernels, mnOrder, mxOrder, withinCoverage ));
+                withinKernels.emplace_back( MC::intersection( clusterJointKernels, withinCoverage ));
             }
-            return union_( withinKernels, mnOrder, mxOrder );
+            return MC::union_( withinKernels );
         }
-
-        static std::map<std::string, HOMCP>
-        filter( std::map<std::string, HOMCP> &&profiles,
-                const Selection &selection )
-        {
-            std::map<std::string, HOMCP> filteredProfiles;
-            for (auto &[cluster, profile] : profiles)
-            {
-                if ( auto filtered = filter( std::move( profile ), selection ); filtered )
-                    filteredProfiles.emplace( cluster, std::move( filtered.value()));
-            }
-            return filteredProfiles;
-        }
-
-        static Selection
-        filter( const HeteroHistogramsFeatures &scoredFeatures, double percentage )
-        {
-            Selection newSelection;
-            std::vector<std::pair<KernelIdentifier, double> > flat;
-            for (const auto &[order, scores] : scoredFeatures)
-                for (auto[id, score] : scores)
-                    flat.emplace_back( KernelIdentifier( order, id ), score );
-
-            auto cmp = []( const std::pair<KernelIdentifier, double> &p1,
-                           const std::pair<KernelIdentifier, double> &p2 ) {
-                return p1.second > p2.second;
-            };
-
-            size_t percentileTailIdx = size_t( flat.size() * percentage );
-            std::nth_element( flat.begin(), flat.begin() + percentileTailIdx,
-                              flat.end(), cmp );
-
-            std::for_each( flat.cbegin(), flat.cbegin() + percentileTailIdx,
-                           [&]( const std::pair<KernelIdentifier, double> &p ) {
-                               newSelection[p.first.order].insert( p.first.id );
-                           } );
-
-            return newSelection;
-        }
+//        static Selection
+//        filter( const HeteroHistogramsFeatures &scoredFeatures, double percentage )
+//        {
+//            Selection newSelection;
+//            std::vector<std::pair<KernelIdentifier, double> > flat;
+//            for (const auto &[order, scores] : scoredFeatures)
+//                for (auto[id, score] : scores)
+//                    flat.emplace_back( KernelIdentifier( order, id ), score );
+//
+//            auto cmp = []( const std::pair<KernelIdentifier, double> &p1,
+//                           const std::pair<KernelIdentifier, double> &p2 ) {
+//                return p1.second > p2.second;
+//            };
+//
+//            size_t percentileTailIdx = size_t( flat.size() * percentage );
+//            std::nth_element( flat.begin(), flat.begin() + percentileTailIdx,
+//                              flat.end(), cmp );
+//
+//            std::for_each( flat.cbegin(), flat.cbegin() + percentileTailIdx,
+//                           [&]( const std::pair<KernelIdentifier, double> &p ) {
+//                               newSelection[p.first.order].insert( p.first.id );
+//                           } );
+//
+//            return newSelection;
+//        }
 
     };
 

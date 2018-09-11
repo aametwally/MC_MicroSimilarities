@@ -6,45 +6,44 @@
 #define MARKOVIAN_FEATURES_SVMMODEL_HPP
 
 #include "common.hpp"
-#include "HOMC.hpp"
-#include "HOMCDefs.hpp"
+#include "AbstractMC.hpp"
+#include "MCOperations.hpp"
+#include "MCFeatures.hpp"
+
 #include "dlib/svm_threaded.h"
 #include "dlib_utilities.hpp"
 #include "dlib/statistics/dpca.h"
+
+using MC::Selection;
 
 template<typename Grouping>
 class SVMMarkovianModel
 {
 public:
-    using MarkovianProfile = MC::HetroOrderMarkovianChains<Grouping>;
-    using Kernel = typename MarkovianProfile::Histogram;
-    using MarkovianProfiles = std::map<std::string, MarkovianProfile>;
-    using KernelsSet = std::unordered_map<Order, std::set<KernelID >>;
+    using MCOps = MC::MCOps<Grouping>;
+    using MCModel = MC::AbstractMC<Grouping>;
+    using Histogram = typename MCModel::Histogram;
+    using MCF = MC::MCFeatures<Grouping>;
+    using HeteroHistograms = typename MCModel::HeteroHistograms;
+    using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
+    using BackboneProfiles = typename MCModel::BackboneProfiles;
+    using ModelTrainer = typename MCModel::ModelTrainer;
+    using HistogramsTrainer = typename MCModel::HistogramsTrainer;
 
-    using HeteroKernels =  typename MarkovianProfile::HeteroHistograms;
-    using HeteroKernelsFeatures =  typename MarkovianProfile::HeteroHistogramsFeatures;
-
-    using DoubleSeries = typename MarkovianProfile::ProbabilitisByOrder;
-    using KernelsSeries = typename MarkovianProfile::KernelSeriesByOrder;
-
-    static constexpr Order MinOrder = MarkovianProfile::MinOrder;
-    static constexpr size_t StatesN = MarkovianProfile::StatesN;
-    static constexpr double eps = std::numeric_limits<double>::epsilon();
-
-    using SampleType = dlib::matrix<double , 0 , 0 >;
+    using SampleType = dlib::matrix<double, 0, 0>;
 
     using SVMBinaryKernel = dlib::radial_basis_kernel<SampleType>;
     using Label = int;
 
     using SVMRBFKernel = dlib::radial_basis_kernel<SampleType>;
     using SVMRBFTrainer = dlib::krr_trainer<SVMRBFKernel>;
-    using SVMBinaryTrainer = dlib::krr_trainer<SVMBinaryKernel >;
-    using SVMTrainer = dlib::one_vs_one_trainer<dlib::any_trainer<SampleType> , Label >;
+    using SVMBinaryTrainer = dlib::krr_trainer<SVMBinaryKernel>;
+    using SVMTrainer = dlib::one_vs_one_trainer<dlib::any_trainer<SampleType>, Label>;
     using DecisionFunction = SVMTrainer::trained_function_type;
 
 public:
-    explicit SVMMarkovianModel( Order maxOrder )
-            : maxOrder_( maxOrder )
+    explicit SVMMarkovianModel( HistogramsTrainer trainer )
+            : histogramsTrainer_( trainer )
     {}
 
 
@@ -57,7 +56,7 @@ public:
         btrainer.set_kernel( SVMBinaryKernel( 0.01 ));
 //        histogramTrainer.set_max_num_sv(10);
 
-        trainer.set_trainer(btrainer );
+        trainer.set_trainer( btrainer );
         trainer.set_num_threads( std::thread::hardware_concurrency());
 
         _registerLabels( training );
@@ -68,9 +67,8 @@ public:
         for (auto &[trainLabel, trainSeqs] : training)
         {
             int index = _label2Index.at( trainLabel );
-            MarkovianProfile kernels( maxOrder_ );
-            kernels.train( trainSeqs );
-            auto flatFeatures = kernels.extractFlatFeatureVector( _selectedKernels );
+            auto flatFeatures = MCOps::extractFlatFeatureVector(
+                    histogramsTrainer_( trainSeqs , _selectedKernels ).value() , _selectedKernels );
             featuresVector.emplace_back( vector_to_matrix( flatFeatures ));
             labels.push_back( index );
         }
@@ -84,26 +82,23 @@ public:
     std::vector<std::string> predict( const std::vector<std::string> &test ) const
     {
         std::vector<std::string> labels;
-        std::vector<SampleType> featuresVector;
         for (auto &seq : test)
         {
-
-            MarkovianProfile kernels( maxOrder_ );
-            kernels.train( {seq} );
-
-            auto flatFeatures = kernels.extractFlatFeatureVector( _selectedKernels );
-
-            labels.push_back( _index2Label.at( _decisionFunction( vector_to_matrix( flatFeatures ))));
-
+            if( auto histograms = histogramsTrainer_( {seq} , _selectedKernels ); histograms  )
+            {
+                auto flatFeatures = MCOps::extractFlatFeatureVector( histograms.value() ,
+                                                                     _selectedKernels );
+                labels.push_back( _index2Label.at( _decisionFunction( vector_to_matrix( flatFeatures ))));
+            }
+            else labels.push_back(  "unclassified" );
         }
-
         return labels;
     }
 
 private:
     void _featureSelection( const std::map<std::string, std::vector<std::string >> &training )
     {
-        std::tie( std::ignore ,  _selectedKernels) = MarkovianProfile::coveredFeatures( training, maxOrder_ );
+        _selectedKernels = MCOps::withinJointAllUnionKernels( training, histogramsTrainer_ );
     }
 
     void _registerLabels( const std::map<std::string, std::vector<std::string >> &training )
@@ -124,13 +119,13 @@ private:
     }
 
 public:
-    const Order maxOrder_;
+    const HistogramsTrainer histogramsTrainer_;
 
 private:
     std::set<std::string> _labels;
     std::map<std::string, int> _label2Index;
     std::unordered_map<int, std::string> _index2Label;
-    KernelsSet _selectedKernels;
+    Selection _selectedKernels;
 //    std::vector<bool> _selectedFeaturesMask;
 
     DecisionFunction _decisionFunction;

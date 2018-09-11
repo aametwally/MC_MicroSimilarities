@@ -7,10 +7,14 @@
 
 int main(int argc, char *argv[])
 {
-    const std::vector< size_t > labels{2, 0, 2, 2, 0, 1, 1, 2, 2, 0, 1, 2};
-    const std::vector< size_t > prediction{0, 0, 2, 1, 0, 2, 1, 0, 2, 0, 2, 2};
+    const std::vector< int64_t > labels{2, 0, 2, 2, 0, 1, 1, 2, 2, 0, 1, 2};
+    const std::vector< int64_t > prediction{0, 0, 2, 1, 0, 2, 1, 0, 2, 0, 2, 2};
 
-    ConfusionMatrix c( labels , prediction );
+    ConfusionMatrix c( std::set< int64_t >( labels.begin() , labels.cend()) );
+    for( auto i = 0 ; i < std::min( labels.size() , prediction.size()) ; ++i )
+    {
+        c.countInstance(prediction[i] , labels[i]);
+    }
     c.printReport<3>();
     c.printClassReport<5>(0);
     c.printClassReport<5>(1);
