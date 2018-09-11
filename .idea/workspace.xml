@@ -22,33 +22,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="029ea99b-3622-4c30-a791-005fa27d1bef" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/algorithm/MC.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/algorithm/MCPipeline.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/algorithm/Pipeline.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/RangedOrderMC.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCDefs.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCFeatures.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/MCFeatures.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCOperations.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/MCOperations.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/HOMCPipeline.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/MarkovChains.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/AbstractMC.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/SVMPipeline.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/ZYMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/ZYMC.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/ZYPipeline.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/ZYPipeline.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/MCPipeline.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/ZYPipeline.hpp" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/HOMC_pipeline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/MC_pipeline.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/ZhengYuan_pipeline.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/confusionMatrix.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/confusionMatrix.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/markovian_features_analysis.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/markovian_features_analysis.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/markovian_features_svm.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/subsetDataset.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/SequenceEntry.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -61,11 +37,14 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="FeatureScoringPipeline.hpp" pinned="false" current-in-tab="false">
+      <file leaf-file-name="FeatureScoringPipeline.hpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-314">
-              <caret line="16" selection-start-line="16" selection-end-line="16" />
+            <state relative-caret-position="210">
+              <caret line="609" selection-start-line="609" selection-end-line="609" />
+              <folding>
+                <element signature="e#148#175#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -94,7 +73,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="true">
+      <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/app/CMakeLists.txt">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="318">
@@ -247,29 +226,29 @@
       <option name="presentableId" value="Default" />
       <updated>1536663623527</updated>
       <workItem from="1536663624864" duration="505000" />
-      <workItem from="1536664421410" duration="9881000" />
+      <workItem from="1536664421410" duration="10168000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="10386000" />
+    <option name="totallyTimeSpent" value="10673000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="51" y="25" width="1315" height="743" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.25" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Messages" visible="true" weight="0.3295082" />
+      <window_info active="true" anchor="bottom" id="Messages" visible="true" weight="0.3295082" />
       <window_info anchor="bottom" id="CMake" weight="0.3295082" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.3295082" />
-      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.3295082" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="7" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.54590166" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -353,13 +332,6 @@
     <entry file="file://$PROJECT_DIR$/src/algorithm/RangedOrderMC.hpp">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-314">
-          <caret line="16" selection-start-line="16" selection-end-line="16" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="563">
@@ -391,6 +363,16 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="318">
           <caret line="54" column="95" selection-start-line="54" selection-start-column="95" selection-end-line="54" selection-end-column="95" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="210">
+          <caret line="609" selection-start-line="609" selection-end-line="609" />
+          <folding>
+            <element signature="e#148#175#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
