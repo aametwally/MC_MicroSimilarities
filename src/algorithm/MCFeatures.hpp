@@ -14,7 +14,7 @@ namespace MC {
     {
         using HOMCOps = MCOps<Grouping>;
         using Histogram= typename AbstractMC< Grouping >::Histogram;
-
+        using BackboneProfiles = typename AbstractMC< Grouping >::BackboneProfiles ;
         using HeteroHistogramsFeatures = typename AbstractMC< Grouping >::HeteroHistogramsFeatures;
         using HeteroHistograms = typename AbstractMC< Grouping >::HeteroHistograms;
 
@@ -419,6 +419,14 @@ namespace MC {
             return radius;
         }
 
+
+        static HeteroHistogramsFeatures
+        informationRadius_UNIFORM( const BackboneProfiles &profiles,
+                                   const Selection &selection )
+        {
+            return informationRadius_UNIFORM( profiles.cbegin(), profiles.cend(),
+                                              selection, []( auto it ) -> const HeteroHistograms & { return it->second->histograms(); } );
+        }
 
         static HeteroHistogramsFeatures
         informationRadius_UNIFORM( const std::vector<HeteroHistograms> &profiles,

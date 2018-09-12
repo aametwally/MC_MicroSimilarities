@@ -34,6 +34,14 @@ public:
         ++_matrix[actualIdx][outputIdx];
     }
 
+    void countInstance( std::string_view prediction, std::string_view actual )
+    {
+        assert( !_dictionary.empty());
+        size_t actualIdx = _getClassIdx( actual );
+        size_t outputIdx = _getClassIdx( prediction );
+        ++_matrix[actualIdx][outputIdx];
+    }
+
     T truePositives( const Label &cl ) const
     {
         assert( !_dictionary.empty());
@@ -286,6 +294,17 @@ private:
         }
     }
 
+    size_t _getClassIdx( std::string_view cl ) const
+    {
+        try{
+            auto idx = _dictionary.at( std::string( cl ) );
+            return idx;
+        } catch( const std::out_of_range &)
+        {
+            return _dictionary.at( _unclassifiedLabel() );
+        }
+    }
+
     template<size_t indentation, size_t col1Width = 50>
     static auto _printRowFunction()
     {
@@ -422,10 +441,18 @@ private:
         return (double( tp + eps ) / (tp + fn + eps) + double( tn + eps ) / (tn + fp + eps)) / 2;
     }
 
+    template< typename L = Label, typename std::enable_if<std::is_same<L,std::string_view>::value, void>::type * = nullptr>
+    static Label _unclassifiedLabel()
+    {
+        static std::string unclassified = "Unclassified";
+        return unclassified;
+    }
+
     template< typename L = Label, typename std::enable_if<std::is_same<L,std::string>::value, void>::type * = nullptr>
     static Label _unclassifiedLabel()
     {
-        return "Unclassified";
+        static std::string unclassified = "Unclassified";
+        return unclassified;
     }
 
     template< typename L = Label, typename std::enable_if<std::is_same<L,int64_t >::value, void>::type * = nullptr>

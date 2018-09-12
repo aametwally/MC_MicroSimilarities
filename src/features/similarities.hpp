@@ -360,8 +360,8 @@ private:
 struct Measurement
 {
 
-    Measurement( std::string label, double val )
-            : _label( std::move( label )), _value( val )
+    Measurement( std::string_view label, double val )
+            : _label( label ), _value( val )
     {}
 
     bool operator==( const Measurement &other ) const
@@ -389,7 +389,7 @@ struct Measurement
         return _value <= other._value;
     }
 
-    const std::string &getLabel() const
+    std::string_view getLabel() const
     {
         return _label;
     }
@@ -400,7 +400,7 @@ struct Measurement
     }
 
 private:
-    const std::string _label;
+    std::string_view _label;
     const double _value;
 };
 
@@ -444,7 +444,7 @@ struct PriorityQueueFixed
         return _q.cend();
     }
 
-    void forTopK( size_t k, const std::function<void( T )> &op )
+    void forTopK( size_t k, const std::function<void( T )> &op ) const
     {
         auto lastIt = (size() < k) ?
                       std::crend( _q ) :
@@ -453,7 +453,7 @@ struct PriorityQueueFixed
         std::for_each( std::crbegin( _q ), lastIt, op );
     }
 
-    void forTopK( size_t k, const std::function<void( T, size_t )> &op )
+    void forTopK( size_t k, const std::function<void( T, size_t )> &op ) const
     {
         auto lastIt = (size() < k) ?
                       std::crend( _q ) :
@@ -482,7 +482,7 @@ struct PriorityQueueFixed
     template<class... Args>
     auto emplace( Args &&... args )
     {
-        auto res = _q.emplace( args... );
+        auto res = _q.emplace( std::forward<Args>(args)... );
         if ( _q.size() > _kTop )
             _q.erase( _q.begin());
         return res;
@@ -547,11 +547,11 @@ struct ClassificationCandidates
 {
     using Queue = typename MatchSet<Criteria>::Queue;
 
-    explicit ClassificationCandidates( std::string trueLabel, Queue q )
-            : _trueLabel( std::move( trueLabel )), _bestMatches( std::move( q ))
+    explicit ClassificationCandidates( std::string_view trueLabel, Queue q )
+            : _trueLabel( trueLabel ), _bestMatches( std::move( q ))
     {}
 
-    std::optional< std::string > bestMatch() const
+    std::optional< std::string_view > bestMatch() const
     {
         if( auto match = _bestMatches.top() ; match )
             return match.value().get().getLabel();
@@ -572,13 +572,13 @@ struct ClassificationCandidates
         } );
     }
 
-    const std::string &trueCluster() const
+    const std::string_view &trueCluster() const
     {
         return _trueLabel;
     }
 
 private:
-    std::string _trueLabel;
+    std::string_view _trueLabel;
     Queue _bestMatches;
 };
 

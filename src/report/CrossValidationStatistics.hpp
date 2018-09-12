@@ -8,7 +8,7 @@
 #include "ConfusionMatrix.hpp"
 #include <fcntl.h>
 
-template<typename Label = std::string>
+template<typename Label = std::string_view>
 class CrossValidationStatistics
 {
 public:
@@ -19,6 +19,10 @@ public:
             _statistics.emplace_back( labels );
     }
 
+    void countInstance( size_t k, std::string_view prediction,  std::string_view actual )
+    {
+        _statistics.at( k ).countInstance( prediction, actual );
+    }
 
     void countInstance( size_t k, const Label &prediction, const Label &actual )
     {

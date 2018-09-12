@@ -18,15 +18,37 @@
           </envs>
         </ADDITIONAL_GENERATION_ENVIRONMENT>
       </configuration>
+      <configuration PROFILE_NAME="Release" CONFIG_NAME="Release" GENERATION_OPTIONS="-DCMAKE_PREFIX_PATH=/media/asem/store/experimental/dlib-install-debug -DDLIB_PREFIX=/media/asem/store/experimental/dlib-install-release">
+        <ADDITIONAL_GENERATION_ENVIRONMENT>
+          <envs>
+            <env name="FMT_SOURCE" value="$USER_HOME$/GP/fmt" />
+            <env name="DLIB_SOURCE" value="$USER_HOME$/GP/dlib" />
+          </envs>
+        </ADDITIONAL_GENERATION_ENVIRONMENT>
+      </configuration>
     </configurations>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="029ea99b-3622-4c30-a791-005fa27d1bef" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/src/algorithm/MCPipeline.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/algorithm/ZYPipeline.hpp" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/algorithm/LSMC.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/MC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/MC.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/MCFeatures.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/MCFeatures.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/MCOperations.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/MCOperations.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/Pipeline.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/Pipeline.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/RangedOrderMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/RangedOrderMC.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/ZYMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/ZYMC.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/algorithm/common.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/algorithm/common.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/MC_pipeline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/MC_pipeline.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/markovian_features_analysis.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/markovian_features_analysis.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/features/similarities.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/features/similarities.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
+    <ignored path="$PROJECT_DIR$/cmake-build-release/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -34,28 +56,16 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Release" />
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="FeatureScoringPipeline.hpp" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
+      <file leaf-file-name="LSMC.hpp" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/algorithm/LSMC.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
-              <caret line="609" selection-start-line="609" selection-end-line="609" />
+            <state relative-caret-position="257">
+              <caret line="34" column="69" selection-start-line="34" selection-start-column="69" selection-end-line="34" selection-end-column="69" />
               <folding>
-                <element signature="e#148#175#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SVMMarkovianModel.hpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="563">
-              <caret line="91" column="13" selection-start-line="91" selection-start-column="13" selection-end-line="91" selection-end-column="13" />
-              <folding>
-                <element signature="e#349#368#0" expanded="true" />
+                <element signature="e#141#164#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -64,8 +74,8 @@
       <file leaf-file-name="Pipeline.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/algorithm/Pipeline.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3920">
-              <caret line="245" column="30" selection-start-line="245" selection-start-column="30" selection-end-line="245" selection-end-column="30" />
+            <state relative-caret-position="97">
+              <caret line="524" selection-start-line="524" selection-end-line="524" />
               <folding>
                 <element signature="e#140#158#0" expanded="true" />
               </folding>
@@ -73,20 +83,41 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/app/CMakeLists.txt">
+      <file leaf-file-name="MCOperations.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="318">
-              <caret line="54" column="95" selection-start-line="54" selection-start-column="95" selection-end-line="54" selection-end-column="95" />
+            <state relative-caret-position="193">
+              <caret line="557" selection-start-line="557" selection-end-line="557" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MCOperations.hpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp">
+      <file leaf-file-name="MC_pipeline.cpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/app/MC_pipeline.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="166">
-              <caret line="475" column="75" selection-start-line="475" selection-start-column="75" selection-end-line="475" selection-end-column="75" />
+            <state relative-caret-position="-1845">
+              <caret line="1" selection-start-line="1" selection-end-line="1" />
+              <folding>
+                <element signature="e#1#24#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="AbstractMC.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/algorithm/AbstractMC.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2848">
+              <caret line="180" column="33" selection-start-line="180" selection-start-column="33" selection-end-line="180" selection-end-column="33" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ZYMC.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/algorithm/ZYMC.hpp">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="198">
+              <caret line="74" column="9" selection-start-line="50" selection-start-column="7" selection-end-line="74" selection-end-column="9" />
             </state>
           </provider>
         </entry>
@@ -102,6 +133,9 @@
       <find>spar</find>
       <find>extract</find>
       <find>flat</find>
+      <find>ignore</find>
+      <find>std::pair</find>
+      <find>beg</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/src/algorithm</dir>
@@ -113,17 +147,28 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/app/markovian_features_analysis.cpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/AbstractMC.hpp" />
         <option value="$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/MCFeatures.hpp" />
         <option value="$PROJECT_DIR$/src/algorithm/SVMPipeline.hpp" />
         <option value="$PROJECT_DIR$/src/app/markovian_features_svm.cpp" />
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/src/algorithm/Pipeline.hpp" />
         <option value="$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp" />
-        <option value="$PROJECT_DIR$/src/algorithm/MCOperations.hpp" />
         <option value="$PROJECT_DIR$/src/app/CMakeLists.txt" />
+        <option value="$PROJECT_DIR$/src/app/markovian_features_analysis.cpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/AbstractMC.hpp" />
+        <option value="$PROJECT_DIR$/src/app/MC_pipeline.cpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/MCFeatures.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/MC.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/RangedOrderMC.hpp" />
+        <option value="$PROJECT_DIR$/src/features/similarities.hpp" />
+        <option value="$PROJECT_DIR$/src/report/crossvalidation.hpp" />
+        <option value="$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp" />
+        <option value="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/common.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/ZYMC.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/Pipeline.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/MCOperations.hpp" />
+        <option value="$PROJECT_DIR$/src/algorithm/LSMC.hpp" />
       </list>
     </option>
   </component>
@@ -133,6 +178,7 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
+  <component name="OCFindUsagesOptions" text="true" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="61" />
     <option name="y" value="47" />
@@ -176,6 +222,20 @@
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="app" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="markovian_features" type="b2602c69:ProjectViewProjectNode" />
+              <item name="markovian_features" type="47feb1d3:ProjectViewModuleNode" />
+              <item name="markovian_features" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="features" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="markovian_features" type="b2602c69:ProjectViewProjectNode" />
+              <item name="markovian_features" type="47feb1d3:ProjectViewModuleNode" />
+              <item name="markovian_features" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="report" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
@@ -203,7 +263,7 @@
   </component>
   <component name="RunManager" selected="Application.MC_pipeline">
     <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features_scoring" EXPLICIT_BUILD_TARGET_NAME="all" />
-    <configuration name="MC_pipeline" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../Caraga_C_2011/psortNeg --fformat psort -l [2,3,4] -h [2,3,4] --model [rmc,romc,zymc]  --grouping [ofer15,nogrouping] --criteria [cos,kl,chi] -s [propensity,voting,acc] " PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="MC_pipeline" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="MC_pipeline" />
+    <configuration name="MC_pipeline" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../Caraga_C_2011/psortNeg --fformat psort -l [2] -h [2] --model [lsmc]  --grouping [ofer15] --criteria [chi] -s [kmers]" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="MC_pipeline" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="MC_pipeline" />
     <configuration name="confusionMatrix" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="confusionMatrix" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="confusionMatrix" />
     <configuration name="fmt" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="fmt" CONFIG_NAME="Debug" />
     <configuration name="markovian_features_scoring" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="markovian_features_scoring" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features_scoring" />
@@ -226,12 +286,12 @@
       <option name="presentableId" value="Default" />
       <updated>1536663623527</updated>
       <workItem from="1536663624864" duration="505000" />
-      <workItem from="1536664421410" duration="10168000" />
+      <workItem from="1536664421410" duration="39647000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="10673000" />
+    <option name="totallyTimeSpent" value="40152000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="51" y="25" width="1315" height="743" extended-state="6" />
@@ -248,7 +308,7 @@
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Terminal" order="7" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.54590166" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.43114755" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -263,17 +323,44 @@
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
   </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/algorithm/Pipeline.hpp</url>
+          <line>525</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp</url>
+          <line>580</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp</url>
+          <line>560</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp</url>
+          <line>563</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp</url>
+          <line>564</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp</url>
+          <line>557</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+      </breakpoints>
+      <option name="time" value="8" />
+    </breakpoint-manager>
+  </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/algorithm/MCFeatures.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="214">
-          <caret line="356" column="50" selection-start-line="356" selection-start-column="50" selection-end-line="356" selection-end-column="50" />
-          <folding>
-            <element signature="e#1343#1366#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/SVMPipeline.hpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="272">
@@ -294,13 +381,6 @@
     <entry file="file://$PROJECT_DIR$/src/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/app/markovian_features_analysis.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="144">
-          <caret line="9" column="27" selection-start-line="9" selection-start-column="27" selection-end-line="9" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../dlib-install-debug/lib/cmake/dlib/dlibConfig.cmake">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="270">
@@ -315,26 +395,19 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/app/MC_pipeline.cpp">
+    <entry file="file://$PROJECT_DIR$/src/app/markovian_features_analysis.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="32">
-          <caret line="2" selection-start-line="2" selection-end-line="2" />
+        <state relative-caret-position="-558">
+          <caret line="87" column="73" selection-start-line="87" selection-start-column="73" selection-end-line="87" selection-end-column="73" />
+          <folding>
+            <element signature="e#79#116#0" expanded="true" />
+          </folding>
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/AbstractMC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="108">
-          <caret line="178" column="22" selection-start-line="178" selection-start-column="22" selection-end-line="178" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/RangedOrderMC.hpp">
-      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/src/algorithm/SVMMarkovianModel.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="563">
+        <state relative-caret-position="-253">
           <caret line="91" column="13" selection-start-line="91" selection-start-column="13" selection-end-line="91" selection-end-column="13" />
           <folding>
             <element signature="e#349#368#0" expanded="true" />
@@ -342,19 +415,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp">
+    <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="166">
-          <caret line="475" column="75" selection-start-line="475" selection-start-column="75" selection-end-line="475" selection-end-column="75" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/Pipeline.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3920">
-          <caret line="245" column="30" selection-start-line="245" selection-start-column="30" selection-end-line="245" selection-end-column="30" />
+        <state relative-caret-position="137">
+          <caret line="194" column="48" selection-start-line="194" selection-start-column="48" selection-end-line="194" selection-end-column="48" />
           <folding>
-            <element signature="e#140#158#0" expanded="true" />
+            <element signature="e#148#175#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -366,12 +432,135 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/algorithm/FeatureScoringPipeline.hpp">
+    <entry file="file://$PROJECT_DIR$/src/algorithm/aminoacids_grouping.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="609" selection-start-line="609" selection-end-line="609" />
+        <state relative-caret-position="228">
+          <caret line="89" column="29" lean-forward="true" selection-start-line="89" selection-start-column="29" selection-end-line="89" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/RangedOrderMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="16">
+          <caret line="166" column="32" selection-start-line="166" selection-start-column="32" selection-end-line="166" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/MCFeatures.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="182">
+          <caret line="428" column="9" selection-start-line="428" selection-start-column="9" selection-end-line="428" selection-end-column="9" />
           <folding>
-            <element signature="e#148#175#0" expanded="true" />
+            <element signature="e#1343#1366#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/report/crossvalidation.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="16">
+          <caret line="46" column="19" selection-start-line="46" selection-start-column="18" selection-end-line="46" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/report/ConfusionMatrix.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="838">
+          <caret line="302" column="9" lean-forward="true" selection-start-line="302" selection-start-column="9" selection-end-line="302" selection-end-column="9" />
+          <folding>
+            <element signature="e#12176#12287#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="192">
+          <caret line="21" column="81" selection-start-line="21" selection-start-column="81" selection-end-line="21" selection-end-column="81" />
+          <folding>
+            <element signature="e#213#248#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/MC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="208">
+          <caret line="131" column="54" selection-start-line="131" selection-start-column="54" selection-end-line="131" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/features/similarities.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="262">
+          <caret line="550" column="36" selection-start-line="550" selection-start-column="36" selection-end-line="550" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/common.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="482">
+          <caret line="470" lean-forward="true" selection-start-line="470" selection-end-line="470" />
+          <folding>
+            <element signature="e#11445#11464#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/ZYMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="74" column="9" selection-start-line="50" selection-start-column="7" selection-end-line="74" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/app/MC_pipeline.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1845">
+          <caret line="1" selection-start-line="1" selection-end-line="1" />
+          <folding>
+            <element signature="e#1#24#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/AbstractMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2848">
+          <caret line="180" column="33" selection-start-line="180" selection-start-column="33" selection-end-line="180" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/Pipeline.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="97">
+          <caret line="524" selection-start-line="524" selection-end-line="524" />
+          <folding>
+            <element signature="e#140#158#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/c++/7/bits/std_function.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="97">
+          <caret line="301" selection-start-line="301" selection-end-line="301" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="193">
+          <caret line="557" selection-start-line="557" selection-end-line="557" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/algorithm/LSMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="257">
+          <caret line="34" column="69" selection-start-line="34" selection-start-column="69" selection-end-line="34" selection-end-column="69" />
+          <folding>
+            <element signature="e#141#164#0" expanded="true" />
           </folding>
         </state>
       </provider>

@@ -84,7 +84,12 @@ using AAGrouping_OFER8 = AAGrouping<8, AAGrouping_OFER8_Array>;
 using AAGrouping_DIAMOND11 = AAGrouping<11, AAGrouping_DIAMOND11_Array>;
 
 template <typename...>  struct AAGroupingList {};
-using SupportedAAGrouping  = AAGroupingList<AAGrouping_NOGROUPING20 ,AAGrouping_OFER8 , AAGrouping_DIAMOND11  ,  AAGrouping_OFER15 >;
+using SupportedAAGrouping  = AAGroupingList<
+        AAGrouping_NOGROUPING20 ,
+//        AAGrouping_OFER8 ,
+//        AAGrouping_DIAMOND11  ,
+        AAGrouping_OFER15
+>;
 
 
 #endif //MARKOVIAN_FEATURES_AMINOACIDS_GROUPING_HPP

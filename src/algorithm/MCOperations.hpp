@@ -578,6 +578,7 @@ namespace MC {
             for (const auto &[label, sequences] : training)
             {
                 trainedProfiles.emplace( label, trainer( sequences, selection ));
+
             }
             return trainedProfiles;
         }

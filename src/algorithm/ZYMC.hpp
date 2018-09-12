@@ -172,7 +172,7 @@ namespace MC {
                 double p = probability( query.substr( 0, distance ), query[distance] );
                 acc += std::log( p );
             }
-            for (auto i = 0; i < query.size() - _order - 1; ++i)
+            for (auto i = 0; i < int64_t(query.size()) - _order - 1; ++i)
             {
                 double p = probability( query.substr( i, _order ), query[i + _order] );
                 acc += std::log( p );
@@ -204,7 +204,7 @@ namespace MC {
                     _incrementInstance( sequence[i], sequence[i + distance], distance );
         }
 
-    private:
+    protected:
         Order _order;
     };
 }

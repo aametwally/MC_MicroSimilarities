@@ -440,4 +440,46 @@ inline auto getOr( const Map &m , K1 k1 ,  K2 k2 , T defaultValue = T()) noexcep
     else return defaultValue;
 };
 
+
+template< typename String >
+std::string reverse( String &&seq  )
+{
+    auto reversed = std::forward<String>( seq );
+    std::reverse(reversed.begin(), reversed.end());
+    return reversed;
+};
+
+bool overlappingSegments( size_t pos1 , size_t size1 , size_t pos2 , size_t size2 )
+{
+    if( pos1 <= pos2 )
+        return pos1 + size1 >= pos2;
+    else return pos2 + size2 >= pos1;
+}
+
+
+std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions( std::string_view seq,
+                                                                                  size_t kMin, size_t kMax )
+{
+    std::map<std::string_view, std::vector<size_t>> kmers;
+    for (auto k = kMin; k <= kMax && k < seq.size(); ++k)
+    {
+        for (size_t pos = 0; pos < seq.size() - k; ++pos)
+            kmers[seq.substr( pos, k )].push_back( pos );
+    }
+    return kmers;
+}
+
+std::map<std::string_view, size_t> extractKmersWithCounts( std::string_view seq,
+                                                                  size_t kMin, size_t kMax )
+{
+    std::map<std::string_view, size_t> kmers;
+    for (auto k = kMin; k <= kMax && k < seq.size(); ++k)
+    {
+        for (size_t pos = 0; pos < seq.size() - k; ++pos)
+            ++kmers[seq.substr( pos, k )];
+    }
+    return kmers;
+}
+
+
 #endif // COMMON_HH

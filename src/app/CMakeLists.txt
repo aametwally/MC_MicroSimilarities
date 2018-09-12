@@ -30,7 +30,7 @@ set( COMMON_INCLUDES
         ../algorithm/MCOperations.hpp
         ../algorithm/AbstractMC.hpp
         ../algorithm/ZYMC.hpp
-        ../algorithm/MC.hpp)
+        ../algorithm/MC.hpp ../algorithm/LSMC.hpp)
 
 add_definitions(-ftemplate-backtrace-limit=0)
 

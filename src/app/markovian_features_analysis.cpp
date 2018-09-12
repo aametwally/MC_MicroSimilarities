@@ -59,10 +59,10 @@ int main( int argc, char *argv[] )
               | clara::Opt( testFile, "test" )
               ["-T"]["--test"]
                       ( "test file" )
-              | clara::Opt( grouping, join( keys( GroupingLabels ), "|" ))
               | clara::Opt( model, join( keys( MCModelLabels ), "|" ))
               ["-m"]["--model"]
                       ( fmt::format( "Markov Chains model, default:{}", model ))
+              | clara::Opt( grouping, join( keys( GroupingLabels ), "|" ))
               ["-G"]["--grouping"]
                       ( fmt::format( "grouping method, default:{}", grouping ))
               | clara::Opt( fastaFormat, join( keys( FormatLabels ), "|" ))
@@ -102,35 +102,42 @@ int main( int argc, char *argv[] )
                     "[k-fold:{}]"
                     "[grouping:{}]\n",
                     input, fastaFormat,
-                    model ,
+                    model,
                     minOrder, maxOrder,
                     k, grouping );
         namespace fs = std::experimental::filesystem;
         fs::path p( input.c_str());
         const std::string fname = p.filename();
 
-        for (auto &m : splitParameters( model ))
-        for (auto &min : splitParameters( minOrder ))
-            for (auto &max : splitParameters( maxOrder ))
-            {
-                auto mnOrder = std::stoi( min );
-                auto mxOrder = std::stoi( max );
-                if ( mxOrder >= mnOrder )
-                {
-                    for (auto &g : splitParameters( grouping ))
-                    {
-                        fmt::print( "[Params]"
-                                    "[model:{}]"
-                                    "[order:{}-{}]"
-                                    "[grouping:{}]\n", m , mnOrder, mxOrder, g );
-                        std::visit( [&]( auto &&p ) {
-                            p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ),
-                                                      k, prefix( fname, mnOrder, mxOrder, g ));
-                        }, getFeatureScoringPipeline( g , m , mnOrder , mxOrder ));
-                    }
-                }
-            }
 
+        for (auto &m : splitParameters( model ))
+        {
+            std::string _minOrder;
+            if ( m == "romc" )
+                _minOrder = minOrder;
+            else _minOrder = "1";
+            for (auto &min : splitParameters( _minOrder ))
+                for (auto &max : splitParameters( maxOrder ))
+                {
+                    auto mnOrder = std::stoi( min );
+                    auto mxOrder = std::stoi( max );
+                    if ( mxOrder >= mnOrder )
+                    {
+                        for (auto &g : splitParameters( grouping ))
+                        {
+                            fmt::print( "[Params]"
+                                        "[model:{}]"
+                                        "[order:{}-{}]"
+                                        "[grouping:{}]\n", m, mnOrder, mxOrder, g );
+                            std::visit( [&]( auto &&p ) {
+                                p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ),
+                                                          k, prefix( fname, mnOrder, mxOrder, g ));
+                            }, getFeatureScoringPipeline( g, m, mnOrder, mxOrder ));
+                        }
+                    }
+
+                }
+        }
 
     }
     return 0;
