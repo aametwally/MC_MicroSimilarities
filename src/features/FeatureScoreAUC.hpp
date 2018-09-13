@@ -6,7 +6,7 @@
 #define MARKOVIAN_FEATURES_FEATURESCOREAUC_HPP
 
 #include "common.hpp"
-#include "similarities.hpp"
+#include "SimilarityMetrics.hpp"
 
 class FeatureScoreAUC
 {

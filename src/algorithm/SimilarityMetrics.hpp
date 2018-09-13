@@ -35,16 +35,15 @@ struct Score
 };
 
 
+template<typename Vector>
+using MetricFunction = std::function<double( const Vector &, const Vector & )>;
+
+
 template<typename Derived>
 struct Criteria
 {
     static constexpr double eps = std::numeric_limits<double>::epsilon();
-
-    template<typename Iterator>
-    static double measure( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
-    {
-        return Derived::apply( first1, last1, first2, last2 );
-    }
+    static constexpr double inf = std::numeric_limits<double>::infinity();
 
     template<typename Container>
     static double measure( const Container &kernel1, const Container &kernel2 )
@@ -52,6 +51,9 @@ struct Criteria
         return Derived::apply( std::cbegin( kernel1 ), std::cend( kernel1 ),
                                std::cbegin( kernel2 ), std::cend( kernel2 ));
     }
+
+    template<typename Vector>
+    static constexpr auto function = measure<Vector>;
 
     template<typename Container>
     static double combine( Container &&c )
@@ -63,6 +65,53 @@ private:
     Criteria() = default;
 
     friend Derived;
+};
+
+struct Euclidean : public Criteria<Euclidean>, Cost
+{
+    static constexpr const char *label = "euclidean";
+
+    template<typename Iterator>
+    static double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    {
+        auto n = std::distance( first1, last1 );
+        assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
+        double sum = 0;
+        for (auto it1 = first1, it2 = first2; it1 != last1; ++it1, ++it2)
+        {
+            auto m = *it1 - *it2;
+            sum += m * m;
+        }
+        return sum;
+    }
+
+    static constexpr auto combine = combineEuclidean;
+private:
+    Euclidean() = default;
+};
+
+
+struct Manhattan : public Criteria<Manhattan>, Cost
+{
+    static constexpr const char *label = "manhattan";
+
+    template<typename Iterator>
+    static double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    {
+        auto n = std::distance( first1, last1 );
+        assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
+        double sum = 0;
+        for (auto it1 = first1, it2 = first2; it1 != last1; ++it1, ++it2)
+        {
+            auto m = *it1 - *it2;
+            sum += ( m < 0 )? -m : m;
+        }
+        return sum;
+    }
+
+    static constexpr auto combine = combineEuclidean;
+private:
+    Manhattan() = default;
 };
 
 struct ChiSquared : public Criteria<ChiSquared>, Score
@@ -140,6 +189,29 @@ struct Intersection : public Criteria<Intersection>, Score
 
 private:
     Intersection() = default;
+};
+
+
+struct MaxIntersection : public Criteria<MaxIntersection>, Score
+{
+    static constexpr const char *label = "max_intersection";
+
+    template<typename Iterator>
+    static inline double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    {
+        assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
+        auto n = std::distance( first1, last1 );
+
+        double max = -inf;
+        for (auto it1 = first1, it2 = first2; it1 != last1; ++it1, ++it2)
+            max = std::max( max, std::min( *it1, *it2 ));
+        return max;
+    }
+
+    static constexpr auto combine = combineManhattan;
+
+private:
+    MaxIntersection() = default;
 };
 
 struct Gaussian : public Criteria<Gaussian>, Score
@@ -357,10 +429,10 @@ private:
     Hellinger() = default;
 };
 
+template< typename Label = std::string_view >
 struct Measurement
 {
-
-    Measurement( std::string_view label, double val )
+    Measurement( Label label, double val )
             : _label( label ), _value( val )
     {}
 
@@ -389,7 +461,7 @@ struct Measurement
         return _value <= other._value;
     }
 
-    std::string_view getLabel() const
+    Label getLabel() const
     {
         return _label;
     }
@@ -400,7 +472,7 @@ struct Measurement
     }
 
 private:
-    std::string_view _label;
+    Label _label;
     const double _value;
 };
 
@@ -482,7 +554,7 @@ struct PriorityQueueFixed
     template<class... Args>
     auto emplace( Args &&... args )
     {
-        auto res = _q.emplace( std::forward<Args>(args)... );
+        auto res = _q.emplace( std::forward<Args>( args )... );
         if ( _q.size() > _kTop )
             _q.erase( _q.begin());
         return res;
@@ -527,47 +599,49 @@ private:
 template<typename T, typename Enable = void>
 struct MatchSet;
 
-template<typename T>
+template<typename T >
 struct MatchSet<T, typename std::enable_if<std::is_base_of<Cost, T>::value>::type>
 {
-    using Queue = PriorityQueueFixed<Measurement, std::greater<> >;
-    static constexpr double WorstValue = std::numeric_limits<double>::infinity();
+    template< typename Label  >
+    using Queue = PriorityQueueFixed<Measurement<Label>, std::greater<> >;
 };
 
 template<typename T>
 struct MatchSet<T, typename std::enable_if<std::is_base_of<Score, T>::value>::type>
 {
-    using Queue = PriorityQueueFixed<Measurement, std::less<>>;
-    static constexpr double WorstValue = -std::numeric_limits<double>::infinity();
+    template< typename Label >
+    using Queue = PriorityQueueFixed<Measurement<Label>, std::less<>>;
 };
 
 
 template<typename Criteria>
 struct ClassificationCandidates
 {
-    using Queue = typename MatchSet<Criteria>::Queue;
+    using M = Measurement<std::string_view>;
+
+    using Queue =  typename MatchSet<Criteria>::template Queue< std::string_view>;
 
     explicit ClassificationCandidates( std::string_view trueLabel, Queue q )
             : _trueLabel( trueLabel ), _bestMatches( std::move( q ))
     {}
 
-    std::optional< std::string_view > bestMatch() const
+    std::optional<std::string_view> bestMatch() const
     {
-        if( auto match = _bestMatches.top() ; match )
+        if ( auto match = _bestMatches.top(); match )
             return match.value().get().getLabel();
         else return std::nullopt;
     }
 
     long trueClusterRank() const
     {
-        return _bestMatches.findRank( [this]( const Measurement &m ) {
+        return _bestMatches.findRank( [this]( const M &m ) {
             return m.getLabel() == _trueLabel;
         } );
     }
 
     bool trueClusterFound() const
     {
-        return _bestMatches.contains( [this]( const Measurement &m ) {
+        return _bestMatches.contains( [this]( const M &m ) {
             return m.getLabel() == _trueLabel;
         } );
     }
@@ -595,7 +669,8 @@ enum class CriteriaEnum
     DensityPowerDivergence3,
     ItakuraSaitu,
     Bhattacharyya,
-    Hellinger
+    Hellinger,
+    MaxIntersection
 };
 
 const std::map<std::string, CriteriaEnum> CriteriaLabels{
@@ -609,15 +684,8 @@ const std::map<std::string, CriteriaEnum> CriteriaLabels{
         {DensityPowerDivergence3::label,   CriteriaEnum::DensityPowerDivergence3},
         {ItakuraSaitu::label,              CriteriaEnum::ItakuraSaitu},
         {Bhattacharyya::label,             CriteriaEnum::Bhattacharyya},
-        {Hellinger::label,                 CriteriaEnum::Hellinger}
+        {Hellinger::label,                 CriteriaEnum::Hellinger},
+        {MaxIntersection::label,           CriteriaEnum::MaxIntersection}
 };
-
-template<typename...>
-struct CriteriaList
-{
-};
-using SupportedCriteria = CriteriaList<ChiSquared, Cosine, KullbackLeiblerDivergence, Intersection, Gaussian,
-        DensityPowerDivergence1, DensityPowerDivergence2, DensityPowerDivergence3, ItakuraSaitu, Bhattacharyya, Hellinger>;
-
 
 #endif //MARKOVIAN_FEATURES_DISTANCES_HPP

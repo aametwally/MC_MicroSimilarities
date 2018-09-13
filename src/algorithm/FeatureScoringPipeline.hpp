@@ -5,7 +5,7 @@
 #ifndef MARKOVIAN_FEATURES_FEATURESCORINGPIPELINE_HPP
 #define MARKOVIAN_FEATURES_FEATURESCORINGPIPELINE_HPP
 
-#include "similarities.hpp"
+#include "SimilarityMetrics.hpp"
 #include "LabeledEntry.hpp"
 #include "ConfusionMatrix.hpp"
 #include "CrossValidationStatistics.hpp"

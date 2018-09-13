@@ -14,7 +14,7 @@ namespace MC {
  * Zheng Yuan Approximated Higher-order Markov Chains
  * Paper: https://febs.onlinelibrary.wiley.com/doi/pdf/10.1016/S0014-5793%2899%2900506-2
  */
-    template<typename AAGrouping = AAGrouping_NOGROUPING20>
+    template<typename AAGrouping >
     class ZYMC : public AbstractMC<AAGrouping>
     {
     public:
@@ -122,6 +122,8 @@ namespace MC {
         {
             for (const auto &s : sequences)
                 _countInstance( s );
+//            for ( const auto &s: sequences )
+//                _countInstance( reverse( s ));
 
             for (auto &[distance, pairs] : this->_histograms)
                 for (auto &[context, histogram] : pairs)
@@ -177,7 +179,7 @@ namespace MC {
                 double p = probability( query.substr( i, _order ), query[i + _order] );
                 acc += std::log( p );
             }
-            return acc;
+            return acc ;
         }
 
 

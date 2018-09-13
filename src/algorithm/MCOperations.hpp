@@ -286,7 +286,7 @@ namespace MC {
     };
 
 
-    Selection union_( const Selection &s1, const Selection &s2 )
+    inline Selection union_( const Selection &s1, const Selection &s2 )
     {
         Selection _union;
         std::set<Order> orders;
@@ -314,7 +314,7 @@ namespace MC {
         return _union;
     }
 
-    Selection union_( const std::vector<Selection> &sets )
+    inline Selection union_( const std::vector<Selection> &sets )
     {
         Selection scannedKernels;
         for (const auto &selection : sets)
@@ -324,7 +324,7 @@ namespace MC {
         return scannedKernels;
     }
 
-    SelectionFlat intersection2( const Selection &s1, const Selection &s2 )
+    inline SelectionFlat intersection2( const Selection &s1, const Selection &s2 )
     {
         SelectionFlat sInt;
         for (auto &[order, ids1] : s1)
@@ -341,7 +341,7 @@ namespace MC {
         return sInt;
     }
 
-    Selection intersection( Selection &&s1, const Selection &s2 ) noexcept
+    inline Selection intersection( Selection &&s1, const Selection &s2 ) noexcept
     {
         for (auto &[order, ids1] : s1)
         {
@@ -359,7 +359,7 @@ namespace MC {
         return s1;
     }
 
-    Selection
+    inline Selection
     intersection( const Selection &s1, const Selection &s2 ) noexcept
     {
         Selection _intersection;
@@ -381,7 +381,7 @@ namespace MC {
         return _intersection;
     }
 
-    Selection
+    inline election
     intersection( const std::vector<Selection> sets,
                   std::optional<double> minCoverage = std::nullopt )
     {
@@ -578,7 +578,6 @@ namespace MC {
             for (const auto &[label, sequences] : training)
             {
                 trainedProfiles.emplace( label, trainer( sequences, selection ));
-
             }
             return trainedProfiles;
         }

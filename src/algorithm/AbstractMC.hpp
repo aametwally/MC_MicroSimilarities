@@ -30,6 +30,7 @@ namespace MC {
     constexpr double eps = std::numeric_limits<double>::epsilon();
     constexpr double nan = std::numeric_limits<double>::quiet_NaN();
     constexpr double inf = std::numeric_limits<double>::infinity();
+    constexpr double pi = 3.14159265358979323846;
 
     template<typename AAGrouping>
     class AbstractMC

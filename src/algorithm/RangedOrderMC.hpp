@@ -1,11 +1,11 @@
-#ifndef MARKOVIAN_KERNELS_HPP
-#define MARKOVIAN_KERNELS_HPP
+#ifndef RANGED_ORDER_MC_HPP
+#define RANGED_ORDER_MC_HPP
 
 
 #include "common.hpp"
 
 #include "Series.hpp"
-#include "similarities.hpp"
+#include "SimilarityMetrics.hpp"
 
 #include "AbstractMC.hpp"
 #include "MCOperations.hpp"

@@ -19,7 +19,7 @@ public:
             _statistics.emplace_back( labels );
     }
 
-    void countInstance( size_t k, std::string_view prediction,  std::string_view actual )
+    void countInstance( size_t k, std::string_view prediction, std::string_view actual )
     {
         _statistics.at( k ).countInstance( prediction, actual );
     }
@@ -71,49 +71,55 @@ public:
         return _statistics.at( k ).macroFScore( beta );
     }
 
-    double mcc( size_t k  ) const
+    double mcc( size_t k ) const
     {
-        return _statistics.at( k ).mcc( );
+        return _statistics.at( k ).mcc();
+    }
+
+    std::map<Label, std::map<Label, size_t >>
+    misclassifications( size_t k ) const
+    {
+        return _statistics.at( k ).misclassifications();
     }
 
     template<typename Function>
-    std::pair< double , double > averagingFunction( const Function &fn ) const
+    std::pair<double, double> averagingFunction( const Function &fn ) const
     {
-        std::vector< double > vals;
-        for( auto i = 0; i < _k; ++i )
+        std::vector<double> vals;
+        for (auto i = 0; i < _k; ++i)
             vals.push_back( fn( i ));
 
-        double sum = std::accumulate( vals.cbegin(),vals.cend(), double(0));
+        double sum = std::accumulate( vals.cbegin(), vals.cend(), double( 0 ));
         double mean = sum / _k;
-        double sDev = std::accumulate( vals.cbegin(),vals.cend(),double(0),
-                                       [mean]( double acc , double val  ){
-            return acc + (val - mean)*(val - mean);
-        });
-        return {mean,sDev};
+        double sDev = std::accumulate( vals.cbegin(), vals.cend(), double( 0 ),
+                                       [mean]( double acc, double val ) {
+                                           return acc + (val - mean) * (val - mean);
+                                       } );
+        return {mean, sDev};
     }
 
-    std::pair< double , double > averageAccuracy() const
+    std::pair<double, double> averageAccuracy() const
     {
         return averagingFunction( [this]( size_t k ) {
             return averageAccuracy( k );
         } );
     }
 
-    std::pair< double , double > overallAccuracy() const
+    std::pair<double, double> overallAccuracy() const
     {
         return averagingFunction( [this]( size_t k ) {
             return overallAccuracy( k );
         } );
     }
 
-    std::pair< double , double > microPrecision() const
+    std::pair<double, double> microPrecision() const
     {
         return averagingFunction( [this]( size_t k ) {
             return microPrecision( k );
         } );
     }
 
-    std::pair< double , double > microRecall() const
+    std::pair<double, double> microRecall() const
     {
         return averagingFunction( [this]( size_t k ) {
             return microRecall( k );
@@ -121,40 +127,67 @@ public:
     }
 
 
-    std::pair< double , double > microFScore( double beta = 1 ) const
+    std::pair<double, double> microFScore( double beta = 1 ) const
     {
         return averagingFunction( [this]( size_t k ) {
             return microFScore( k );
         } );
     }
 
-    std::pair< double , double > macroPrecision() const
+    std::pair<double, double> macroPrecision() const
     {
         return averagingFunction( [this]( size_t k ) {
             return macroPrecision( k );
         } );
     }
 
-    std::pair< double , double > macroRecall() const
+    std::pair<double, double> macroRecall() const
     {
         return averagingFunction( [this]( size_t k ) {
             return macroRecall( k );
         } );
     }
 
-    std::pair< double , double > macroFScore( double beta = 1 ) const
+    std::pair<double, double> macroFScore( double beta = 1 ) const
     {
         return averagingFunction( [this]( size_t k ) {
             return macroFScore( k );
         } );
     }
 
-    std::pair< double , double > mcc( ) const
+    std::pair<double, double> mcc() const
     {
         return averagingFunction( [this]( size_t k ) {
             return mcc( k );
         } );
     }
+
+
+    std::map<Label, std::vector<std::pair<Label, size_t >>> misclassifications() const
+    {
+        std::map<Label, std::map<Label, size_t>> misclassifiedAcc;
+        for (size_t i = 0; i < _k; ++i)
+        {
+            for (auto &[label, missed] : misclassifications( i ))
+            {
+                for (auto &[missedLabel, hits] : missed)
+                    misclassifiedAcc[label][missedLabel] += hits;
+            }
+        }
+
+        std::map<Label, std::vector<std::pair<Label, size_t >>> misclassified;
+        for (auto&[label, missed] : misclassifiedAcc)
+        {
+            auto &_misclassified = misclassified[label];
+            for (auto &[missedLabel, hits] : missed)
+                _misclassified.emplace_back( missedLabel, hits );
+            std::sort( _misclassified.begin(), _misclassified.end(),
+                       []( auto &p1, auto &p2 ) { return p1.second > p2.second; } );
+        }
+
+        return misclassified;
+    }
+
 
     template<size_t indentation = 0>
     void printReport() const
@@ -175,21 +208,34 @@ public:
         printRow( "Micro F1-Score", microFScore());
         printRow( "MCC (multiclass)", mcc());
 
+        fmt::print( "{:<{}}Misclassification:\n", "", indentation + 2 );
+        auto printRow2 = _printRowFunction<indentation + 4>();
+        for (auto &[label, missclassified] : misclassifications())
+        {
+            std::vector<std::string> pairs;
+            for (auto &[missedLabel, hits] : missclassified)
+                pairs.push_back( fmt::format( "[{}:{}]", missedLabel, hits ));
+
+            auto row = fmt::format( "Class:{} -> {}", label, io::join( pairs, "" ));
+
+            fmt::print( "{:<{}}{}\n", "", indentation + 4, row );
+        }
+
     }
 
     template<size_t indentation = 0>
     void printReport( size_t k ) const
     {
-        _statistics.at( k ). template printReport<indentation>();
+        _statistics.at( k ).template printReport<indentation>();
     }
 
 private:
     template<size_t indentation, size_t col1Width = 50>
     static auto _printRowFunction()
     {
-        return [=]( const char *col1, std::pair<double,double> &&col2 ) {
+        return [=]( const char *col1, std::pair<double, double> &&col2 ) {
             constexpr const char *fmtSpec = "{:<{}}{:<{}}:{:.4f}  (±{:.3f})\n";
-            fmt::print( fmtSpec, "", indentation, col1, col1Width, col2.first  , col2.second );
+            fmt::print( fmtSpec, "", indentation, col1, col1Width, col2.first, col2.second );
         };
     }
 

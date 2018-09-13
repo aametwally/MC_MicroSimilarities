@@ -230,7 +230,7 @@ public:
             den2 += (den2a * den2b);
         }
 
-        return num / std::sqrt(den1 * den2);
+        return num / std::sqrt( den1 * den2 );
     }
 
     /**
@@ -243,6 +243,31 @@ public:
         auto allTp = _allTruePositives();
         auto allFn = _allFalseNegatives();
         return double( allTp + eps ) / (allTp + allFn + eps);
+    }
+
+    std::map< Label , std::map< Label, size_t >> misclassifications() const
+    {
+        std::map< Label , std::map< Label, size_t >> missclassified;
+        for( auto &[label,idx] : _dictionary )
+        {
+            for( auto &[misslabel,hits] : _misclassifications( idx ))
+                missclassified[ label ][ misslabel ] += hits;
+        }
+        return missclassified;
+    }
+
+    std::map< Label, size_t > misclassifications( const Label &l ) const
+    {
+        auto classIdx = _getClassIdx( l );
+        return _misclassifications( classIdx );
+    }
+
+    std::vector< Label > labels() const
+    {
+        std::vector< Label > ls;
+        for( auto &[label,i] : _dictionary )
+            ls.push_back( label );
+        return ls;
     }
 
     template<size_t indentation = 0>
@@ -283,25 +308,34 @@ public:
     }
 
 private:
+    Label _getClassLabel( size_t index ) const
+    {
+        for (auto &[label, idx] : _dictionary)
+            if ( index == idx ) return label;
+        return {};
+    }
+
     size_t _getClassIdx( const Label &cl ) const
     {
-        try{
+        try
+        {
             auto idx = _dictionary.at( cl );
             return idx;
-        } catch( const std::out_of_range &)
+        } catch (const std::out_of_range &)
         {
-            return _dictionary.at( _unclassifiedLabel() );
+            return _dictionary.at( _unclassifiedLabel());
         }
     }
 
     size_t _getClassIdx( std::string_view cl ) const
     {
-        try{
-            auto idx = _dictionary.at( std::string( cl ) );
-            return idx;
-        } catch( const std::out_of_range &)
+        try
         {
-            return _dictionary.at( _unclassifiedLabel() );
+            auto idx = _dictionary.at( std::string( cl ));
+            return idx;
+        } catch (const std::out_of_range &)
+        {
+            return _dictionary.at( _unclassifiedLabel());
         }
     }
 
@@ -320,7 +354,7 @@ private:
         size_t i = 0;
         for (auto &label : labels)
             dic.emplace( label, i++ );
-        dic.emplace( _unclassifiedLabel() , i );
+        dic.emplace( _unclassifiedLabel(), i );
 
         return dic;
     }
@@ -441,21 +475,33 @@ private:
         return (double( tp + eps ) / (tp + fn + eps) + double( tn + eps ) / (tn + fp + eps)) / 2;
     }
 
-    template< typename L = Label, typename std::enable_if<std::is_same<L,std::string_view>::value, void>::type * = nullptr>
+    std::map< Label, size_t > _misclassifications( size_t classIdx ) const
+    {
+        std::map< Label, size_t > misclassified;
+        auto &row = _matrix.at( classIdx );
+        for( auto &[label , col] : _dictionary )
+        {
+            if( col == classIdx ) continue;
+            else misclassified[ label ] = row.at( col );
+        }
+        return misclassified;
+    }
+
+    template<typename L = Label, typename std::enable_if<std::is_same<L, std::string_view>::value, void>::type * = nullptr>
     static Label _unclassifiedLabel()
     {
         static std::string unclassified = "Unclassified";
         return unclassified;
     }
 
-    template< typename L = Label, typename std::enable_if<std::is_same<L,std::string>::value, void>::type * = nullptr>
+    template<typename L = Label, typename std::enable_if<std::is_same<L, std::string>::value, void>::type * = nullptr>
     static Label _unclassifiedLabel()
     {
         static std::string unclassified = "Unclassified";
         return unclassified;
     }
 
-    template< typename L = Label, typename std::enable_if<std::is_same<L,int64_t >::value, void>::type * = nullptr>
+    template<typename L = Label, typename std::enable_if<std::is_same<L, int64_t>::value, void>::type * = nullptr>
     static Label _unclassifiedLabel()
     {
         return -1;

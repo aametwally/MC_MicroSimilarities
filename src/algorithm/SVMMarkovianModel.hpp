@@ -2,134 +2,89 @@
 // Created by asem on 13/08/18.
 //
 
-#ifndef MARKOVIAN_FEATURES_SVMMODEL_HPP
-#define MARKOVIAN_FEATURES_SVMMODEL_HPP
+#ifndef MARKOVIAN_FEATURES_SVMMARKOVIANMODEL_HPP
+#define MARKOVIAN_FEATURES_SVMMARKOVIANMODEL_HPP
 
-#include "common.hpp"
 #include "AbstractMC.hpp"
 #include "MCOperations.hpp"
 #include "MCFeatures.hpp"
+#include "SVMModel.hpp"
+#include "MLConfusedMC.hpp"
 
-#include "dlib/svm_threaded.h"
-#include "dlib_utilities.hpp"
-#include "dlib/statistics/dpca.h"
+namespace MC {
 
-using MC::Selection;
-
-template<typename Grouping>
-class SVMMarkovianModel
-{
-public:
-    using MCOps = MC::MCOps<Grouping>;
-    using MCModel = MC::AbstractMC<Grouping>;
-    using Histogram = typename MCModel::Histogram;
-    using MCF = MC::MCFeatures<Grouping>;
-    using HeteroHistograms = typename MCModel::HeteroHistograms;
-    using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
-    using BackboneProfiles = typename MCModel::BackboneProfiles;
-    using ModelTrainer = typename MCModel::ModelTrainer;
-    using HistogramsTrainer = typename MCModel::HistogramsTrainer;
-
-    using SampleType = dlib::matrix<double, 0, 0>;
-
-    using SVMBinaryKernel = dlib::radial_basis_kernel<SampleType>;
-    using Label = int;
-
-    using SVMRBFKernel = dlib::radial_basis_kernel<SampleType>;
-    using SVMRBFTrainer = dlib::krr_trainer<SVMRBFKernel>;
-    using SVMBinaryTrainer = dlib::krr_trainer<SVMBinaryKernel>;
-    using SVMTrainer = dlib::one_vs_one_trainer<dlib::any_trainer<SampleType>, Label>;
-    using DecisionFunction = SVMTrainer::trained_function_type;
-
-public:
-    explicit SVMMarkovianModel( HistogramsTrainer trainer )
-            : histogramsTrainer_( trainer )
-    {}
-
-
-    void fit( const std::map<std::string, std::vector<std::string >> &training )
+    template<typename Grouping>
+    class SVMMarkovianModel : protected SVMModel, protected MLConfusedMC
     {
+    public:
+        using Ops = MCOps<Grouping>;
+        using MCModel = AbstractMC<Grouping>;
+        using Histogram = typename MCModel::Histogram;
+        using MCF = MCFeatures<Grouping>;
+        using HeteroHistograms = typename MCModel::HeteroHistograms;
+        using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
+        using BackboneProfiles = typename MCModel::BackboneProfiles;
+        using ModelTrainer = typename MCModel::ModelTrainer;
+        using HistogramsTrainer = typename MCModel::HistogramsTrainer;
 
-        SVMTrainer trainer;
-        SVMBinaryTrainer btrainer;
-//        histogramTrainer.set_lambda(0.00001);
-        btrainer.set_kernel( SVMBinaryKernel( 0.01 ));
-//        histogramTrainer.set_max_num_sv(10);
 
-        trainer.set_trainer( btrainer );
-        trainer.set_num_threads( std::thread::hardware_concurrency());
+    public:
+        explicit SVMMarkovianModel( HistogramsTrainer trainer )
+                : _histogramsTrainer( trainer )
+        {}
 
-        _registerLabels( training );
-        _featureSelection( training );
 
-        std::vector<int> labels;
-        std::vector<SampleType> featuresVector;
-        for (auto &[trainLabel, trainSeqs] : training)
+        void fit( const BackboneProfiles &backbones,
+                  const BackboneProfiles &background,
+                  const std::map<std::string, std::vector<std::string >> &training )
         {
-            int index = _label2Index.at( trainLabel );
-            auto flatFeatures = MCOps::extractFlatFeatureVector(
-                    histogramsTrainer_( trainSeqs , _selectedKernels ).value() , _selectedKernels );
-            featuresVector.emplace_back( vector_to_matrix( flatFeatures ));
-            labels.push_back( index );
+            _featureSelection( training );
+            MLConfusedMC::fit( training );
         }
 
-//        dlib::discriminant_pca dpca;
 
-        _decisionFunction = trainer.train( featuresVector, labels );
-    }
-
-
-    std::vector<std::string> predict( const std::vector<std::string> &test ) const
-    {
-        std::vector<std::string> labels;
-        for (auto &seq : test)
+        virtual std::vector<std::string_view> predict( const std::vector<std::string> &test ) const
         {
-            if( auto histograms = histogramsTrainer_( {seq} , _selectedKernels ); histograms  )
+            std::vector<std::string_view> labels;
+            for (auto &seq : test)
+                labels.emplace_back( MLConfusedMC::predict( seq ));
+
+            return labels;
+        }
+
+    protected:
+        std::optional<FeatureVector> extractFeatures( const std::string &sequence ) const override
+        {
+            if ( auto histograms = _histogramsTrainer( {sequence}, _selectedKernels ); histograms )
             {
-                auto flatFeatures = MCOps::extractFlatFeatureVector( histograms.value() ,
-                                                                     _selectedKernels );
-                labels.push_back( _index2Label.at( _decisionFunction( vector_to_matrix( flatFeatures ))));
-            }
-            else labels.push_back(  "unclassified" );
+                auto flatFeatures = Ops::extractFlatFeatureVector( histograms.value(), _selectedKernels );
+                return flatFeatures;
+            } else return std::nullopt;
         }
-        return labels;
-    }
 
-private:
-    void _featureSelection( const std::map<std::string, std::vector<std::string >> &training )
-    {
-        _selectedKernels = MCOps::withinJointAllUnionKernels( training, histogramsTrainer_ );
-    }
-
-    void _registerLabels( const std::map<std::string, std::vector<std::string >> &training )
-    {
-        _labels.clear();
-        _label2Index.clear();
-        _index2Label.clear();
-        for (const auto &l : keys( training ))
-            _labels.insert( l );
-
-        int i = 0;
-        for (auto &label : _labels)
+        void fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) override
         {
-            _label2Index.emplace( label, i );
-            _index2Label.emplace( i, label );
-            ++i;
+            SVMModel::fit( labels, std::move( f ));
         }
-    }
 
-public:
-    const HistogramsTrainer histogramsTrainer_;
+        std::string_view predictML( const FeatureVector &f ) const override
+        {
+            return SVMModel::predict( f );
+        }
 
-private:
-    std::set<std::string> _labels;
-    std::map<std::string, int> _label2Index;
-    std::unordered_map<int, std::string> _index2Label;
-    Selection _selectedKernels;
+        void _featureSelection( const std::map<std::string, std::vector<std::string >> &training )
+        {
+            _selectedKernels = Ops::withinJointAllUnionKernels( training, _histogramsTrainer );
+        }
+
+
+    protected:
+        const HistogramsTrainer _histogramsTrainer;
+
+        Selection _selectedKernels;
 //    std::vector<bool> _selectedFeaturesMask;
 
-    DecisionFunction _decisionFunction;
-};
+    };
 
-
-#endif //MARKOVIAN_FEATURES_SVMMODEL_HPP
+}
+#endif //MARKOVIAN_FEATURES_SVMMARKOVIANMODEL_HPP

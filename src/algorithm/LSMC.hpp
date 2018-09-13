@@ -32,7 +32,7 @@ namespace MC {
         {}
 
         explicit LSMC( const std::vector<std::string> &sequences,
-                       Order order ) : ZYMC<AAGrouping>( sequences , order )
+                       Order order ) : ZYMC<AAGrouping>( sequences, order )
         {}
 
         LSMC() = delete;
@@ -40,7 +40,7 @@ namespace MC {
         LSMC( const LSMC &mE ) = default;
 
         LSMC( LSMC &&mE ) noexcept
-        : ZYMC<AAGrouping>( std::move( mE ) )
+                : ZYMC<AAGrouping>( std::move( mE ))
         {}
 
         LSMC &operator=( const LSMC &mE )
@@ -91,29 +91,25 @@ namespace MC {
 
         double propensity( std::string_view query ) const override
         {
-            double acc = 0;
-            std::pair<double, double> prev = {inf, inf};
-            prev.second = std::log( this->_histograms.at( 0 ).at( 0 ).at( Base::_char2ID( query.front())));
+            std::vector<double> propensities;
+            propensities.push_back( std::log( this->_histograms.at( 0 ).at( 0 ).at( Base::_char2ID( query.front()))));
             for (Order distance = 1; distance < this->_order && distance < query.size(); ++distance)
             {
                 double p = this->probability( query.substr( 0, distance ), query[distance] );
-                double microPropensity = std::log( p );
-                if ( prev.first < prev.second && prev.second > microPropensity )
-                    acc += prev.second;
-                prev.first = prev.second;
-                prev.second = microPropensity;
+                propensities.push_back( std::log( p ));;
             }
 
             for (auto i = 0; i < int64_t( query.size()) - this->_order - 1; ++i)
             {
                 double p = this->probability( query.substr( i, this->_order ), query[i + this->_order] );
-                double microPropensity = std::log( p );
-                if ( prev.first < prev.second && prev.second > microPropensity )
-                    acc += prev.second;
-                prev.first = prev.second;
-                prev.second = microPropensity;
+                propensities.push_back( std::log( p ));;
             }
-            return acc;
+//            for( auto p : propensities )
+//                fmt::print("[{}]\n", io::join(io::asStringsVector( propensities ), ","));
+
+            auto correlation = correlate( hannWindow( std::min( size_t(this->_order), query.size())), propensities );
+
+            return std::accumulate( correlation.cbegin(), correlation.cend(), double( 0 ));
         }
 
     };

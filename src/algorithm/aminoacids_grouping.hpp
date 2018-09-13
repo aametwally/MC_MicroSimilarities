@@ -7,7 +7,6 @@
 
 #include "common.hpp"
 
-
 enum class AminoAcidGroupingEnum
 {
     NoGrouping20,
@@ -59,6 +58,9 @@ reducedAlphabetIds( const std::array<const char *, N> &alphabetGrouping )
     return ids;
 };
 
+
+
+
 constexpr std::array<const char *, 20> AAGrouping_NOGROUPING_Array = {"A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S",
                                         "T", "V", "W", "Y"};
 
@@ -90,6 +92,7 @@ using SupportedAAGrouping  = AAGroupingList<
 //        AAGrouping_DIAMOND11  ,
         AAGrouping_OFER15
 >;
+
 
 
 #endif //MARKOVIAN_FEATURES_AMINOACIDS_GROUPING_HPP
