@@ -10,7 +10,7 @@
 #include "common.hpp"
 
 template<typename T>
-std::vector<std::vector<T >>
+inline std::vector<std::vector<T >>
 kFoldSplit( std::vector<T> &&input, size_t k )
 {
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -23,7 +23,7 @@ kFoldSplit( std::vector<T> &&input, size_t k )
 
 
 template< typename T, typename Label = std::string >
-std::vector<std::vector<std::pair<Label, T >>>
+inline std::vector<std::vector<std::pair<Label, T >>>
 kFoldStratifiedSplit( std::map<Label, std::vector<T> > &&input, size_t k )
 {
     std::vector<std::vector<std::pair<Label, T >>> folds( k );
@@ -45,7 +45,7 @@ kFoldStratifiedSplit( std::map<Label, std::vector<T> > &&input, size_t k )
 }
 
 template<typename T, typename Label = std::string >
-std::map<Label, std::vector<T >>
+inline std::map<Label, std::vector<T >>
 joinFoldsExceptK( const std::vector<std::vector<std::pair<Label, T >>> &input, size_t k )
 {
     assert( k < input.size());

@@ -6,7 +6,6 @@
 #define MARKOVIAN_FEATURES_ZYMC_HPP
 
 #include "AbstractMC.hpp"
-#include "MCOperations.hpp"
 
 namespace MC {
 /**
@@ -19,14 +18,10 @@ namespace MC {
     {
     public:
         using Base = AbstractMC<AAGrouping>;
-        using ModelTrainer = typename Base::ModelTrainer ;
-        using HistogramsTrainer  = typename Base::HistogramsTrainer ;
         using Histogram = typename Base::Histogram;
 
         using IsoHistograms = std::unordered_map<HistogramID, Histogram>;
         using HeteroHistograms = std::unordered_map<Order, IsoHistograms>;
-
-        using Ops = MCOps<AAGrouping>;
 
     public:
         explicit ZYMC( Order order ) : _order( order )
@@ -45,7 +40,7 @@ namespace MC {
                        Order order ) : _order( order )
         {
             assert( order >= 1 );
-            train( sequences );
+            this->train( sequences );
         }
 
         ZYMC() = delete;
@@ -74,61 +69,6 @@ namespace MC {
             return *this;
         }
 
-        static ModelTrainer getModelTrainer( Order order )
-        {
-            return [=]( const std::vector< std::string > &sequences,
-                        std::optional<std::reference_wrapper<const Selection >> selection )->std::unique_ptr< Base >
-            {
-                if( selection ) {
-                    auto model = Ops::filter( std::move(ZYMC( sequences , order )) , selection->get() );
-                    if( model ) return std::unique_ptr< Base >( new ZYMC(std::move( model.value() )));
-                    else return nullptr;
-                }
-                else return std::unique_ptr< Base >( new ZYMC( sequences , order ));
-            };
-        }
-
-        static HistogramsTrainer getHistogramsTrainer( Order order )
-        {
-            return [=]( const std::vector< std::string > &sequences,
-                        std::optional<std::reference_wrapper<const Selection >> selection  )->std::optional< HeteroHistograms >
-            {
-                if( selection )
-                {
-                    auto model= Ops::filter( ZYMC( sequences , order ) , selection->get() );
-                    if( model ) return std::move( model->convertToHistograms());
-                    else return std::nullopt;
-                }
-                else return std::move( ZYMC( sequences , order ).convertToHistograms());
-            };
-        }
-
-        void setMinOrder( Order mnOrder ) override
-        {
-            // Do nothing
-        }
-
-        void setMaxOrder( Order mxOrder ) override
-        {
-            _order = mxOrder;
-        }
-
-        void setRangedOrders( std::pair< Order , Order > range ) override
-        {
-            setMaxOrder( range.second );
-        }
-
-        void train( const std::vector<std::string> &sequences ) override
-        {
-            for (const auto &s : sequences)
-                _countInstance( s );
-//            for ( const auto &s: sequences )
-//                _countInstance( reverse( s ));
-
-            for (auto &[distance, pairs] : this->_histograms)
-                for (auto &[context, histogram] : pairs)
-                    histogram.normalize();
-        }
 
         const Order order() const
         {
@@ -193,7 +133,7 @@ namespace MC {
             this->_histograms[distance][c].increment( s );
         }
 
-        void _countInstance( std::string_view sequence )
+        void _countInstance( std::string_view sequence ) override
         {
             for (auto a : sequence)
             {

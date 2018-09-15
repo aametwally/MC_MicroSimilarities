@@ -2,7 +2,7 @@
 // Created by asem on 13/09/18.
 //
 
-#include "KNNConfusionMC.h"
+#include "KNNConfusionMC.hpp"
 
 namespace MC
 {

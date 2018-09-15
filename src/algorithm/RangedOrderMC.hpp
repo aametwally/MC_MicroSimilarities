@@ -8,33 +8,13 @@
 #include "SimilarityMetrics.hpp"
 
 #include "AbstractMC.hpp"
-#include "MCOperations.hpp"
-
 
 namespace MC {
-    auto geometricDistribution( double p )
-    {
-        return [p]( double exponent ) {
-            return pow( p, exponent );
-        };
-    }
-
-    template<typename T>
-    auto inverseFunction()
-    {
-        return []( T n ) {
-            return T( 1 ) / n;
-        };
-    }
-
     template<typename AAGrouping>
     class RangedOrderMC : public AbstractMC<AAGrouping>
     {
     public:
         using Base = AbstractMC<AAGrouping>;
-        using ModelTrainer = typename Base::ModelTrainer ;
-        using HistogramsTrainer  = typename Base::HistogramsTrainer ;
-        using Ops = MCOps<AAGrouping>;
         using Histogram = typename Base::Histogram;
         using HeteroHistograms = typename Base::HeteroHistograms ;
 
@@ -64,7 +44,7 @@ namespace MC {
                 _order( mnOrder, mxOrder )
         {
             assert( maxOrder() >= minOrder());
-            train( sequences );
+            this->train( sequences );
         }
 
         RangedOrderMC() = delete;
@@ -95,62 +75,20 @@ namespace MC {
             return *this;
         }
 
-        static ModelTrainer getModelTrainer( Order mnOrder , Order mxOrder )
-        {
-            return [=]( const std::vector< std::string > &sequences,
-                        std::optional<std::reference_wrapper<const Selection >> selection )->std::unique_ptr< Base >
-            {
-                if( selection ) {
-                    auto model = Ops::filter( std::move(RangedOrderMC( sequences , mnOrder , mxOrder )) , selection->get() );
-                    if( model ) return std::unique_ptr< Base >( new RangedOrderMC(std::move( model.value() )));
-                    else return nullptr;
-                }
-                else return std::unique_ptr< Base >( new RangedOrderMC( sequences , mnOrder , mxOrder ));
-            };
-        }
-
-        static HistogramsTrainer getHistogramsTrainer( Order mnOrder , Order mxOrder )
-        {
-            return [=]( const std::vector< std::string > &sequences,
-                        std::optional<std::reference_wrapper<const Selection >> selection  )->std::optional< HeteroHistograms >
-            {
-                if( selection )
-                {
-                    auto model= Ops::filter( RangedOrderMC( sequences , mnOrder , mxOrder ) , selection->get() );
-                    if( model ) return std::move( model->convertToHistograms());
-                    else return std::nullopt;
-                }
-                else return std::move( RangedOrderMC( sequences ,  mnOrder , mxOrder ).convertToHistograms());
-            };
-        }
-
-        void setMinOrder( Order mnOrder ) override
+        void setMinOrder( Order mnOrder )
         {
             _order.first = mnOrder;
         }
 
-        void setMaxOrder( Order mxOrder ) override
+        void setMaxOrder( Order mxOrder )
         {
             _order.second = mxOrder;
         }
 
-        void setRangedOrders( std::pair< Order , Order > range ) override
+        void setRangedOrders( std::pair< Order , Order > range )
         {
             _order = range;
         }
-
-        virtual void train( const std::vector<std::string> &sequences )
-        {
-            assert( Base::isReducedSequences( sequences ));
-
-            for (const auto &s : sequences)
-                _countInstance( s );
-
-            for (Order order = minOrder(); order <= maxOrder(); ++order)
-                for (auto &[id, histogram] : this->_histograms.at( order ))
-                    histogram.normalize();
-        }
-
 
         double probability( std::string_view context, char currentState ) const override
         {
@@ -205,18 +143,6 @@ namespace MC {
                     } );
         }
 
-        void toFiles( const std::string &dir,
-                      const std::string &prefix,
-                      const std::string &id ) const
-        {
-            std::ofstream histogramFile;
-            std::vector<std::string> names1 = {prefix, "profile", id};
-            histogramFile.open( dir + "/" + io::join( names1, "_" ) + ".array" );
-            for (const auto &[id, histogram] : this->histograms())
-                histogramFile << histogram.toString() << std::endl;
-            histogramFile.close();
-        }
-
         const std::pair<Order, Order> &order() const
         {
             return _order;
@@ -241,8 +167,6 @@ namespace MC {
         { return id / Base::StatesN; }
 
 
-
-
     protected:
         void _incrementInstance( std::string_view context,
                                  char currentState,
@@ -254,7 +178,7 @@ namespace MC {
             this->_histograms[order][id].increment( c );
         }
 
-        void _countInstance( std::string_view sequence )
+        void _countInstance( std::string_view sequence ) override
         {
             for (auto order = minOrder(); order <= maxOrder(); ++order)
                 for (auto i = 0; i < sequence.size() - order - 1; ++i)

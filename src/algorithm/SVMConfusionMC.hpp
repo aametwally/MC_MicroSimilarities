@@ -5,7 +5,7 @@
 #ifndef MARKOVIAN_FEATURES_SVMCONFUSIONMC_HPP
 #define MARKOVIAN_FEATURES_SVMCONFUSIONMC_HPP
 
-#include "SVMMarkovianModel.hpp"
+#include "SVMMCParameters.hpp"
 #include "MLConfusedMC.hpp"
 
 namespace MC {
@@ -13,19 +13,17 @@ namespace MC {
     template<typename Grouping>
     class SVMConfusionMC : protected SVMModel, protected MLConfusedMC
     {
-        using Ops = MCOps<Grouping>;
         using MCModel = AbstractMC<Grouping>;
         using Histogram = typename MCModel::Histogram;
         using MCF = MCFeatures<Grouping>;
         using HeteroHistograms = typename MCModel::HeteroHistograms;
         using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
-        using ModelTrainer = typename MCModel::ModelTrainer;
-        using HistogramsTrainer = typename MCModel::HistogramsTrainer;
+        using ModelTrainer = ModelGenerator< Grouping >;
 
     public:
 
-        explicit SVMConfusionMC( ModelTrainer modelTrainer, HistogramsTrainer trainer )
+        explicit SVMConfusionMC( ModelTrainer modelTrainer )
                 : _modelTrainer( modelTrainer )
         {}
 

@@ -7,25 +7,30 @@ set( COMMON_INCLUDE_DIRECTORIES
         ../features )
 
 set( MC_SOURCE_FILES
+        ../algorithm/Selection.cpp
+        ../algorithm/AbstractMC.cpp
         ../algorithm/KNNConfusionMC.cpp
+        ../algorithm/KNNMCParameters.cpp
         ../algorithm/KNNModel.cpp
         ../algorithm/LSMC.cpp
         ../algorithm/MC.cpp
         ../algorithm/Pipeline.cpp
         ../algorithm/SVMConfusionMC.cpp
-        ../algorithm/SVMMarkovianModel.cpp
+        ../algorithm/SVMMCParameters.cpp
         ../algorithm/SVMModel.cpp
-        ../algorithm/ZYMC.cpp)
+        ../algorithm/ZYMC.cpp ../report/ConfusionMatrix.cpp ../report/CrossValidationStatistics.cpp)
 
 
 set( MC_DETAILS_TEMPLATE_FILES
-        ../algorithm/KNNConfusionMC.h
+        ../algorithm/AbstractMC.hpp
+        ../algorithm/KNNConfusionMC.hpp
+        ../algorithm/KNNMCParameters.hpp
         ../algorithm/KNNModel.hpp
         ../algorithm/LSMC.hpp
         ../algorithm/MC.hpp
         ../algorithm/Pipeline.hpp
         ../algorithm/SVMConfusionMC.hpp
-        ../algorithm/SVMMarkovianModel.hpp
+        ../algorithm/SVMMCParameters.hpp
         ../algorithm/SVMModel.hpp
         ../algorithm/ZYMC.hpp
         ../algorithm/MLConfusedMC.hpp )
@@ -47,7 +52,9 @@ set( COMMON_INCLUDES
         ../data/dlib_utilities.hpp
         ../features/FeatureScoreAUC.hpp
         ../algorithm/FeatureScoringPipeline.hpp
-        ../algorithm/Histogram.hpp )
+        ../algorithm/Histogram.hpp
+        ../algorithm/MCDefs.h
+        ../algorithm/Selection.hpp )
 
 add_definitions(-ftemplate-backtrace-limit=0)
 
@@ -65,7 +72,7 @@ target_compile_features( MC_pipeline PRIVATE cxx_std_17)
 
 ### Generate the feature scoring executable
 add_executable( markovian_features_scoring  ${COMMON_INCLUDES}  ${MC_SOURCE_FILES}
-        ${MC_DETAILS_TEMPLATE_FILES} markovian_features_analysis.cpp)
+        ${MC_DETAILS_TEMPLATE_FILES} markovian_features_analysis.cpp ../algorithm/AbstractMC.cpp)
 target_include_directories( markovian_features_scoring PRIVATE
         ${CMAKE_SOURCE_DIR}/src/include
         ${COMMON_INCLUDE_DIRECTORIES}
@@ -74,7 +81,7 @@ target_link_libraries( markovian_features_scoring PRIVATE fmt-header-only stdc++
 target_compile_features( markovian_features_scoring PRIVATE cxx_std_17 )
 
 ### Confusion Matrix Test
-add_executable( confusionMatrix  ${COMMON_INCLUDES} confusionMatrix.cpp ../algorithm/MCFeatures.cpp ../algorithm/MCOperations.cpp ../algorithm/RangedOrderMC.cpp)
+add_executable( confusionMatrix  ${COMMON_INCLUDES} confusionMatrix.cpp ../algorithm/MCFeatures.cpp ../algorithm/RangedOrderMC.cpp)
 target_include_directories( confusionMatrix PRIVATE
         ${CMAKE_SOURCE_DIR}/src/include
         ${COMMON_INCLUDE_DIRECTORIES} )

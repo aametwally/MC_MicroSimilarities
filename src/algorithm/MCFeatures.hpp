@@ -6,13 +6,11 @@
 #define MARKOVIAN_FEATURES_MARKOVIANMODELFEATURES_HPP
 
 #include "AbstractMC.hpp"
-#include "MCOperations.hpp"
 
 namespace MC {
     template<typename Grouping>
     class MCFeatures
     {
-        using HOMCOps = MCOps<Grouping>;
         using Histogram= typename AbstractMC< Grouping >::Histogram;
         using BackboneProfiles = typename AbstractMC< Grouping >::BackboneProfiles ;
         using HeteroHistogramsFeatures = typename AbstractMC< Grouping >::HeteroHistogramsFeatures;

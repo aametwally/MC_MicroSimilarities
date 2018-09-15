@@ -14,14 +14,10 @@ namespace MC {
     {
     public:
         using Base = AbstractMC<AAGrouping>;
-        using ModelTrainer = typename Base::ModelTrainer;
-        using HistogramsTrainer  = typename Base::HistogramsTrainer;
         using Histogram = typename Base::Histogram;
 
         using IsoHistograms = std::unordered_map<HistogramID, Histogram>;
         using HeteroHistograms = std::unordered_map<Order, IsoHistograms>;
-
-        using Ops = MCOps<AAGrouping>;
 
         explicit LSMC( Order order ) : ZYMC<AAGrouping>( order )
         {}
@@ -60,34 +56,6 @@ namespace MC {
             this->_histograms = std::move( mE._histograms );
             return *this;
         }
-
-        static ModelTrainer getLSMCTrainer( Order order )
-        {
-            return [=]( const std::vector<std::string> &sequences,
-                        std::optional<std::reference_wrapper<const Selection >> selection ) -> std::unique_ptr<Base> {
-                if ( selection )
-                {
-                    auto model = Ops::filter( std::move( LSMC( sequences, order )), selection->get());
-                    if ( model ) return std::unique_ptr<Base>( new LSMC( std::move( model.value())));
-                    else return nullptr;
-
-                } else return std::unique_ptr<Base>( new LSMC( sequences, order ));
-            };
-        }
-
-        static HistogramsTrainer getLSMCHistogramsTrainer( Order order )
-        {
-            return [=]( const std::vector<std::string> &sequences,
-                        std::optional<std::reference_wrapper<const Selection >> selection ) -> std::optional<HeteroHistograms> {
-                if ( selection )
-                {
-                    auto model = Ops::filter( LSMC( sequences, order ), selection->get());
-                    if ( model ) return std::move( model->convertToHistograms());
-                    else return std::nullopt;
-                } else return std::move( LSMC( sequences, order ).convertToHistograms());
-            };
-        }
-
 
         double propensity( std::string_view query ) const override
         {

@@ -6,7 +6,6 @@
 #define MARKOVIAN_FEATURES_SVMMARKOVIANMODEL_HPP
 
 #include "AbstractMC.hpp"
-#include "MCOperations.hpp"
 #include "MCFeatures.hpp"
 #include "SVMModel.hpp"
 #include "MLConfusedMC.hpp"
@@ -14,23 +13,20 @@
 namespace MC {
 
     template<typename Grouping>
-    class SVMMarkovianModel : protected SVMModel, protected MLConfusedMC
+    class SVMMCParameters : protected SVMModel, protected MLConfusedMC
     {
     public:
-        using Ops = MCOps<Grouping>;
         using MCModel = AbstractMC<Grouping>;
         using Histogram = typename MCModel::Histogram;
         using MCF = MCFeatures<Grouping>;
         using HeteroHistograms = typename MCModel::HeteroHistograms;
         using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
-        using ModelTrainer = typename MCModel::ModelTrainer;
-        using HistogramsTrainer = typename MCModel::HistogramsTrainer;
-
+        using ModelTrainer = ModelGenerator<Grouping>;
 
     public:
-        explicit SVMMarkovianModel( HistogramsTrainer trainer )
-                : _histogramsTrainer( trainer )
+        explicit SVMMCParameters( ModelTrainer trainer )
+                : _modelTrainer( trainer )
         {}
 
 
@@ -55,11 +51,9 @@ namespace MC {
     protected:
         std::optional<FeatureVector> extractFeatures( const std::string &sequence ) const override
         {
-            if ( auto histograms = _histogramsTrainer( {sequence}, _selectedKernels ); histograms )
-            {
-                auto flatFeatures = Ops::extractFlatFeatureVector( histograms.value(), _selectedKernels );
-                return flatFeatures;
-            } else return std::nullopt;
+            if ( auto model = _modelTrainer( sequence, _selectedKernels ); *model )
+                return model->extractFlatFeatureVector( _selectedKernels );
+            else return std::nullopt;
         }
 
         void fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) override
@@ -74,12 +68,12 @@ namespace MC {
 
         void _featureSelection( const std::map<std::string, std::vector<std::string >> &training )
         {
-            _selectedKernels = Ops::withinJointAllUnionKernels( training, _histogramsTrainer );
+            _selectedKernels = MCModel::withinJointAllUnionKernels( training, _modelTrainer );
         }
 
 
     protected:
-        const HistogramsTrainer _histogramsTrainer;
+        const ModelTrainer _modelTrainer;
 
         Selection _selectedKernels;
 //    std::vector<bool> _selectedFeaturesMask;

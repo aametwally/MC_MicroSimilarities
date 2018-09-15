@@ -6,7 +6,6 @@
 #define MARKOVIAN_FEATURES_MC_HPP
 
 #include "AbstractMC.hpp"
-#include "MCOperations.hpp"
 
 namespace MC {
 
@@ -16,12 +15,8 @@ namespace MC {
 
     public:
         using Base = AbstractMC<AAGrouping>;
-        using ModelTrainer = typename Base::ModelTrainer ;
-        using HistogramsTrainer  = typename Base::HistogramsTrainer ;
         using Histogram = typename Base::Histogram;
         using HeteroHistograms  = typename Base::HeteroHistograms ;
-
-        using Ops = MCOps<AAGrouping>;
 
     public:
         explicit MC( Order order ) : _order( order )
@@ -40,7 +35,14 @@ namespace MC {
                      Order order ) : _order( order )
         {
             assert( order >= 1 );
-            train( sequences );
+            this->train( sequences );
+        }
+
+        explicit MC( const std::vector<std::string_view> &sequences,
+                     Order order ) : _order( order )
+        {
+            assert( order >= 1 );
+            this->train( sequences );
         }
 
         MC() = delete;
@@ -67,31 +69,6 @@ namespace MC {
                 throw std::runtime_error( "Orders mismatch!" );
             this->_histograms = std::move( mE._histograms );
             return *this;
-        }
-
-        void setMinOrder( Order mnOrder ) override
-        {
-            // Do nothing
-        }
-
-        void setMaxOrder( Order mxOrder ) override
-        {
-            _order = mxOrder;
-        }
-
-        void setRangedOrders( std::pair< Order , Order > range ) override
-        {
-            setMaxOrder( range.second );
-        }
-
-        void train( const std::vector<std::string> &sequences ) override
-        {
-            for (const auto &s : sequences)
-                _countInstance( s );
-
-            for (auto &[order, isoHistograms] : this->_histograms)
-                for (auto &[contextId, histogram] : isoHistograms)
-                    histogram.normalize();
         }
 
         const Order order() const
@@ -137,35 +114,6 @@ namespace MC {
             return acc;
         }
 
-        static ModelTrainer getModelTrainer( Order order )
-        {
-            return [=]( const std::vector< std::string > &sequences,
-                        std::optional<std::reference_wrapper<const Selection >> selection )->std::unique_ptr< Base >
-            {
-                if( selection ) {
-                    auto model = Ops::filter( std::move(MC( sequences , order )) , selection->get() );
-                    if( model ) return std::unique_ptr< Base >( new MC(std::move( model.value() )));
-                    else return nullptr;
-                }
-                else return std::unique_ptr< Base >( new MC( sequences , order ));
-            };
-        }
-
-        static HistogramsTrainer getHistogramsTrainer( Order order )
-        {
-            return [=]( const std::vector< std::string > &sequences,
-                        std::optional<std::reference_wrapper<const Selection >> selection  )->std::optional< HeteroHistograms >
-            {
-                if( selection )
-                {
-                    auto model= Ops::filter( MC( sequences , order ) , selection->get() );
-                    if( model ) return std::move( model->convertToHistograms());
-                    else return std::nullopt;
-                }
-                else return std::move( MC( sequences , order ).convertToHistograms());
-            };
-        }
-
     protected:
         void _incrementInstance( std::string_view context,
                                  char currentState )
@@ -176,7 +124,7 @@ namespace MC {
             this->_histograms[order][id].increment( c );
         }
 
-        void _countInstance( std::string_view sequence )
+        void _countInstance( std::string_view sequence ) override
         {
             for (auto a : sequence)
             {

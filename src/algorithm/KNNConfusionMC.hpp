@@ -6,7 +6,6 @@
 #define MARKOVIAN_FEATURES_KNNCONFUSIONMC_H
 
 #include "AbstractMC.hpp"
-#include "MCOperations.hpp"
 #include "MCFeatures.hpp"
 
 #include "KNNModel.hpp"
@@ -17,15 +16,13 @@ namespace MC {
     class KNNConfusionMC : protected KNNModel<Euclidean> , protected MLConfusedMC
     {
         using KNN = KNNModel<Euclidean>;
-        using Ops = MCOps<Grouping>;
         using MCModel = AbstractMC<Grouping>;
         using Histogram = typename MCModel::Histogram;
         using MCF = MCFeatures<Grouping>;
         using HeteroHistograms = typename MCModel::HeteroHistograms;
         using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
-        using ModelTrainer = typename MCModel::ModelTrainer;
-        using HistogramsTrainer = typename MCModel::HistogramsTrainer;
+        using ModelTrainer =  ModelGenerator<Grouping>;
 
     public:
 

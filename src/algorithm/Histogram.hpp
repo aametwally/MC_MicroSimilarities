@@ -115,6 +115,14 @@ namespace buffers {
             return newKernel;
         }
 
+        Histogram operator-( const Histogram &other ) const
+        {
+            Histogram diff;
+            for( auto i = 0; i < StatesN; ++i )
+                diff._buffer[i] = _buffer[i] - other._buffer[i];
+            return diff;
+        }
+
         static inline double dot( const Histogram &k1, const Histogram &k2 )
         {
             double sum = 0;

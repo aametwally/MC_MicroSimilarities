@@ -34,14 +34,6 @@ public:
         ++_matrix[actualIdx][outputIdx];
     }
 
-    void countInstance( std::string_view prediction, std::string_view actual )
-    {
-        assert( !_dictionary.empty());
-        size_t actualIdx = _getClassIdx( actual );
-        size_t outputIdx = _getClassIdx( prediction );
-        ++_matrix[actualIdx][outputIdx];
-    }
-
     T truePositives( const Label &cl ) const
     {
         assert( !_dictionary.empty());
@@ -230,7 +222,7 @@ public:
             den2 += (den2a * den2b);
         }
 
-        return num / std::sqrt( den1 * den2 );
+        return num / std::sqrt( den1 * den2 + eps );
     }
 
     /**
@@ -320,18 +312,6 @@ private:
         try
         {
             auto idx = _dictionary.at( cl );
-            return idx;
-        } catch (const std::out_of_range &)
-        {
-            return _dictionary.at( _unclassifiedLabel());
-        }
-    }
-
-    size_t _getClassIdx( std::string_view cl ) const
-    {
-        try
-        {
-            auto idx = _dictionary.at( std::string( cl ));
             return idx;
         } catch (const std::out_of_range &)
         {

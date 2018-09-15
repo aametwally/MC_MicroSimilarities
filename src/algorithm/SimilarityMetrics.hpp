@@ -104,7 +104,7 @@ struct Manhattan : public Criteria<Manhattan>, Cost
         for (auto it1 = first1, it2 = first2; it1 != last1; ++it1, ++it2)
         {
             auto m = *it1 - *it2;
-            sum += ( m < 0 )? -m : m;
+            sum += (m < 0) ? -m : m;
         }
         return sum;
     }
@@ -168,6 +168,28 @@ struct Cosine : public Criteria<Cosine>, Score
 private:
     Cosine() = default;
 };
+
+
+struct Dot : public Criteria<Dot>, Score
+{
+    static constexpr const char *label = "dot";
+
+    template<typename Iterator>
+    static inline double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    {
+        assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
+        double sum{0};
+        for (auto it1 = first1, it2 = first2; it1 != last1; ++it1, ++it2)
+            sum += (*it1) * (*it2);
+        return sum;
+    }
+
+    static constexpr auto combine = combineManhattan;
+
+private:
+    Dot() = default;
+};
+
 
 struct Intersection : public Criteria<Intersection>, Score
 {
@@ -429,7 +451,7 @@ private:
     Hellinger() = default;
 };
 
-template< typename Label = std::string_view >
+template<typename Label = std::string_view>
 struct Measurement
 {
     Measurement( Label label, double val )
@@ -599,17 +621,17 @@ private:
 template<typename T, typename Enable = void>
 struct MatchSet;
 
-template<typename T >
+template<typename T>
 struct MatchSet<T, typename std::enable_if<std::is_base_of<Cost, T>::value>::type>
 {
-    template< typename Label  >
+    template<typename Label>
     using Queue = PriorityQueueFixed<Measurement<Label>, std::greater<> >;
 };
 
 template<typename T>
 struct MatchSet<T, typename std::enable_if<std::is_base_of<Score, T>::value>::type>
 {
-    template< typename Label >
+    template<typename Label>
     using Queue = PriorityQueueFixed<Measurement<Label>, std::less<>>;
 };
 
@@ -619,7 +641,7 @@ struct ClassificationCandidates
 {
     using M = Measurement<std::string_view>;
 
-    using Queue =  typename MatchSet<Criteria>::template Queue< std::string_view>;
+    using Queue =  typename MatchSet<Criteria>::template Queue<std::string_view>;
 
     explicit ClassificationCandidates( std::string_view trueLabel, Queue q )
             : _trueLabel( trueLabel ), _bestMatches( std::move( q ))
@@ -661,6 +683,7 @@ enum class CriteriaEnum
 {
     ChiSquared,
     Cosine,
+    Dot,
     KullbackLeiblerDiv,
     Intersection,
     Gaussian,
@@ -676,6 +699,7 @@ enum class CriteriaEnum
 const std::map<std::string, CriteriaEnum> CriteriaLabels{
         {ChiSquared::label,                CriteriaEnum::ChiSquared},
         {Cosine::label,                    CriteriaEnum::Cosine},
+        {Dot::label,                       CriteriaEnum::Dot},
         {KullbackLeiblerDivergence::label, CriteriaEnum::KullbackLeiblerDiv},
         {Intersection::label,              CriteriaEnum::Intersection},
         {Gaussian::label,                  CriteriaEnum::Gaussian},

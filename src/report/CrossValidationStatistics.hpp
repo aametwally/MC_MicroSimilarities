@@ -19,14 +19,16 @@ public:
             _statistics.emplace_back( labels );
     }
 
-    void countInstance( size_t k, std::string_view prediction, std::string_view actual )
-    {
-        _statistics.at( k ).countInstance( prediction, actual );
-    }
 
     void countInstance( size_t k, const Label &prediction, const Label &actual )
     {
         _statistics.at( k ).countInstance( prediction, actual );
+    }
+
+    template< typename Label1 , typename Label2 >
+    void countInstance( size_t k, const Label1 &prediction, const Label2 &actual )
+    {
+        _statistics.at( k ).countInstance( Label( prediction ), Label( actual ) );
     }
 
 
@@ -89,7 +91,7 @@ public:
         for (auto i = 0; i < _k; ++i)
             vals.push_back( fn( i ));
 
-        double sum = std::accumulate( vals.cbegin(), vals.cend(), double( 0 ));
+        double sum = std::accumulate( vals.cbegin(), vals.cend(), double( std::numeric_limits<double>::epsilon() ));
         double mean = sum / _k;
         double sDev = std::accumulate( vals.cbegin(), vals.cend(), double( 0 ),
                                        [mean]( double acc, double val ) {

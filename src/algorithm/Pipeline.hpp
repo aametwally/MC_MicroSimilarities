@@ -22,11 +22,10 @@
 #include "ZYMC.hpp"
 #include "LSMC.hpp"
 #include "MCFeatures.hpp"
-#include "MCOperations.hpp"
 
-#include "SVMMarkovianModel.hpp"
+#include "SVMMCParameters.hpp"
 #include "SVMConfusionMC.hpp"
-#include "KNNConfusionMC.h"
+#include "KNNConfusionMC.hpp"
 
 #include "SimilarityMetrics.hpp"
 
@@ -81,14 +80,11 @@ namespace MC {
 
     private:
         using MCF = MCFeatures<Grouping>;
-        using Ops = MCOps<Grouping>;
 
         using AbstractModel = AbstractMC<Grouping>;
 
-
-        using ModelTrainer = typename AbstractModel::ModelTrainer;
-        using HistogramsTrainer = typename AbstractModel::HistogramsTrainer;
         using BackboneProfiles =  typename AbstractModel::BackboneProfiles;
+        using BackboneProfile =  typename AbstractModel::BackboneProfile;
 
         using Histogram = typename AbstractModel::Histogram;
 
@@ -106,9 +102,8 @@ namespace MC {
         using LeaderBoard = ClassificationCandidates<Score>;
 
     public:
-        Pipeline( ModelTrainer modelTrainer, HistogramsTrainer histogramsTrainer, Similarity similarity )
+        Pipeline( ModelGenerator<Grouping> modelTrainer, Similarity similarity )
                 : _modelTrainer( modelTrainer ),
-                  _histogramsTrainer( histogramsTrainer ),
                   _similarity( similarity )
         {
 
@@ -126,11 +121,11 @@ namespace MC {
         std::vector<LeaderBoard>
         classify_VALIDATION(
                 const std::vector<std::string> &queries,
-                const std::vector<std::string> &trueLabels,
+                const std::vector<std::string_view> &trueLabels,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
                 const Selection &selection,
-                const ClassificationMethod classificationStrategy )
+                const ClassificationMethod classificationStrategy ) const
         {
             assert( queries.size() == trueLabels.size());
 
@@ -152,20 +147,9 @@ namespace MC {
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                const Selection &selection )
+                const Selection &selection ) const
         {
-            BackboneProfiles background;
-            for (auto &[label, _] : trainingClusters)
-            {
-                std::vector<std::string> backgroundSequences;
-                for (auto&[bgLabel, bgSequences] : trainingClusters)
-                {
-                    if ( bgLabel == label ) continue;
-                    for (auto &s : bgSequences)
-                        backgroundSequences.push_back( s );
-                }
-                background.emplace( label, _modelTrainer( backgroundSequences, selection ));
-            }
+            BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
 
             std::vector<PriorityQueue> results;
             for (const auto &seq : queries)
@@ -214,9 +198,9 @@ namespace MC {
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                const Selection &selection )
+                const Selection &selection ) const
         {
-            auto trainedHistograms = Ops::trainIndividuals( trainingClusters, _histogramsTrainer, selection );
+            auto trainedHistograms = AbstractModel::trainIndividuals( trainingClusters, _modelTrainer, selection );
             auto[withinClassRadius, populationRadius] = MCF::populationRadius( trainedHistograms, selection );
             const auto relevance3 =
                     MCF::minMaxScale(
@@ -226,8 +210,8 @@ namespace MC {
             {
                 std::map<std::string_view, double> voter;
 
-                if ( auto query = _histogramsTrainer( {seq}, selection ); query )
-                    for (const auto &[order, isoKernels] : query.value())
+                if ( auto query = _modelTrainer( seq, selection ); *query )
+                    for (const auto &[order, isoKernels] : query->histograms().get())
                     {
                         for (const auto &[id, k1] : isoKernels)
                         {
@@ -265,20 +249,9 @@ namespace MC {
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                const Selection &selection )
+                const Selection &selection ) const
         {
-            BackboneProfiles background;
-            for (auto &[label, _] : trainingClusters)
-            {
-                std::vector<std::string> backgroundSequences;
-                for (auto&[bgLabel, bgSequences] : trainingClusters)
-                {
-                    if ( bgLabel == label ) continue;
-                    for (auto &s : bgSequences)
-                        backgroundSequences.push_back( s );
-                }
-                background.emplace( label, _modelTrainer( backgroundSequences, selection ));
-            }
+            BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
 
             auto clustersIR = MCF::informationRadius_UNIFORM( targets, selection );
             auto backgroundIR = MCF::informationRadius_UNIFORM( background, selection );
@@ -288,8 +261,8 @@ namespace MC {
             {
                 std::map<std::string_view, double> voter;
 
-                if ( auto query = _histogramsTrainer( {seq}, selection ); query )
-                    for (const auto &[order, isoHistograms] : query.value())
+                if ( auto query = _modelTrainer( seq, selection ); *query )
+                    for (const auto &[order, isoHistograms] : query->histograms().get())
                     {
                         for (const auto &[id, histogram1] : isoHistograms)
                         {
@@ -298,11 +271,12 @@ namespace MC {
                             {
                                 auto &bg = background.at( clusterName );
                                 auto histogram2 = profile->histogram( order, id );
-                                auto bgHistogram = bg->histogram( order, id );
-                                if ( histogram2 && bgHistogram )
+                                auto hBG = bg->histogram( order, id );
+                                if ( histogram2 && hBG )
                                 {
-                                    auto val = _similarity( histogram1, histogram2->get()) -
-                                               _similarity( histogram1, bgHistogram->get());
+//                                    auto val = _similarity( histogram1, histogram2->get()) -
+//                                               _similarity( histogram1, hBG->get());
+                                    auto val = _similarity( histogram1 - hBG->get(), histogram2->get() - hBG->get());
                                     pq.emplace( clusterName, val );
                                 }
                             }
@@ -328,7 +302,7 @@ namespace MC {
         predict_ACCUMULATIVE( const std::vector<std::string> &queries,
                               const BackboneProfiles &targets,
                               const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                              const Selection &selection )
+                              const Selection &selection ) const
         {
 
 
@@ -337,12 +311,12 @@ namespace MC {
             {
                 PriorityQueue matchSet( targets.size());
 
-                if ( auto queryOpt = _histogramsTrainer( {seq}, selection ); queryOpt )
+                if ( auto query = _modelTrainer( seq, selection ); *query )
                 {
                     for (const auto &[clusterId, profile] : targets)
                     {
                         double sum = 0;
-                        for (const auto &[order, isoKernels] : queryOpt.value())
+                        for (const auto &[order, isoKernels] : query->histograms().get())
                             for (const auto &[id, kernel1] : isoKernels)
                             {
 
@@ -365,22 +339,11 @@ namespace MC {
         predict_ACCUMULATIVE_WBG( const std::vector<std::string> &queries,
                                   const BackboneProfiles &targets,
                                   const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                                  const Selection &selection )
+                                  const Selection &selection ) const
         {
-            BackboneProfiles background;
-            for (auto &[label, _] : trainingClusters)
-            {
-                std::vector<std::string> backgroundSequences;
-                for (auto&[bgLabel, bgSequences] : trainingClusters)
-                {
-                    if ( bgLabel == label ) continue;
-                    for (auto &s : bgSequences)
-                        backgroundSequences.push_back( s );
-                }
-                background.emplace( label, _modelTrainer( backgroundSequences, selection ));
-            }
+            BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
 
-            auto trainedHistograms = Ops::trainIndividuals( trainingClusters, _histogramsTrainer, selection );
+            auto trainedHistograms = AbstractModel::trainIndividuals( trainingClusters, _modelTrainer, selection );
             auto[withinClassRadius, populationRadius] = MCF::populationRadius( trainedHistograms, selection );
             const auto relevance =
                     MCF::minMaxScale(
@@ -391,13 +354,13 @@ namespace MC {
             {
                 PriorityQueue matchSet( targets.size());
 
-                if ( auto queryOpt = _histogramsTrainer( {seq}, selection ); queryOpt )
+                if ( auto query = _modelTrainer( seq, selection ); *query )
                 {
                     for (const auto &[clusterId, profile] : targets)
                     {
                         auto &bg = background.at( clusterId );
                         double sum = 0;
-                        for (const auto &[order, isoKernels] : queryOpt.value())
+                        for (const auto &[order, isoKernels] : query->histograms().get())
                             for (const auto &[id, histogram1] : isoKernels)
                             {
                                 double score = getOr( relevance, order, id, double( 0 ));
@@ -405,8 +368,9 @@ namespace MC {
                                 auto hBG = bg->histogram( order, id );
                                 if ( histogram2 && hBG )
                                 {
-                                    sum += _similarity( histogram1, histogram2->get()) -
-                                           _similarity( histogram1, hBG->get());
+//                                    sum += _similarity( histogram1, histogram2->get()) -
+//                                           _similarity( histogram1, hBG->get());
+                                    sum += _similarity( histogram1 - hBG->get(), histogram2->get() - hBG->get());
                                 }
                             }
                         matchSet.emplace( clusterId, sum );
@@ -424,7 +388,7 @@ namespace MC {
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                const Selection &selection )
+                const Selection &selection ) const
         {
             std::vector<PriorityQueue> rankedPredictions;
             for (auto &query : queries)
@@ -444,20 +408,9 @@ namespace MC {
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                const Selection &selection )
+                const Selection &selection ) const
         {
-            BackboneProfiles background;
-            for (auto &[label, _] : trainingClusters)
-            {
-                std::vector<std::string> backgroundSequences;
-                for (auto&[bgLabel, bgSequences] : trainingClusters)
-                {
-                    if ( bgLabel == label ) continue;
-                    for (auto &s : bgSequences)
-                        backgroundSequences.push_back( s );
-                }
-                background.emplace( label, _modelTrainer( backgroundSequences, selection ));
-            }
+            BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
 
             std::vector<PriorityQueue> rankedPredictions;
             for (auto &query : queries)
@@ -479,23 +432,12 @@ namespace MC {
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                const Selection &selection )
+                const Selection &selection ) const
         {
-            BackboneProfiles background;
-            for (auto &[label, _] : trainingClusters)
-            {
-                std::vector<std::string> backgroundSequences;
-                for (auto&[bgLabel, bgSequences] : trainingClusters)
-                {
-                    if ( bgLabel == label ) continue;
-                    for (auto &s : bgSequences)
-                        backgroundSequences.push_back( s );
-                }
-                background.emplace( label, _modelTrainer( backgroundSequences, selection ));
-            }
+            BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
 
-            SVMMarkovianModel<Grouping> svm( _histogramsTrainer );
-            svm.fit( targets , background , trainingClusters );
+            SVMMCParameters<Grouping> svm( _modelTrainer );
+            svm.fit( targets, background, trainingClusters );
             auto predicted = svm.predict( queries );
 
             std::vector<PriorityQueue> rankedPredictions;
@@ -515,22 +457,11 @@ namespace MC {
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                const Selection &selection )
+                const Selection &selection ) const
         {
-            BackboneProfiles background;
-            for (auto &[label, _] : trainingClusters)
-            {
-                std::vector<std::string> backgroundSequences;
-                for (auto&[bgLabel, bgSequences] : trainingClusters)
-                {
-                    if ( bgLabel == label ) continue;
-                    for (auto &s : bgSequences)
-                        backgroundSequences.push_back( s );
-                }
-                background.emplace( label, _modelTrainer( backgroundSequences, selection ));
-            }
+            BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
 
-            SVMConfusionMC<Grouping> svm( _modelTrainer, _histogramsTrainer );
+            SVMConfusionMC<Grouping> svm( _modelTrainer );
             svm.fit( targets, background, trainingClusters );
             auto predicted = svm.predict( queries );
 
@@ -551,20 +482,9 @@ namespace MC {
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                const Selection &selection )
+                const Selection &selection ) const
         {
-            BackboneProfiles background;
-            for (auto &[label, _] : trainingClusters)
-            {
-                std::vector<std::string> backgroundSequences;
-                for (auto&[bgLabel, bgSequences] : trainingClusters)
-                {
-                    if ( bgLabel == label ) continue;
-                    for (auto &s : bgSequences)
-                        backgroundSequences.push_back( s );
-                }
-                background.emplace( label, _modelTrainer( backgroundSequences, selection ));
-            }
+            BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
 
             KNNConfusionMC<Grouping> knn( 3 );
             knn.fit( targets, background, trainingClusters );
@@ -586,12 +506,45 @@ namespace MC {
             return rankedPredictions;
         }
 
+        BackboneProfiles
+        backgroundProfiles( const std::map<std::string, std::vector<std::string >> &trainingSequences,
+                            const Selection &selection ) const
+        {
+            BackboneProfiles background;
+            for (auto &[label, _] : trainingSequences)
+            {
+                std::vector<std::string> backgroundSequences;
+                for (auto&[bgLabel, bgSequences] : trainingSequences)
+                {
+                    if ( bgLabel == label ) continue;
+                    for (auto &s : bgSequences)
+                        backgroundSequences.push_back( s );
+                }
+                background.emplace( label, _modelTrainer( backgroundSequences, selection ));
+            }
+            return background;
+        }
+
+
+        BackboneProfile
+        backgroundProfile( const std::map<std::string, std::vector<std::string >> &trainingSequences,
+                           const Selection &selection ) const
+        {
+            BackboneProfiles background;
+            std::vector<std::string_view> backgroundSequences;
+            for (auto &[label, seqs] : trainingSequences)
+                for (auto &s : seqs)
+                    backgroundSequences.push_back( s );
+
+            return _modelTrainer( backgroundSequences, selection );
+        }
+
         std::vector<PriorityQueue>
         predict( const std::vector<std::string> &queries,
                  const BackboneProfiles &targets,
                  const std::map<std::string, std::vector<std::string >> &trainingClusters,
                  const Selection &selection,
-                 const ClassificationMethod classificationStrategy )
+                 const ClassificationMethod classificationStrategy ) const
         {
             switch (classificationStrategy)
             {
@@ -623,8 +576,8 @@ namespace MC {
         std::pair<Selection, BackboneProfiles>
         featureSelection( const std::map<std::string, std::vector<std::string> > &trainingClusters )
         {
-            auto selection = Ops::withinJointAllUnionKernels( trainingClusters, _histogramsTrainer, 0.3 );
-            auto trainedProfiles = Ops::train( std::move( trainingClusters ), _modelTrainer, selection );
+            auto selection = AbstractModel::withinJointAllUnionKernels( trainingClusters, _modelTrainer, 0.3 );
+            auto trainedProfiles = AbstractModel::train( std::move( trainingClusters ), _modelTrainer, selection );
 
             return std::make_pair( std::move( selection ), std::move( trainedProfiles ));
         }
@@ -648,8 +601,9 @@ namespace MC {
             const Folds folds = kFoldStratifiedSplit( std::move( groupedEntries ), k );
 
             auto extractTest = []( const std::vector<std::pair<std::string, std::string >> &items ) {
-                std::vector<std::string> sequences, labels;
-                for (const auto item : items)
+                std::vector<std::string> sequences;
+                std::vector<std::string_view> labels;
+                for (const auto &item : items)
                 {
                     labels.push_back( item.first );
                     sequences.push_back( item.second );
@@ -702,8 +656,7 @@ namespace MC {
         }
 
     private:
-        const ModelTrainer _modelTrainer;
-        const HistogramsTrainer _histogramsTrainer;
+        const ModelGenerator<Grouping> _modelTrainer;
         const Similarity _similarity;
 
     };
@@ -715,29 +668,24 @@ namespace MC {
     template<typename AAGrouping, typename Similarity>
     PipelineVariant getConfiguredPipeline( MCModelsEnum model, Order mnOrder, Order mxOrder, Similarity similarity )
     {
+        using M = AbstractMC<AAGrouping>; // M: Model
+        using MG = ModelGenerator<AAGrouping>;
         using RMC = MC<AAGrouping>;
         using ROMC = RangedOrderMC<AAGrouping>;
         using ZMC = ZYMC<AAGrouping>;
         using LSMCM = LSMC<AAGrouping>;
 
+
         switch (model)
         {
             case MCModelsEnum::RegularMC :
-                return Pipeline<AAGrouping>( RMC::getModelTrainer( mxOrder ),
-                                             RMC::getHistogramsTrainer( mxOrder ),
-                                             similarity );
+                return Pipeline<AAGrouping>( MG::template create<RMC>( mxOrder ), similarity );
             case MCModelsEnum::RangedOrderMC :
-                return Pipeline<AAGrouping>( ROMC::getModelTrainer( mnOrder, mxOrder ),
-                                             ROMC::getHistogramsTrainer( mnOrder, mxOrder ),
-                                             similarity );
+                return Pipeline<AAGrouping>( MG::template create<ROMC>( mnOrder, mxOrder ), similarity );
             case MCModelsEnum::ZhengYuanMC :
-                return Pipeline<AAGrouping>( ZMC::getModelTrainer( mxOrder ),
-                                             ZMC::getHistogramsTrainer( mxOrder ),
-                                             similarity );
+                return Pipeline<AAGrouping>( MG::template create<ZMC>( mxOrder ), similarity );
             case MCModelsEnum::LocalitySensitiveMC :
-                return Pipeline<AAGrouping>( LSMCM::getLSMCTrainer( mxOrder ),
-                                             LSMCM::getLSMCHistogramsTrainer( mxOrder ),
-                                             similarity );
+                return Pipeline<AAGrouping>( MG::template create<LSMCM>( mxOrder ), similarity );
             default:
                 throw std::runtime_error( "Undefined Strategy" );
         }
@@ -759,6 +707,9 @@ namespace MC {
             case CriteriaEnum::Cosine :
                 return getConfiguredPipeline<AAGrouping>(
                         model, mnOrder, mxOrder, Cosine::function<Histogram> );
+            case CriteriaEnum::Dot :
+                return getConfiguredPipeline<AAGrouping>(
+                        model, mnOrder, mxOrder, Dot::function<Histogram> );
             case CriteriaEnum::KullbackLeiblerDiv:
                 return getConfiguredPipeline<AAGrouping>(
                         model, mnOrder, mxOrder, KullbackLeiblerDivergence::function<Histogram> );
