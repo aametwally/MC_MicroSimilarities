@@ -12,6 +12,7 @@ namespace MC
     using Order = int8_t;
     using HistogramID = size_t;
 
+    constexpr std::string_view unclassified = std::string_view();
 
     constexpr double eps = std::numeric_limits<double>::epsilon();
     constexpr double nan = std::numeric_limits<double>::quiet_NaN();

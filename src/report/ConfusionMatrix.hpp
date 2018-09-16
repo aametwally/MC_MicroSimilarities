@@ -467,24 +467,17 @@ private:
         return misclassified;
     }
 
-    template<typename L = Label, typename std::enable_if<std::is_same<L, std::string_view>::value, void>::type * = nullptr>
+    template<typename L = Label, typename std::enable_if<!std::is_arithmetic<L>::value, void>::type * = nullptr>
     static Label _unclassifiedLabel()
     {
-        static std::string unclassified = "Unclassified";
+        static Label unclassified = Label();
         return unclassified;
     }
 
-    template<typename L = Label, typename std::enable_if<std::is_same<L, std::string>::value, void>::type * = nullptr>
+    template<typename L = Label, typename std::enable_if<std::is_arithmetic<L>::value, void>::type * = nullptr>
     static Label _unclassifiedLabel()
     {
-        static std::string unclassified = "Unclassified";
-        return unclassified;
-    }
-
-    template<typename L = Label, typename std::enable_if<std::is_same<L, int64_t>::value, void>::type * = nullptr>
-    static Label _unclassifiedLabel()
-    {
-        return -1;
+        return std::numeric_limits<L>::quiet_NaN();
     }
 
 private:

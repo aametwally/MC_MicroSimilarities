@@ -10,7 +10,7 @@ set( MARKOVIAN_FEATURES_LIB_HEADER_FILES  )
 
 ### Include directories.
 include_directories( . )
-include_directories( algorithm )
+include_directories(mc)
 
 
 

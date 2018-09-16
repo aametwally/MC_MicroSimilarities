@@ -9,9 +9,6 @@
 #include "AbstractMC.hpp"
 
 namespace MC {
-
-    const std::string unclassified = "unclassified";
-
     class MLConfusedMC
     {
 

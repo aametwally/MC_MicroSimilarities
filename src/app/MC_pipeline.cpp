@@ -95,49 +95,38 @@ int main( int argc, char *argv[] )
                     k, criteria, grouping, strategy );
 
 
-        for (auto &s: splitParameters( strategy ))
+        for (auto &c : splitParameters( criteria ))
         {
-            std::string _criteria;
-            const std::vector< std::string > histogramBased = {"voting","voting_bg","acc", "acc_bg"};
-            if ( std::any_of(histogramBased.cbegin(),histogramBased.cend(), [&](const auto &hb){return s == hb; }))
-                _criteria = criteria;
-            else _criteria = "cos";
-            for (auto &c : splitParameters( _criteria ))
+            for (auto &m : splitParameters( model ))
             {
-                for (auto &m : splitParameters( model ))
-                {
-                    std::string _minOrder;
-                    if ( m == "romc" )
-                        _minOrder = minOrder;
-                    else _minOrder = "1";
-                    for (auto &min : splitParameters( _minOrder ))
-                        for (auto &max : splitParameters( maxOrder ))
+                std::string _minOrder;
+                if ( m == "romc" )
+                    _minOrder = minOrder;
+                else _minOrder = "0";
+                for (auto &min : splitParameters( _minOrder ))
+                    for (auto &max : splitParameters( maxOrder ))
+                    {
+                        auto mnOrder = std::stoi( min );
+                        auto mxOrder = std::stoi( max );
+                        if ( mxOrder >= mnOrder )
                         {
-                            auto mnOrder = std::stoi( min );
-                            auto mxOrder = std::stoi( max );
-                            if ( mxOrder >= mnOrder )
+                            for (auto &g : splitParameters( grouping ))
                             {
-                                for (auto &g : splitParameters( grouping ))
-                                {
 
-                                    fmt::print( "[Params]"
-                                                "[model:{}]"
-                                                "[order:{}-{}]"
-                                                "[criteria:{}]"
-                                                "[grouping:{}]"
-                                                "[strategy:{}]\n", m, mnOrder, mxOrder, c, g, s );
+                                fmt::print( "[Params]"
+                                            "[model:{}]"
+                                            "[order:{}-{}]"
+                                            "[criteria:{}]"
+                                            "[grouping:{}]\n", m, mnOrder, mxOrder, c, g );
 
-
-                                    std::visit( [&]( auto &&p ) {
-                                        auto classificationMethod = ClassificationMethodLabel.at( s );
-                                        p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ), k,
-                                                                  classificationMethod );
-                                    }, getConfiguredPipeline( g, c, m, mnOrder, mxOrder ));
-                                }
+                                std::visit( [&]( auto &&p ) {
+                                    p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ), k,
+                                                              splitParameters( strategy ));
+                                }, getConfiguredPipeline( g, c, m, mnOrder, mxOrder ));
                             }
-
                         }
-                }
+
+                    }
             }
         }
     }

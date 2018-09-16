@@ -23,6 +23,8 @@
 #include "LSMC.hpp"
 #include "MCFeatures.hpp"
 
+#include "MicroSimilarityVotingClassifier.hpp"
+#include "MacroSimilarityClassifier.hpp"
 #include "SVMMCParameters.hpp"
 #include "SVMConfusionMC.hpp"
 #include "KNNConfusionMC.hpp"
@@ -50,11 +52,8 @@ namespace MC {
     enum class ClassificationMethod
     {
         Voting,
-        Voting_WBG,
         Accumulative,
-        Accumulative_WBG,
         Propensity,
-        Propensity_WBG,
         SVM,
         SVM_Propensity,
         KNN_Propensity,
@@ -63,11 +62,8 @@ namespace MC {
 
     static const std::map<std::string, ClassificationMethod> ClassificationMethodLabel = {
             {"voting",         ClassificationMethod::Voting},
-            {"voting_bg",      ClassificationMethod::Voting_WBG},
             {"acc",            ClassificationMethod::Accumulative},
-            {"acc_bg",         ClassificationMethod::Accumulative_WBG},
             {"propensity",     ClassificationMethod::Propensity},
-            {"propensity_bg",  ClassificationMethod::Propensity_WBG},
             {"svm",            ClassificationMethod::SVM},
             {"svm_propensity", ClassificationMethod::SVM_Propensity},
             {"knn_propensity", ClassificationMethod::KNN_Propensity},
@@ -118,7 +114,7 @@ namespace MC {
             return LabeledEntry::reducedAlphabetEntries<Grouping>( std::forward<Entries>( entries ));
         }
 
-        std::vector<LeaderBoard>
+        std::vector<std::pair<std::string_view, std::string_view >>
         classify_VALIDATION(
                 const std::vector<std::string> &queries,
                 const std::vector<std::string_view> &trueLabels,
@@ -132,17 +128,15 @@ namespace MC {
             auto results = predict( queries, targets, trainingClusters, selection,
                                     classificationStrategy );
             assert( results.size() == queries.size());
-            std::vector<LeaderBoard> classifications;
+            std::vector<std::pair<std::string_view, std::string_view >> classifications;
             for (auto i = 0; i < queries.size(); ++i)
-            {
-                classifications.emplace_back( trueLabels.at( i ),
-                                              results.at( i ));
-            }
+                classifications.emplace_back( trueLabels.at( i ), results.at( i ));
+
             return classifications;
         }
 
 
-        std::vector<PriorityQueue>
+        std::vector<std::string_view>
         predict_KMERS(
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
@@ -151,7 +145,7 @@ namespace MC {
         {
             BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
 
-            std::vector<PriorityQueue> results;
+            std::vector<std::string_view> results;
             for (const auto &seq : queries)
             {
                 auto reversedSeq = reverse( seq );
@@ -188,231 +182,48 @@ namespace MC {
                     } );
                     vPQ.emplace( label, sum );
                 }
-                results.emplace_back( std::move( vPQ ));
+                if ( auto top = vPQ.top(); top )
+                    results.emplace_back( top->get().getLabel());
+                else results.emplace_back();
             }
             return results;
         }
 
-        std::vector<PriorityQueue>
+        std::vector<std::string_view>
+        predict_ACCUMULATIVE(
+                const std::vector<std::string> &queries,
+                const BackboneProfiles &targets,
+                const std::map<std::string, std::vector<std::string >> &trainingClusters,
+                const Selection &selection ) const
+        {
+            BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
+            auto model = MacroSimilarityClassifier<Grouping>( targets, background, selection,
+                                                              _modelTrainer, _similarity );
+            return model.predict( queries );
+        }
+
+        std::vector<std::string_view>
         predict_VOTING(
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
                 const Selection &selection ) const
         {
-            auto trainedHistograms = AbstractModel::trainIndividuals( trainingClusters, _modelTrainer, selection );
-            auto[withinClassRadius, populationRadius] = MCF::populationRadius( trainedHistograms, selection );
-            const auto relevance3 =
-                    MCF::minMaxScale(
-                            MCF::histogramRelevance_ALL2WITHIN_UNIFORM( withinClassRadius, populationRadius ));
-            std::vector<PriorityQueue> results;
-            for (auto &seq : queries)
-            {
-                std::map<std::string_view, double> voter;
-
-                if ( auto query = _modelTrainer( seq, selection ); *query )
-                    for (const auto &[order, isoKernels] : query->histograms().get())
-                    {
-                        for (const auto &[id, k1] : isoKernels)
-                        {
-                            PriorityQueue pq( targets.size());
-                            for (const auto &[clusterName, profile] : targets)
-                            {
-                                if ( auto k2Opt = profile->histogram( order, id ); k2Opt )
-                                {
-                                    auto val = _similarity( k1, k2Opt.value().get());
-                                    pq.emplace( clusterName, val );
-                                }
-                            }
-                            double score = //getOr( populationRadius, order, id, double( 0 )) +
-                                    //getOr( relevance1, order, id, double( 0 )) +
-                                    //getOr( relevance2, order, id, double( 0 )) +
-                                    getOr( relevance3, order, id, double( 0 ));
-                            pq.forTopK( 5, [&]( const auto &candidate, size_t index ) {
-                                std::string_view label = candidate.getLabel();
-                                voter[label] += (score + 1) / (index + 1);
-                            } );
-                        }
-                    }
-
-                PriorityQueue vPQ( targets.size());
-                for (const auto &[id, votes]: voter)
-                    vPQ.emplace( id, votes );
-                results.emplace_back( std::move( vPQ ));
-            }
-            return results;
-        }
-
-
-        std::vector<PriorityQueue>
-        predict_VOTING_WBG(
-                const std::vector<std::string> &queries,
-                const BackboneProfiles &targets,
-                const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                const Selection &selection ) const
-        {
             BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
-
-            auto clustersIR = MCF::informationRadius_UNIFORM( targets, selection );
-            auto backgroundIR = MCF::informationRadius_UNIFORM( background, selection );
-
-            std::vector<PriorityQueue> results;
-            for (auto &seq : queries)
-            {
-                std::map<std::string_view, double> voter;
-
-                if ( auto query = _modelTrainer( seq, selection ); *query )
-                    for (const auto &[order, isoHistograms] : query->histograms().get())
-                    {
-                        for (const auto &[id, histogram1] : isoHistograms)
-                        {
-                            PriorityQueue pq( targets.size());
-                            for (const auto &[clusterName, profile] : targets)
-                            {
-                                auto &bg = background.at( clusterName );
-                                auto histogram2 = profile->histogram( order, id );
-                                auto hBG = bg->histogram( order, id );
-                                if ( histogram2 && hBG )
-                                {
-//                                    auto val = _similarity( histogram1, histogram2->get()) -
-//                                               _similarity( histogram1, hBG->get());
-                                    auto val = _similarity( histogram1 - hBG->get(), histogram2->get() - hBG->get());
-                                    pq.emplace( clusterName, val );
-                                }
-                            }
-                            double score = getOr( backgroundIR, order, id, double( 0 )) -
-                                           getOr( clustersIR, order, id, double( 0 ));
-
-                            pq.forTopK( 5, [&]( const auto &candidate, size_t index ) {
-                                std::string_view label = candidate.getLabel();
-                                voter[label] += (score + 1) / (index + 1);
-                            } );
-                        }
-                    }
-
-                PriorityQueue vPQ( targets.size());
-                for (const auto &[id, votes]: voter)
-                    vPQ.emplace( id, votes );
-                results.emplace_back( std::move( vPQ ));
-            }
-            return results;
+            auto model = MicroSimilarityVotingClassifier<Grouping>( targets, background, selection,
+                                                                    _modelTrainer, _similarity );
+            return model.predict( queries );
         }
 
-        std::vector<PriorityQueue>
-        predict_ACCUMULATIVE( const std::vector<std::string> &queries,
-                              const BackboneProfiles &targets,
-                              const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                              const Selection &selection ) const
-        {
-
-
-            std::vector<PriorityQueue> results;
-            for (auto &seq : queries)
-            {
-                PriorityQueue matchSet( targets.size());
-
-                if ( auto query = _modelTrainer( seq, selection ); *query )
-                {
-                    for (const auto &[clusterId, profile] : targets)
-                    {
-                        double sum = 0;
-                        for (const auto &[order, isoKernels] : query->histograms().get())
-                            for (const auto &[id, kernel1] : isoKernels)
-                            {
-
-                                auto k2 = profile->histogram( order, id );
-                                if ( k2 )
-                                {
-                                    sum += _similarity( kernel1, k2.value().get());
-                                }
-                            }
-                        matchSet.emplace( clusterId, sum );
-                    }
-                }
-                results.emplace_back( std::move( matchSet ));
-            }
-
-            return results;
-        }
-
-        std::vector<PriorityQueue>
-        predict_ACCUMULATIVE_WBG( const std::vector<std::string> &queries,
-                                  const BackboneProfiles &targets,
-                                  const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                                  const Selection &selection ) const
-        {
-            BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
-
-            auto trainedHistograms = AbstractModel::trainIndividuals( trainingClusters, _modelTrainer, selection );
-            auto[withinClassRadius, populationRadius] = MCF::populationRadius( trainedHistograms, selection );
-            const auto relevance =
-                    MCF::minMaxScale(
-                            MCF::histogramRelevance_ALL2MIN_UNIFORM( withinClassRadius, populationRadius ));
-
-            std::vector<PriorityQueue> results;
-            for (auto &seq : queries)
-            {
-                PriorityQueue matchSet( targets.size());
-
-                if ( auto query = _modelTrainer( seq, selection ); *query )
-                {
-                    for (const auto &[clusterId, profile] : targets)
-                    {
-                        auto &bg = background.at( clusterId );
-                        double sum = 0;
-                        for (const auto &[order, isoKernels] : query->histograms().get())
-                            for (const auto &[id, histogram1] : isoKernels)
-                            {
-                                double score = getOr( relevance, order, id, double( 0 ));
-                                auto histogram2 = profile->histogram( order, id );
-                                auto hBG = bg->histogram( order, id );
-                                if ( histogram2 && hBG )
-                                {
-//                                    sum += _similarity( histogram1, histogram2->get()) -
-//                                           _similarity( histogram1, hBG->get());
-                                    sum += _similarity( histogram1 - hBG->get(), histogram2->get() - hBG->get());
-                                }
-                            }
-                        matchSet.emplace( clusterId, sum );
-                    }
-                }
-                results.emplace_back( std::move( matchSet ));
-            }
-
-            return results;
-        }
-
-
-        std::vector<PriorityQueue>
+        std::vector<std::string_view>
         predict_PROPENSITY(
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
                 const std::map<std::string, std::vector<std::string >> &trainingClusters,
                 const Selection &selection ) const
         {
-            std::vector<PriorityQueue> rankedPredictions;
-            for (auto &query : queries)
-            {
-                PriorityQueue matchSet( targets.size());
-                for (auto&[label, backbone] :targets)
-                {
-                    matchSet.emplace( label, backbone->propensity( query ));
-                }
-                rankedPredictions.emplace_back( std::move( matchSet ));
-            }
-            return rankedPredictions;
-        }
-
-        std::vector<PriorityQueue>
-        predict_PROPENSITY_WBG(
-                const std::vector<std::string> &queries,
-                const BackboneProfiles &targets,
-                const std::map<std::string, std::vector<std::string >> &trainingClusters,
-                const Selection &selection ) const
-        {
             BackboneProfiles background = backgroundProfiles( trainingClusters, selection );
-
-            std::vector<PriorityQueue> rankedPredictions;
+            std::vector<std::string_view> predictions;
             for (auto &query : queries)
             {
                 PriorityQueue matchSet( targets.size());
@@ -422,12 +233,14 @@ namespace MC {
                     double logOdd = backbone->propensity( query ) - bg->propensity( query );
                     matchSet.emplace( label, logOdd );
                 }
-                rankedPredictions.emplace_back( std::move( matchSet ));
+                if ( auto top = matchSet.top(); top )
+                    predictions.emplace_back( top->get().getLabel());
+                else predictions.emplace_back( unclassified );
             }
-            return rankedPredictions;
+            return predictions;
         }
 
-        std::vector<PriorityQueue>
+        std::vector<std::string_view>
         predict_SVM(
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
@@ -438,21 +251,10 @@ namespace MC {
 
             SVMMCParameters<Grouping> svm( _modelTrainer );
             svm.fit( targets, background, trainingClusters );
-            auto predicted = svm.predict( queries );
-
-            std::vector<PriorityQueue> rankedPredictions;
-
-            for (auto &predictedClass : predicted)
-            {
-                PriorityQueue matchSet( 1 );
-                matchSet.emplace( predictedClass, 0 );
-                rankedPredictions.emplace_back( std::move( matchSet ));
-            }
-
-            return rankedPredictions;
+            return svm.predict( queries );
         }
 
-        std::vector<PriorityQueue>
+        std::vector<std::string_view>
         predict_SVM_Propensity(
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
@@ -463,21 +265,10 @@ namespace MC {
 
             SVMConfusionMC<Grouping> svm( _modelTrainer );
             svm.fit( targets, background, trainingClusters );
-            auto predicted = svm.predict( queries );
-
-            std::vector<PriorityQueue> rankedPredictions;
-
-            for (auto &predictedClass : predicted)
-            {
-                PriorityQueue matchSet( 1 );
-                matchSet.emplace( predictedClass, 0 );
-                rankedPredictions.emplace_back( std::move( matchSet ));
-            }
-
-            return rankedPredictions;
+            return svm.predict( queries );
         }
 
-        std::vector<PriorityQueue>
+        std::vector<std::string_view>
         predict_KNN_Propensity(
                 const std::vector<std::string> &queries,
                 const BackboneProfiles &targets,
@@ -488,22 +279,7 @@ namespace MC {
 
             KNNConfusionMC<Grouping> knn( 3 );
             knn.fit( targets, background, trainingClusters );
-            auto predicted = knn.predict( queries );
-
-            std::vector<PriorityQueue> rankedPredictions;
-
-            for (auto &predictedClass : predicted)
-            {
-                auto it = targets.find( std::string( predictedClass ));
-                if ( it == targets.end())
-                    throw std::runtime_error( fmt::format( "Unexpected label {}", predictedClass ));
-
-                PriorityQueue matchSet( 1 );
-                matchSet.emplace( predictedClass, 0 );
-                rankedPredictions.emplace_back( std::move( matchSet ));
-            }
-
-            return rankedPredictions;
+            return knn.predict( queries );
         }
 
         BackboneProfiles
@@ -539,7 +315,7 @@ namespace MC {
             return _modelTrainer( backgroundSequences, selection );
         }
 
-        std::vector<PriorityQueue>
+        std::vector<std::string_view>
         predict( const std::vector<std::string> &queries,
                  const BackboneProfiles &targets,
                  const std::map<std::string, std::vector<std::string >> &trainingClusters,
@@ -550,16 +326,10 @@ namespace MC {
             {
                 case ClassificationMethod::Accumulative :
                     return predict_ACCUMULATIVE( queries, targets, trainingClusters, selection );
-                case ClassificationMethod::Accumulative_WBG :
-                    return predict_ACCUMULATIVE_WBG( queries, targets, trainingClusters, selection );
                 case ClassificationMethod::Voting :
                     return predict_VOTING( queries, targets, trainingClusters, selection );
-                case ClassificationMethod::Voting_WBG :
-                    return predict_VOTING_WBG( queries, targets, trainingClusters, selection );
                 case ClassificationMethod::Propensity :
                     return predict_PROPENSITY( queries, targets, trainingClusters, selection );
-                case ClassificationMethod::Propensity_WBG :
-                    return predict_PROPENSITY_WBG( queries, targets, trainingClusters, selection );
                 case ClassificationMethod::SVM :
                     return predict_SVM( queries, targets, trainingClusters, selection );
                 case ClassificationMethod::SVM_Propensity :
@@ -582,16 +352,45 @@ namespace MC {
             return std::make_pair( std::move( selection ), std::move( trainedProfiles ));
         }
 
-        void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries, size_t k,
-                                     const ClassificationMethod classificationStrategy )
+        void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries, const size_t k,
+                                     const std::vector<std::string> &classificationStrategy )
         {
+
+            std::set<std::string> classifiers;
+            for (const auto &classifier : classificationStrategy)
+                classifiers.insert( classifier );
+
             std::set<std::string> labels;
+            std::vector<std::string> members;
             for (const auto &entry : entries)
+            {
                 labels.insert( entry.getLabel());
+                members.push_back( entry.getMemberId());
+            }
 
-            using Folds = std::vector<std::vector<std::pair<std::string, std::string >>>;
 
-            auto groupedEntries = LabeledEntry::groupSequencesByLabels( reducedAlphabetEntries( std::move( entries )));
+            auto viewLabels = std::set<std::string_view>( labels.cbegin(), labels.cend());
+
+            using Fold = std::vector<std::pair<std::string, LabeledEntry >>;
+            using FoldSequences = std::vector<std::pair<std::string, std::string >>;
+            using Folds = std::vector<Fold>;
+            using FoldsSequences = std::vector<FoldSequences>;
+
+            auto extractSequences = []( const Folds &folds ) {
+                FoldsSequences fSequences;
+                std::transform( folds.cbegin(), folds.cend(),
+                                std::back_inserter( fSequences ), []( const Fold &f ) {
+                            FoldSequences foldSequences;
+                            std::transform( f.cbegin(), f.cend(), std::back_inserter( foldSequences ),
+                                            []( const auto &p ) {
+                                                return std::make_pair( p.first, p.second.getSequence());
+                                            } );
+                            return foldSequences;
+                        } );
+                return fSequences;
+            };
+
+            auto groupedEntries = LabeledEntry::groupEntriesByLabels( reducedAlphabetEntries( std::move( entries )));
 //            fmt::print( "[All Sequences:{}]\n", entries.size());
 //            auto labels = keys( groupedEntries );
 //            for (auto &l : labels) l = fmt::format( "{}({})", l, groupedEntries.at( l ).size());
@@ -599,82 +398,77 @@ namespace MC {
 //                        groupedEntries.size(),
 //                        io::join( labels, "|" ));
             const Folds folds = kFoldStratifiedSplit( std::move( groupedEntries ), k );
+            const FoldsSequences sFolds = extractSequences( folds );
 
-            auto extractTest = []( const std::vector<std::pair<std::string, std::string >> &items ) {
+            auto unzip = []( const std::vector<std::pair<std::string, LabeledEntry >> &items ) {
+                std::vector<std::string_view> ids;
                 std::vector<std::string> sequences;
-                std::vector<std::string_view> labels;
+                std::vector<std::string_view> ls;
                 for (const auto &item : items)
                 {
-                    labels.push_back( item.first );
-                    sequences.push_back( item.second );
+                    ls.push_back( item.first );
+                    sequences.push_back( item.second.getSequence());
+                    ids.push_back( item.second.getMemberId());
                 }
-                return std::make_pair( sequences, labels );
+                return std::make_tuple( ids, sequences, ls );
             };
 
-            CrossValidationStatistics validation( k, labels );
-            std::unordered_map<long, size_t> histogram;
+
+
+
+            using MemberAssignments = std::map<std::string_view,
+                    std::map<std::string_view, std::vector<std::string_view >>>;
+
+            MemberAssignments assignments;
+            std::map<std::string, CrossValidationStatistics<std::string_view >> validation;
+
+            for (auto &classifier : classifiers)
+                validation[classifier] = CrossValidationStatistics( k, viewLabels );
+
 
             for (auto i = 0; i < k; ++i)
             {
-                auto trainingClusters = joinFoldsExceptK( folds, i );
-                const auto[test, tLabels] = extractTest( folds.at( i ));
+                auto trainingClusters = joinFoldsExceptK( sFolds, i );
+                const auto[ids, test, tLabels] = unzip( folds.at( i ));
                 const auto[selection, filteredProfiles] = featureSelection( trainingClusters );
-                auto classificationResults = classify_VALIDATION( test, tLabels, filteredProfiles,
-                                                                  trainingClusters, selection,
-                                                                  classificationStrategy );
 
-                for (const auto &classification : classificationResults)
+                for (auto &classifier : classifiers)
                 {
-                    if ( auto prediction = classification.bestMatch();prediction )
-                    {
-                        auto it = trainingClusters.find( std::string( prediction.value()));
-                        if ( it == trainingClusters.end())
-                            throw std::runtime_error( fmt::format( "Unexpected label {}", prediction.value()));
+                    auto classifierEnum = ClassificationMethodLabel.at( classifier );
+                    auto predictions = classify_VALIDATION( test, tLabels, filteredProfiles,
+                                                            trainingClusters, selection,
+                                                            classifierEnum );
 
-                        ++histogram[classification.trueClusterRank()];
-                        validation.countInstance( i, prediction.value(), classification.trueCluster());
-                    } else
-                    {
-                        ++histogram[-1];
-                        validation.countInstance( i, "unclassified", classification.trueCluster());
-                    }
+                    assert( predictions.size() == tLabels.size() && tLabels.size() == test.size());
+
+                    auto &cValidation = validation[classifier];
+                    for (auto[trueClass, prediction] : predictions)
+                        cValidation.countInstance( i, prediction, trueClass );
                 }
             }
 
-            validation.printReport();
-
-            fmt::print( "True Classification Histogram:\n" );
-
-            for (auto &[k, v] : histogram)
+            for (auto &classifier : classifiers)
             {
-                if ( k == -1 )
-                    fmt::print( "[{}:{}]", "Unclassified", v );
-                else
-                    fmt::print( "[{}:{}]", fmt::format( "Rank{}", k ), v );
+                validation[classifier].printReport( classifier );
+                fmt::print( "\n" );
             }
-            fmt::print( "\n" );
         }
 
     private:
         const ModelGenerator<Grouping> _modelTrainer;
         const Similarity _similarity;
-
     };
 
-
     using PipelineVariant = MakeVariantType<Pipeline, SupportedAAGrouping>;
-
 
     template<typename AAGrouping, typename Similarity>
     PipelineVariant getConfiguredPipeline( MCModelsEnum model, Order mnOrder, Order mxOrder, Similarity similarity )
     {
-        using M = AbstractMC<AAGrouping>; // M: Model
         using MG = ModelGenerator<AAGrouping>;
         using RMC = MC<AAGrouping>;
         using ROMC = RangedOrderMC<AAGrouping>;
         using ZMC = ZYMC<AAGrouping>;
         using LSMCM = LSMC<AAGrouping>;
-
 
         switch (model)
         {
@@ -707,9 +501,6 @@ namespace MC {
             case CriteriaEnum::Cosine :
                 return getConfiguredPipeline<AAGrouping>(
                         model, mnOrder, mxOrder, Cosine::function<Histogram> );
-            case CriteriaEnum::Dot :
-                return getConfiguredPipeline<AAGrouping>(
-                        model, mnOrder, mxOrder, Dot::function<Histogram> );
             case CriteriaEnum::KullbackLeiblerDiv:
                 return getConfiguredPipeline<AAGrouping>(
                         model, mnOrder, mxOrder, KullbackLeiblerDivergence::function<Histogram> );

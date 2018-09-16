@@ -19,18 +19,12 @@ public:
             _statistics.emplace_back( labels );
     }
 
+    CrossValidationStatistics() = default;
 
     void countInstance( size_t k, const Label &prediction, const Label &actual )
     {
         _statistics.at( k ).countInstance( prediction, actual );
     }
-
-    template< typename Label1 , typename Label2 >
-    void countInstance( size_t k, const Label1 &prediction, const Label2 &actual )
-    {
-        _statistics.at( k ).countInstance( Label( prediction ), Label( actual ) );
-    }
-
 
     double averageAccuracy( size_t k ) const
     {
@@ -192,10 +186,10 @@ public:
 
 
     template<size_t indentation = 0>
-    void printReport() const
+    void printReport( std::string_view tag ) const
     {
 
-        fmt::print( "{:<{}}General Statistics:\n", "", indentation );
+        fmt::print( "{:<{}}General Statistics [{}]:\n", "", indentation , tag );
 
         auto printRow = _printRowFunction<indentation + 2>();
 
