@@ -25,14 +25,14 @@ namespace MC {
         using ModelTrainer = ModelGenerator<Grouping>;
 
     public:
-        explicit SVMMCParameters( ModelTrainer trainer )
-                : _modelTrainer( trainer )
+        explicit SVMMCParameters( ModelTrainer trainer ,  double lambda = 0.001 , double gamma  = 0.5  )
+                : _modelTrainer( trainer ) , SVMModel( lambda , gamma )
         {}
 
 
         void fit( const BackboneProfiles &backbones,
                   const BackboneProfiles &background,
-                  const std::map<std::string, std::vector<std::string >> &training )
+                  const std::map<std::string_view, std::vector<std::string >> &training )
         {
             _featureSelection( training );
             MLConfusedMC::fit( training );
@@ -49,7 +49,7 @@ namespace MC {
         }
 
     protected:
-        std::optional<FeatureVector> extractFeatures( const std::string &sequence ) const override
+        std::optional<FeatureVector> extractFeatures( std::string_view sequence ) const override
         {
             if ( auto model = _modelTrainer( sequence, _selectedKernels ); *model )
                 return model->extractFlatFeatureVector( _selectedKernels );
@@ -66,7 +66,7 @@ namespace MC {
             return SVMModel::predict( f );
         }
 
-        void _featureSelection( const std::map<std::string, std::vector<std::string >> &training )
+        void _featureSelection( const std::map<std::string_view, std::vector<std::string >> &training )
         {
             _selectedKernels = MCModel::withinJointAllUnionKernels( training, _modelTrainer );
         }

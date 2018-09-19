@@ -186,7 +186,7 @@ public:
 
 
     template<size_t indentation = 0>
-    void printReport( std::string_view tag ) const
+    void printReport( std::string_view tag = std::string_view() ) const
     {
 
         fmt::print( "{:<{}}General Statistics [{}]:\n", "", indentation , tag );

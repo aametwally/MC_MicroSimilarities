@@ -23,35 +23,16 @@ namespace MC {
                                                   const Selection &selection,
                                                   const ModelTrainer modelTrainer,
                                                   const Similarity similarity )
-                : Base( backbones, background, selection, modelTrainer, similarity )
+                : Base( backbones, background, selection, modelTrainer, similarity ),
+                  _clustersIR( MCF::informationRadius_UNIFORM( backbones , selection )),
+                  _backgroundIR( MCF::informationRadius_UNIFORM( background , selection ))
         {
-        }
-
-        virtual std::vector<std::string_view> predict( const std::vector<std::string> &test ) const override
-        {
-            if ( this->_backbones && this->_background )
-            {
-                auto clustersIR = MCF::informationRadius_UNIFORM( this->_backbones->get(), this->_selectedHistograms );
-                auto backgroundIR = MCF::informationRadius_UNIFORM( this->_background->get(),
-                                                                    this->_selectedHistograms );
-
-                std::vector<std::string_view> labels;
-                for (auto &seq : test)
-                    labels.emplace_back( _predict( seq, clustersIR, backgroundIR ));
-                return labels;
-            } else throw std::runtime_error( fmt::format( "Bad training" ));
         }
 
     protected:
-        std::string_view _predict( std::string_view sequence,
-                                   const HeteroHistogramsFeatures &clustersIR,
-                                   const HeteroHistogramsFeatures &backgroundIR ) const
+        AbstractClassifier::PriorityQueue _predict( std::string_view sequence  ) const override
         {
             using PriorityQueue = typename MatchSet<Score>::Queue<std::string_view>;
-
-
-            PriorityQueue matchSet( this->_backbones->get().size());
-
             std::map<std::string_view, double> voter;
 
             if ( auto query = this->_modelTrainer( sequence, this->_selectedHistograms ); *query )
@@ -74,28 +55,33 @@ namespace MC {
                                 pq.emplace( clusterName, val );
                             }
                         }
-                        double score = getOr( backgroundIR, order, id, double( 0 )) -
-                                       getOr( clustersIR, order, id, double( 0 ));
+                        double score = getOr( _backgroundIR, order, id, double( 0 )) -
+                                       getOr( _clustersIR, order, id, double( 0 ));
 
                         pq.forTopK( 5, [&]( const auto &candidate, size_t index ) {
                             std::string_view label = candidate.getLabel();
-                            voter[label] += (1 + score) / (index + 1);
+                            double val = (1 + score) / (index + 1);
+                            voter[label] += val;
                         } );
                     }
                 }
             }
 
-            auto top = std::pair< std::string_view, double>( unclassified, -inf );
+            double sum = 0;
+            for( auto &[label,votes] : voter )
+                sum += votes;
+
+            PriorityQueue scoredQueue( this->_backbones->get().size());
             for (auto[label, votes] : voter)
-            {
-                if ( votes > top.second )
-                    top = {label, votes};
-            }
-            return top.first;
+                scoredQueue.emplace( label, votes / sum );
+
+            return scoredQueue;
         }
+
+    protected:
+        const HeteroHistogramsFeatures _clustersIR;
+        const HeteroHistogramsFeatures _backgroundIR;
     };
-
-
 }
 
 

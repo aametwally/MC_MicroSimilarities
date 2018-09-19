@@ -87,25 +87,30 @@ inline void normalize( std::vector<double> &vec )
 inline std::vector<double> unitNormalize( std::vector<double> &&vec )
 {
     double sum = 0;
-    for( auto v : vec )
-        sum += v*v;
+    for (auto v : vec)
+        sum += v * v;
     double den = std::sqrt( sum );
-    for( auto &v : vec )
+    for (auto &v : vec)
         v /= den;
     return vec;
 }
 
-inline std::vector<double> minmaxNormalize( std::vector< double > &&vec )
+inline std::map< std::string_view , double> minmaxNormalize( std::map< std::string_view , double> &&map )
 {
-    double min = std::numeric_limits<double>::infinity();
-    double max = -min;
-    for( auto v : vec )
-    {
-        min = std::min( min , v );
-        max = std::max( max , v );
-    }
-    for( auto &v : vec )
-        v = ( v - min ) / ( max - min );
+    auto[min, max] = std::minmax_element( map.cbegin(), map.cend(), []( auto &p1 , auto &p2 ){
+        return p1.second < p2.second;
+    });
+    for (auto &[_,f] : map)
+        f = (f - min->second) / (max->second - min->second);
+    return map;
+}
+
+inline std::vector<double> minmaxNormalize( std::vector<double> &&vec )
+{
+    auto[min, max] = std::minmax_element( vec.cbegin(), vec.cend());
+
+    for (double &f : vec)
+        f = (f - *min) / (*max - *min);
     return vec;
 }
 
@@ -233,7 +238,7 @@ namespace io {
     }
 
     inline auto split( const std::string &s,
-                std::string delim )
+                       std::string delim )
     {
         std::vector<std::string> tokens;
         size_t last = 0;
@@ -252,8 +257,8 @@ namespace io {
     template<typename SeqIt>
     inline std::string join( SeqIt first, SeqIt last, const std::string &sep )
     {
-        auto binaryJoinString = [sep]( std::string &a, const std::string &b ) -> std::string & {
-            return a += (((a.length() > 0) ? sep : "") + b);
+        auto binaryJoinString = [sep]( std::string &a, std::string_view b ) -> std::string & {
+            return a.append((a.empty()) ? "" : sep ).append( b );
         };
         return std::accumulate( first, last,
                                 std::string(), binaryJoinString );
@@ -261,7 +266,7 @@ namespace io {
 
     template<typename Container = std::vector<std::string >>
     inline std::string join( const Container &container,
-                      const std::string &sep )
+                             const std::string &sep )
     {
         return join( container.cbegin(), container.cend(), sep );
     }
@@ -483,7 +488,7 @@ inline bool overlappingSegments( size_t pos1, size_t size1, size_t pos2, size_t 
 
 
 inline std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions( std::string_view seq,
-                                                                           size_t kMin, size_t kMax )
+                                                                                  size_t kMin, size_t kMax )
 {
     std::map<std::string_view, std::vector<size_t>> kmers;
     for (auto k = kMin; k <= kMax && k < seq.size(); ++k)
@@ -495,7 +500,7 @@ inline std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions
 }
 
 inline std::map<std::string_view, size_t> extractKmersWithCounts( std::string_view seq,
-                                                           size_t kMin, size_t kMax )
+                                                                  size_t kMin, size_t kMax )
 {
     std::map<std::string_view, size_t> kmers;
     for (auto k = kMin; k <= kMax && k < seq.size(); ++k)
@@ -521,10 +526,10 @@ inline std::vector<double> correlate( const std::vector<double> &window, const s
     std::vector<double> product;
     product.reserve( 2 * window.size() + vector.size());
 
-    for (int64_t overlap = 1; overlap <  window.size(); ++overlap)
+    for (int64_t overlap = 1; overlap < window.size(); ++overlap)
     {
-        for (int64_t j = 0; j < overlap ; ++j)
-            product.push_back( window[ j ] * vector[ overlap - j - 1 ] );
+        for (int64_t j = 0; j < overlap; ++j)
+            product.push_back( window[j] * vector[overlap - j - 1] );
     }
 
     for (int64_t pos = 0; pos < int64_t( vector.size()) - window.size(); ++pos)
@@ -533,12 +538,81 @@ inline std::vector<double> correlate( const std::vector<double> &window, const s
             product.push_back( window[i] * vector[i + pos] );
     }
 
-    for (int64_t overlap = window.size() - 1; overlap > 0 ; --overlap)
+    for (int64_t overlap = window.size() - 1; overlap > 0; --overlap)
     {
-        for (int64_t j = 0; j < overlap ; ++j)
-            product.push_back( window[ j ] * vector[ vector.size() - overlap - j - 1 ] );
+        for (int64_t j = 0; j < overlap; ++j)
+            product.push_back( window[j] * vector[vector.size() - overlap - j - 1] );
     }
     return product;
+}
+
+
+template<typename Iterator>
+inline bool next_combination( const Iterator first, Iterator k, const Iterator last )
+{
+    /* Credits: Thomas Draper */
+    if ((first == last) || (first == k) || (last == k))
+        return false;
+    Iterator itr1 = first;
+    Iterator itr2 = last;
+    ++itr1;
+    if ( last == itr1 )
+        return false;
+    itr1 = last;
+    --itr1;
+    itr1 = k;
+    --itr2;
+    while (first != itr1)
+    {
+        if ( *--itr1 < *itr2 )
+        {
+            Iterator j = k;
+            while (!(*itr1 < *j)) ++j;
+            std::iter_swap( itr1, j );
+            ++itr1;
+            ++j;
+            itr2 = k;
+            std::rotate( itr1, j, last );
+            while (last != j)
+            {
+                ++j;
+                ++itr2;
+            }
+            std::rotate( k, itr2, last );
+            return true;
+        }
+    }
+    std::rotate( first, k, last );
+    return false;
+}
+
+
+template<typename T>
+std::vector<std::vector<T >>
+inline combinations( const std::vector<T> &vec, size_t k )
+{
+    assert( k <= vec.size());
+    auto copy = vec;
+    std::vector<std::vector<T >> comb;
+    do
+    {
+        comb.emplace_back( copy.begin(), copy.begin() + k );
+    } while (next_combination( copy.begin(), copy.begin() + k, copy.end()));
+    return comb;
+}
+
+
+template<typename T>
+std::vector<std::vector<T >>
+inline combinations( const std::vector<T> &vec )
+{
+
+    std::vector<std::vector<T >> comb;
+    for (size_t k = 1; k <= vec.size(); ++k)
+        for (auto &&c : combinations( vec, k ))
+            comb.emplace_back( std::move( c ));
+
+    return comb;
 }
 
 #endif // COMMON_HH

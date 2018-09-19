@@ -4,14 +4,8 @@
 
 #include "MicroSimilarityVotingClassifier.hpp"
 
-
 namespace MC
 {
-
-
-    template class MicroSimilarityVotingClassifier< AAGrouping_NOGROUPING20 >;
-
-
-    template class MicroSimilarityVotingClassifier< AAGrouping_OFER15 >;
-
+template class MicroSimilarityVotingClassifier< AAGrouping_NOGROUPING20 >;
+template class MicroSimilarityVotingClassifier< AAGrouping_OFER15 >;
 }

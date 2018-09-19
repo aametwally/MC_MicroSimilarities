@@ -3,15 +3,23 @@
 //
 #include "SVMModel.hpp"
 
+SVMModel::SVMModel( std::optional<double> lambda , std::optional<double> gamma )
+        : _lambda( lambda ), _gamma( gamma )
+{
+
+}
+
+
 void SVMModel::fit( const std::vector<std::string_view> &labels, std::vector<std::vector<double >> &&featuresVector )
 {
     auto svmLabels = _registerLabels( labels );
+    auto nFeatures = featuresVector.front().size();
     auto svmFeatures = _svmFeatures( std::move( featuresVector ));
 
     SVMTrainer trainer;
     SVMBinaryTrainer btrainer;
-    btrainer.set_lambda( 0.001 );
-    btrainer.set_kernel( SVMBinaryKernel( 1 ));
+    btrainer.set_lambda( (_lambda)? _lambda.value() : 1.0 );
+    btrainer.set_kernel( SVMBinaryKernel( (_gamma)? _gamma.value() : 1.0 / nFeatures ));
 //        histogramTrainer.set_max_num_sv(10);
 
     trainer.set_trainer( btrainer );
@@ -61,3 +69,4 @@ std::vector<SVMModel::Label> SVMModel::_registerLabels( const std::vector<std::s
         svmLabels.push_back( _label2Index.at( label ));
     return svmLabels;
 }
+

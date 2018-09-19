@@ -504,6 +504,7 @@ struct PriorityQueueFixed
 {
     using Queue = std::set<T, Comp>;
     using ConstantIterator = typename Queue::const_iterator;
+    using ValueType = T;
 
     explicit PriorityQueueFixed( const Comp &cmp, size_t kTop )
             : _kTop( kTop ), _q( cmp )

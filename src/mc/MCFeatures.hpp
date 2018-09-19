@@ -11,11 +11,13 @@ namespace MC {
     template<typename Grouping>
     class MCFeatures
     {
-        using Histogram= typename AbstractMC< Grouping >::Histogram;
-        using BackboneProfiles = typename AbstractMC< Grouping >::BackboneProfiles ;
-        using HeteroHistogramsFeatures = typename AbstractMC< Grouping >::HeteroHistogramsFeatures;
-        using HeteroHistograms = typename AbstractMC< Grouping >::HeteroHistograms;
+        using Histogram= typename AbstractMC<Grouping>::Histogram;
+        using BackboneProfiles = typename AbstractMC<Grouping>::BackboneProfiles;
+        using BackboneProfile = typename AbstractMC<Grouping>::BackboneProfile;
 
+        using HeteroHistogramsFeatures = typename AbstractMC<Grouping>::HeteroHistogramsFeatures;
+        using HeteroHistograms = typename AbstractMC<Grouping>::HeteroHistograms;
+        using ModelTrainer = ModelGenerator<Grouping>;
     public:
 
         static HeteroHistogramsFeatures
@@ -40,7 +42,7 @@ namespace MC {
             return features;
         }
 
-        template< typename Histograms >
+        template<typename Histograms>
         static HeteroHistogramsFeatures
         minMaxScale( Histograms &&features )
         {
@@ -68,14 +70,14 @@ namespace MC {
         }
 
         static HeteroHistograms
-        meanHistograms( const std::map<std::string, HeteroHistogramsFeatures >&trainedHistograms,
+        meanHistograms( const std::map<std::string, HeteroHistogramsFeatures> &trainedHistograms,
                         const std::map<std::string, HeteroHistogramsFeatures> &histogramWeights )
         {
             HeteroHistograms means;
             for (const auto &[cluster, histograms] : trainedHistograms)
             {
                 const auto &weights = histogramWeights.at( cluster );
-                for (auto &[order, isoHistograms] : histograms )
+                for (auto &[order, isoHistograms] : histograms)
                 {
                     for (auto &[id, histogram] : isoHistograms)
                         means[order][id] += (histogram * weights.at( order ).at( id ));
@@ -85,7 +87,7 @@ namespace MC {
         }
 
         static std::vector<HeteroHistogramsFeatures>
-        histogramWeights( const std::vector< HeteroHistogramsFeatures  > &trainedHistograms )
+        histogramWeights( const std::vector<HeteroHistogramsFeatures> &trainedHistograms )
         {
             std::vector<HeteroHistogramsFeatures> weights;
             std::unordered_map<Order, std::set<HistogramID >> scannedIDs;
@@ -94,7 +96,7 @@ namespace MC {
             {
                 weights.emplace_back();
                 auto &w = weights.back();
-                for (auto &[order, isoHistograms] : histograms )
+                for (auto &[order, isoHistograms] : histograms)
                 {
                     auto &_w = w[order];
                     for (auto &[id, histogram] : isoHistograms)
@@ -233,9 +235,9 @@ namespace MC {
             {
                 auto &_relevance = relevance[order];
                 auto &wcIsoRadius = sumJSD.at( order );
-                for (auto &[id,tRadius] : isoTRadius )
+                for (auto &[id, tRadius] : isoTRadius)
                 {
-                    _relevance[id] = tRadius - getOr( wcIsoRadius , id, nan );
+                    _relevance[id] = tRadius - getOr( wcIsoRadius, id, nan );
                 }
             }
 
@@ -423,7 +425,8 @@ namespace MC {
                                    const Selection &selection )
         {
             return informationRadius_UNIFORM( profiles.cbegin(), profiles.cend(),
-                                              selection, []( auto it ) -> const HeteroHistograms & { return it->second->histograms(); } );
+                                              selection,
+                                              []( auto it ) -> const HeteroHistograms & { return it->second->histograms(); } );
         }
 
         static HeteroHistogramsFeatures

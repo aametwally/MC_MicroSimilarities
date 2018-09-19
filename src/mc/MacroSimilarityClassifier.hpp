@@ -9,10 +9,11 @@
 #include "MCFeatures.hpp"
 
 #include "SimilarityMetrics.hpp"
+#include "AbstractClassifier.hpp"
 
 namespace MC {
     template<typename Grouping>
-    class MacroSimilarityClassifier
+    class MacroSimilarityClassifier : public AbstractClassifier
     {
     protected:
         using MCModel = AbstractMC<Grouping>;
@@ -23,6 +24,7 @@ namespace MC {
         using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
         using ModelTrainer =  ModelGenerator<Grouping>;
+        using PriorityQueue = typename MatchSet<Score>::Queue<std::string_view>;
 
     public:
 
@@ -33,38 +35,29 @@ namespace MC {
                                             const Similarity similarityFunction )
                 : _backbones( backbones ), _background( background ),
                   _modelTrainer( modelTrainer ), _selectedHistograms( selection ),
-                  _similarity( similarityFunction )
+                  _similarity( similarityFunction ), AbstractClassifier( backbones.size())
         {
 
         }
-
-
-        virtual std::vector<std::string_view> predict( const std::vector<std::string> &test ) const
-        {
-            if ( _backbones && _background )
-            {
-                std::vector<std::string_view> labels;
-                for (auto &seq : test)
-                    labels.emplace_back( _predict( seq ));
-                return labels;
-            } else throw std::runtime_error( fmt::format( "Bad training" ));
-        }
-
 
     protected:
-
-        std::string_view _predict( std::string_view sequence ) const
+        bool _validTraining() const override
         {
-            using PriorityQueue = typename MatchSet<Score>::Queue<std::string_view>;
+            return _backbones && _background
+                   && _backbones->get().size() == _background->get().size()
+                   && _backbones->get().size() == _nLabels;
+        }
 
-            PriorityQueue matchSet( _backbones->get().size());
-
+        PriorityQueue _predict( std::string_view sequence ) const override
+        {
+            std::map<std::string_view, double> macros;
+            double sum = 0;
             if ( auto query = _modelTrainer( sequence, _selectedHistograms ); *query )
             {
-                for (const auto &[clusterId, profile] : _backbones->get())
+                for (const auto &[label, profile] : _backbones->get())
                 {
-                    auto &bg = _background->get().at( clusterId );
-                    double sum = 0;
+                    auto &bg = _background->get().at( label );
+                    double macro = 0;
                     for (const auto &[order, isoKernels] : query->histograms().get())
                         for (const auto &[id, histogram1] : isoKernels)
                         {
@@ -73,18 +66,21 @@ namespace MC {
                             auto hBG = bg->histogram( order, id );
                             if ( histogram2 && hBG )
                             {
-                                sum += _similarity( histogram1, histogram2->get()) -
-                                       _similarity( histogram1, hBG->get());
+                                macro += _similarity( histogram1, histogram2->get()) -
+                                         _similarity( histogram1, hBG->get());
 //                                    sum += similarity( histogram1 - hBG->get(), histogram2->get() - hBG->get());
                             }
                         }
-                    matchSet.emplace( clusterId, sum );
+                    macros[label] = macro;
+                    sum += macro;
                 }
             }
 
-            if ( auto top = matchSet.top(); top )
-                return top->get().getLabel();
-            else return unclassified;
+            PriorityQueue matchSet( _backbones->get().size());
+            for (auto &[label, macro] : macros)
+                matchSet.emplace( label, macro / sum );
+
+            return matchSet;
         }
 
     protected:

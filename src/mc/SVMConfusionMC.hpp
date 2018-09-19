@@ -5,8 +5,13 @@
 #ifndef MARKOVIAN_FEATURES_SVMCONFUSIONMC_HPP
 #define MARKOVIAN_FEATURES_SVMCONFUSIONMC_HPP
 
+#include "SimilarityMetrics.hpp"
 #include "SVMMCParameters.hpp"
 #include "MLConfusedMC.hpp"
+#include "AbstractClassifier.hpp"
+#include "MCPropensityClassifier.hpp"
+#include "MacroSimilarityClassifier.hpp"
+#include "MicroSimilarityVotingClassifier.hpp"
 
 namespace MC {
 
@@ -20,19 +25,35 @@ namespace MC {
         using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
         using ModelTrainer = ModelGenerator< Grouping >;
+        using Similarity = MetricFunction<Histogram>;
 
     public:
 
-        explicit SVMConfusionMC( ModelTrainer modelTrainer )
-                : _modelTrainer( modelTrainer )
+        explicit SVMConfusionMC( ModelTrainer modelTrainer ,
+                                 std::optional<double> lambda = 5 ,
+                                 std::optional<double> gamma  = SVMModel::Auto  )
+                : _modelTrainer( modelTrainer ) , SVMModel( lambda , gamma )
         {}
 
         void fit( const BackboneProfiles &backbones,
                   const BackboneProfiles &background,
-                  const std::map<std::string, std::vector<std::string >> &training )
+                  const std::map<std::string_view, std::vector<std::string >> &training,
+                  ModelTrainer trainer,
+                  const Selection &selection,
+                  Similarity similarity )
         {
             _backbones = backbones;
             _background = background;
+            _ensemble.emplace( ClassificationEnum::Propensity,
+                               new MCPropensityClassifier<Grouping>( backbones, background ));
+
+            _ensemble.emplace( ClassificationEnum::Accumulative,
+                               new MacroSimilarityClassifier<Grouping>( backbones, background,
+                                                                        selection, trainer, similarity ));
+
+            _ensemble.emplace( ClassificationEnum::Voting,
+                               new MicroSimilarityVotingClassifier<Grouping>( backbones, background,
+                                                                              selection, trainer, similarity ));
             MLConfusedMC::fit( training );
         }
 
@@ -50,13 +71,14 @@ namespace MC {
         }
 
     protected:
-        std::optional<FeatureVector> extractFeatures( const std::string &sequence ) const override
+        std::optional<FeatureVector> extractFeatures( std::string_view sequence ) const override
         {
             FeatureVector f;
-            for (auto &[cluster, backbone] : _backbones->get())
+            for (auto &[enumm, classifier] : _ensemble)
             {
-                auto &bg = _background->get().at( cluster );
-                f.push_back( backbone->propensity( sequence ) - bg->propensity( sequence ));
+                auto propensityPredictions = classifier->scoredPredictions( sequence );
+                for (auto &[cluster, _] : _backbones->get())
+                    f.push_back( propensityPredictions.at( cluster ));
             }
             return f;
         }
@@ -75,6 +97,7 @@ namespace MC {
     protected:
         std::optional<std::reference_wrapper<const BackboneProfiles >> _backbones;
         std::optional<std::reference_wrapper<const BackboneProfiles >> _background;
+        std::map<ClassificationEnum, std::unique_ptr<AbstractClassifier >> _ensemble;
 
         ModelTrainer _modelTrainer;
     };

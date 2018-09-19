@@ -13,7 +13,6 @@
 
 namespace MC {
 
-
     template<typename AAGrouping>
     class AbstractMC
     {
@@ -32,7 +31,7 @@ namespace MC {
         using HeteroHistograms =  std::unordered_map<Order, IsoHistograms>;
         using HeteroHistogramsFeatures = std::unordered_map<Order, std::unordered_map<HistogramID, double>>;
         using BackboneProfile = std::unique_ptr<AbstractMC>;
-        using BackboneProfiles = std::map<std::string, std::unique_ptr<AbstractMC >>;
+        using BackboneProfiles = std::map<std::string_view, std::unique_ptr<AbstractMC >>;
     public:
 
     public:
@@ -280,7 +279,7 @@ namespace MC {
             for (const auto &[cluster, profile] : profiles)
                 if ( *profile )
                     for (const auto &[order, isoHistograms] : profile->histograms().get())
-                        for (const auto &[id, histogram] : isoHistograms )
+                        for (const auto &[id, histogram] : isoHistograms)
                             allFeatureSpace[order].insert( id );
             return allFeatureSpace;
         }
@@ -344,7 +343,7 @@ namespace MC {
 
         template<typename ModelGenerator>
         static BackboneProfiles
-        train( const std::map<std::string, std::vector<std::string >> &training,
+        train( const std::map<std::string_view, std::vector<std::string >> &training,
                ModelGenerator trainer,
                std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt )
         {
@@ -357,12 +356,48 @@ namespace MC {
         }
 
         template<typename ModelGenerator>
+        BackboneProfiles
+        static backgroundProfiles( const std::map<std::string_view, std::vector<std::string >> &trainingSequences,
+                                   ModelGenerator modelTrainer,
+                                   const Selection &selection )
+        {
+            BackboneProfiles background;
+            for (auto &[label, _] : trainingSequences)
+            {
+                std::vector<std::string_view> backgroundSequences;
+                for (auto&[bgLabel, bgSequences] : trainingSequences)
+                {
+                    if ( bgLabel == label ) continue;
+                    for (auto &s : bgSequences)
+                        backgroundSequences.push_back( s );
+                }
+                background.emplace( label, modelTrainer( backgroundSequences, selection ));
+            }
+            return background;
+        }
+
+        template<typename ModelGenerator>
+        BackboneProfile
+        static backgroundProfile( const std::map<std::string_view, std::vector<std::string >> &trainingSequences,
+                                  ModelGenerator modelTrainer,
+                                  std::optional<std::reference_wrapper<const Selection>> selection )
+        {
+            BackboneProfiles background;
+            std::vector<std::string_view> backgroundSequences;
+            for (auto &[label, seqs] : trainingSequences)
+                for (auto &s : seqs)
+                    backgroundSequences.push_back( s );
+
+            return modelTrainer( backgroundSequences, selection );
+        }
+
+        template<typename ModelGenerator>
         static std::map<std::string, std::vector<HeteroHistograms> >
-        trainIndividuals( const std::map<std::string, std::vector<std::string >> &training,
+        trainIndividuals( const std::map<std::string_view, std::vector<std::string >> &training,
                           ModelGenerator trainer,
                           std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt )
         {
-            std::map<std::string, std::vector<HeteroHistograms  >> trainedHistograms;
+            std::map<std::string_view, std::vector<HeteroHistograms  >> trainedHistograms;
             for (const auto &[label, sequences] : training)
             {
                 auto &_trainedHistograms = trainedHistograms[label];
@@ -375,9 +410,10 @@ namespace MC {
             return trainedHistograms;
         }
 
+
         template<typename ModelGenerator>
         static std::pair<Selection, BackboneProfiles>
-        filterJointKernels( const std::map<std::string, std::vector<std::string >> &trainingClusters,
+        filterJointKernels( const std::map<std::string_view, std::vector<std::string >> &trainingClusters,
                             ModelGenerator trainer,
                             double minSharedPercentage = 0.75 )
         {
@@ -425,7 +461,7 @@ namespace MC {
 
         template<typename ModelGenerator>
         static Selection
-        withinJointAllUnionKernels( const std::map<std::string, std::vector<std::string>> &trainingClusters,
+        withinJointAllUnionKernels( const std::map<std::string_view, std::vector<std::string>> &trainingClusters,
                                     ModelGenerator trainer,
                                     double withinCoverage = 0.5 )
         {
@@ -444,8 +480,6 @@ namespace MC {
             }
             return union_( withinKernels );
         }
-
-
     };
 
 
@@ -464,40 +498,40 @@ namespace MC {
 
     public:
 
-        template<typename Model ,  class... Args>
+        template<typename Model, class... Args>
         static ModelGenerator create( Args &&... args )
         {
             return ModelGenerator(
-                    [=](){
-                return std::unique_ptr< Abstract >( new Model( args...));
-            });
+                    [=]() {
+                        return std::unique_ptr<Abstract>( new Model( args... ));
+                    } );
         }
 
 
-        template< typename SequenceData >
+        template<typename SequenceData>
         std::unique_ptr<AbstractMC<Grouping>> operator()(
                 SequenceData &&sequences ) const
         {
             auto model = _modelFunction();
-            model->train( std::forward< SequenceData >( sequences ));
+            model->train( std::forward<SequenceData>( sequences ));
             return model;
         }
 
-        template< typename SequenceData >
+        template<typename SequenceData>
         std::unique_ptr<AbstractMC<Grouping>> operator()(
                 SequenceData &&sequences, std::optional<std::reference_wrapper<const Selection >> selection ) const
         {
             if ( selection )
             {
                 auto model = _modelFunction();
-                model->train( std::forward< SequenceData >( sequences ));
+                model->train( std::forward<SequenceData>( sequences ));
                 model->filter( selection->get());
                 if ( *model ) return std::move( model );
                 else return nullptr;
             } else return this->operator()( sequences );
         }
 
-        template< typename SequenceData >
+        template<typename SequenceData>
         HeteroHistograms histograms(
                 SequenceData &&sequences ) const
         {
@@ -506,7 +540,5 @@ namespace MC {
             return model->convertToHistograms();
         }
     };
-
-
 }
 #endif //MARKOVIAN_FEATURES_MARKOVCHAINS_HPP

@@ -44,14 +44,14 @@ kFoldStratifiedSplit( std::map<Label, std::vector<T> > &&input, size_t k )
     return folds;
 }
 
-template<typename T, typename Label = std::string >
-inline std::map<Label, std::vector<T >>
-joinFoldsExceptK( const std::vector<std::vector<std::pair<Label, T >>> &input, size_t k )
+template< typename T >
+inline std::map<std::string_view , std::vector<T >>
+joinFoldsExceptK( const std::vector<std::vector<std::pair<std::string, T >>> &input, size_t k )
 {
     assert( k < input.size());
 
-    std::map<Label, std::vector<T >> joined;
-    auto mapInserter = [&]( const std::vector<std::pair<Label, T >> &vec ) {
+    std::map<std::string_view, std::vector<T >> joined;
+    auto mapInserter = [&]( const std::vector<std::pair<std::string, T >> &vec ) {
         for (auto &p : vec)
             joined[ p.first ].push_back( p.second );
     };

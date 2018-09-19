@@ -23,7 +23,7 @@ int main( int argc, char *argv[] )
     bool showHelp = false;
     std::string grouping = keys( GroupingLabels ).front();
     std::string criteria = keys( CriteriaLabels ).front();
-    std::string strategy = keys( ClassificationMethodLabel ).front();
+    std::string strategy = keys( ClassifierEnum ).front();
     std::string model = keys( MCModelLabels ).front();
 
     auto cli
@@ -44,7 +44,7 @@ int main( int argc, char *argv[] )
               | clara::Opt( criteria, join( keys( CriteriaLabels ), "|" ))
               ["-c"]["--criteria"]
                       ( fmt::format( "Similarity Criteria, default:{}", criteria ))
-              | clara::Opt( strategy, join( keys( ClassificationMethodLabel ), "|" ))
+              | clara::Opt( strategy, join( keys( ClassifierEnum ), "|" ))
               ["-s"]["--strategy"]
                       ( fmt::format( "Classification Strategy, default:{}", strategy ))
               | clara::Opt( order, "MC order" )

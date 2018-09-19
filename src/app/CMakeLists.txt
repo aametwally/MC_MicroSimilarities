@@ -9,6 +9,9 @@ set( COMMON_INCLUDE_DIRECTORIES
 set( MC_SOURCE_FILES
         ../mc/Selection.cpp
         ../mc/AbstractMC.cpp
+        ../mc/AbstractClassifier.cpp
+        ../mc/MCKmersClassifier.cpp
+        ../mc/MCPropensityClassifier.cpp
         ../mc/MacroSimilarityClassifier.cpp
         ../mc/MicroSimilarityVotingClassifier.cpp
         ../mc/KNNConfusionMC.cpp
@@ -20,11 +23,17 @@ set( MC_SOURCE_FILES
         ../mc/SVMConfusionMC.cpp
         ../mc/SVMMCParameters.cpp
         ../mc/SVMModel.cpp
-        ../mc/ZYMC.cpp ../report/ConfusionMatrix.cpp ../report/CrossValidationStatistics.cpp)
+        ../mc/ZYMC.cpp
+        ../report/ConfusionMatrix.cpp
+        ../report/CrossValidationStatistics.cpp
+        ../report/EnsembleCrossValidation.cpp )
 
 
 set( MC_DETAILS_TEMPLATE_FILES
         ../mc/AbstractMC.hpp
+        ../mc/MCKmersClassifier.hpp
+        ../mc/AbstractClassifier.hpp
+        ../mc/MCPropensityClassifier.hpp
         ../mc/MacroSimilarityClassifier.hpp
         ../mc/MicroSimilarityVotingClassifier.hpp
         ../mc/KNNConfusionMC.hpp
@@ -49,6 +58,7 @@ set( COMMON_INCLUDES
         ../mc/SimilarityMetrics.hpp
         ../mc/aminoacids_grouping.hpp
         ../report/CrossValidationStatistics.hpp
+        ../report/EnsembleCrossValidation.hpp
         ../report/crossvalidation.hpp
         ../mc/Pipeline.hpp
         ../mc/Series.hpp
