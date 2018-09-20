@@ -57,7 +57,7 @@ namespace MC {
         }
 
     protected:
-        std::optional<FeatureVector> extractFeatures( const std::string_view sequence ) const override
+        std::optional<FeatureVector> _extractFeatures( std::string_view sequence ) const override
         {
             if ( _backbones && _background )
             {
@@ -115,12 +115,12 @@ namespace MC {
 
         }
 
-        void fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) override
+        void _fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) override
         {
             KNNModel::fit( labels, std::move( f ));
         }
 
-        std::string_view predictML( const FeatureVector &f ) const override
+        std::string_view _predictML( const FeatureVector &f ) const override
         {
             return KNNModel::predict( f );
         }

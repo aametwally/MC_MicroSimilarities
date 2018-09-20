@@ -499,6 +499,23 @@ inline std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions
     return kmers;
 }
 
+inline std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions( std::string_view seq,
+                                                                                  std::initializer_list<size_t> ks )
+{
+    std::map<std::string_view, std::vector<size_t>> kmers;
+    for( auto k : ks )
+    {
+        if( k < seq.size())
+        {
+            for (size_t pos = 0; pos < seq.size() - k; ++pos)
+                kmers[seq.substr( pos, k )].push_back( pos );
+        }
+    }
+    return kmers;
+}
+
+
+
 inline std::map<std::string_view, size_t> extractKmersWithCounts( std::string_view seq,
                                                                   size_t kMin, size_t kMax )
 {

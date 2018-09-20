@@ -58,7 +58,7 @@ struct op_vector_to_matrix
 };
 
 template<typename T>
-const dlib::matrix_op<op_vector_to_matrix<T> > vector_to_matrix( const std::vector<T> &vector )
+const dlib::matrix_op<op_vector_to_matrix<T> > vector_to_cmatrix( const std::vector<T> &vector )
 {
     typedef op_vector_to_matrix<T> op;
     return dlib::matrix_op<op>( op( vector ));

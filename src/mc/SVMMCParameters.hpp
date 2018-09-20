@@ -49,19 +49,19 @@ namespace MC {
         }
 
     protected:
-        std::optional<FeatureVector> extractFeatures( std::string_view sequence ) const override
+        std::optional<FeatureVector> _extractFeatures( std::string_view sequence ) const override
         {
             if ( auto model = _modelTrainer( sequence, _selectedKernels ); *model )
                 return model->extractFlatFeatureVector( _selectedKernels );
             else return std::nullopt;
         }
 
-        void fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) override
+        void _fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) override
         {
             SVMModel::fit( labels, std::move( f ));
         }
 
-        std::string_view predictML( const FeatureVector &f ) const override
+        std::string_view _predictML( const FeatureVector &f ) const override
         {
             return SVMModel::predict( f );
         }

@@ -33,104 +33,48 @@ namespace MC {
             return _backbones.size() == _background.size() && _backbones.size() == _nLabels;
         }
 
-
-//        PriorityQueue _predict( std::string_view sequence ) const override
-//        {
-//            auto kmers = extractKmersWithCounts( sequence, 10, 15 );
-////            std::string rev = reverse( std::string( sequence ));
-////            auto rkmers = extractKmersWithCounts( sequence, 10, 15 );
-////            for (auto &[kmer, count] : rkmers)
-////                kmers[kmer] += count;
-//
-//            const size_t kTop = kmers.size();
-//            std::map<std::string_view, PriorityQueue> propensity;
-//
-//
-//            for (auto&[label, backbone] :_backbones)
-//            {
-//                using It = std::map<std::string_view, PriorityQueue>::iterator;
-//                It propensityIt;
-//                std::tie( propensityIt, std::ignore ) = propensity.emplace( label, kmers.size());
-//                PriorityQueue &_propensity = propensityIt->second;
-//                for (auto &[kmer, count] : kmers)
-//                {
-//                    auto &bg = _background.at( label );
-//                    double logOdd = backbone->propensity( kmer ) - bg->propensity( kmer );
-//                    _propensity.emplace( kmer, logOdd * count );
-//                }
-//            }
-//
-//            std::map<std::string_view, double> affinity;
-//            double sum = 0;
-//            for (const auto &[label, propensities]:  propensity)
-//            {
-//                propensities.forTopK( kTop, [&]( const auto &candidate, size_t index ) {
-//                    affinity[label] += candidate.getValue();
-//                    sum += candidate.getValue();
-//                } );
-//            }
-//
-//            PriorityQueue vPQ( _nLabels );
-//            for( auto &[label,aff] : affinity )
-//                vPQ.emplace( label, aff );
-//
-//            return vPQ;
-//        }
-
         PriorityQueue _predict( std::string_view sequence ) const override
         {
-            auto kmers = extractKmersWithPositions( sequence, 8, 15 );
+            auto kmers = extractKmersWithPositions( sequence, {20, 30, 40, 50, 60, 70, 80} );
 
             std::map<std::string_view, std::map<std::string_view, double>> propensity;
 
-            for (auto&[label, backbone] :_backbones)
+            for (auto &[kmer, pos] : kmers)
             {
-                auto &_propensity = propensity[label];
-                for (auto &[kmer, pos] : kmers)
+                auto &_propensity = propensity[ kmer ];
+                for (auto&[label, backbone] :_backbones)
                 {
                     auto &bg = _background.at( label );
                     double logOdd = backbone->propensity( kmer ) - bg->propensity( kmer );
-                    _propensity.emplace( kmer, logOdd );
+                    _propensity[ label ] = logOdd ;
                 }
             }
 
-            std::map<std::string_view, std::multiset<double, std::greater<double> >> topKmers;
-            for (auto&[label, propensities] : propensity)
+            std::map<std::string_view, double> classesAffinity;
+            double sum = 0;
+            const auto ranges =  _nonoverlapMaximalAffinities( kmers, propensity );
+//            fmt::print("L:{}-R:{}\n",sequence.length(), ranges.size());
+            for ( auto &range : ranges )
             {
-                auto &_topKmers = topKmers[label];
-                for (auto &[seq, positions] : _nonoverlapMaximalAffinities( kmers, propensities ))
-                    for (auto p : positions)
-                        _topKmers.insert( propensities[seq] );
+                classesAffinity[ range.getLabel()] += range.getScore();
+                sum += range.getScore();
             }
-
-            size_t minOverlaps = std::min_element( topKmers.cbegin(), topKmers.cend(),
-                                                   []( const auto &p1, const auto &p2 ) {
-                                                       return p1.second.size() < p2.second.size();
-                                                   } )->second.size();
-
-            std::map<std::string_view, double> affinity;
-            for (auto &[label, values] : topKmers)
-            {
-                size_t i = 0;
-                auto &_affinity = affinity[label];
-                for (auto v : values)
-                {
-                    if ( i++ < minOverlaps ) _affinity += v;
-                    else break;
-                }
-            }
+            for( auto &[label,_] : _backbones )
+                classesAffinity[ label ] += 0;
 
             PriorityQueue vPQ( _nLabels );
-            for (auto &[label, aff] : affinity)
-                vPQ.emplace( label, aff );
+            for (auto &[label, aff] : classesAffinity)
+                vPQ.emplace( label, aff / sum );
 
             return vPQ;
         }
 
         struct SequenceRange
         {
-            SequenceRange( size_t begin, size_t size, std::pair<std::string_view, size_t> sequence, double score )
-                    : _begin( begin ), _size( size ), _maximalSequence( sequence ), _score( score )
+            SequenceRange( size_t begin, size_t size,
+                           std::tuple<std::string_view, std::string_view , size_t> sequence, double score )
+                    : _begin( begin ), _size( size ),
+                      _maximalSequence( std::move( sequence )), _score( score )
             {}
 
         public:
@@ -154,14 +98,29 @@ namespace MC {
                 _size = size;
             }
 
-            const std::pair<std::string_view, size_t> &getMaximalSequence() const
+            const auto &getMaximalSequence() const
             {
                 return _maximalSequence;
             }
 
-            void setMaximalSequence( const std::pair<std::string_view, size_t> &maximalSequence )
+            void setMaximalSequence( std::string_view seq, std::string_view label , size_t pos  )
             {
-                _maximalSequence = maximalSequence;
+                _maximalSequence = { seq , label , pos };
+            }
+
+            std::string_view getLabel() const
+            {
+                return std::get<1>( _maximalSequence );
+            }
+
+            std::string_view getSequence() const
+            {
+                return std::get<0>( _maximalSequence );
+            }
+
+            size_t getPosition() const
+            {
+                return std::get<2>( _maximalSequence );
             }
 
             double getScore() const
@@ -177,50 +136,51 @@ namespace MC {
         private:
             size_t _begin;
             size_t _size;
-            std::pair<std::string_view, size_t> _maximalSequence;
+            std::tuple<std::string_view, std::string_view, size_t> _maximalSequence;
             double _score;
         };
 
-        static std::map<std::string_view, std::vector<size_t> >
+        static std::vector< SequenceRange >
         _nonoverlapMaximalAffinities(
                 const std::map<std::string_view, std::vector<size_t >> &kmers,
-                const std::map<std::string_view, double> &affinity )
+                const std::map<std::string_view, std::map<std::string_view, double>> &affinity )
         {
             assert( std::all_of( kmers.cbegin(), kmers.cend(), []( const auto &p ) {
                 return std::is_sorted( p.second.cbegin(), p.second.cend());
             } ));
+
+            auto max = [&]( std::string_view sequence ) {
+                auto &aff = affinity.at( sequence );
+                return *std::max_element( aff.cbegin(), aff.cend(),
+                                         []( const auto &p1, const auto &p2 ) {
+                                             return p1.second < p2.second;
+                                         } );
+            };
 
             std::map<size_t, std::vector<std::string_view >> kmersByPosition;
             for (auto &[kmer, positions] : kmers)
                 for (auto position : positions)
                     kmersByPosition[position].emplace_back( kmer );
 
-
             std::vector<SequenceRange> ranges;
-            ranges.emplace_back( kmersByPosition.begin()->first, 0,
-                                 std::make_pair( unclassified, 0 ), -inf );
+            ranges.emplace_back( 0 , 0, std::make_tuple( "" , unclassified, 0 ), -inf );
             for (auto &[position, neighbors] : kmersByPosition)
             {
                 if ( position > ranges.back().getBegin() + ranges.back().getSize())
-                    ranges.emplace_back( position, 0, std::make_pair( unclassified, 0 ), -inf );
+                    ranges.emplace_back( position, 0, std::make_tuple( "" , unclassified, 0 ), -inf );
                 SequenceRange &currentRange = ranges.back();
 
                 for (auto &kmer : neighbors)
                 {
-                    if ( auto aff = affinity.at( kmer ); aff > currentRange.getScore())
+                    if ( auto [label,score] = max( kmer ); score > currentRange.getScore())
                     {
                         currentRange.setSize( position - currentRange.getBegin() + kmer.length());
-                        currentRange.setScore( aff );
-                        currentRange.setMaximalSequence( std::make_pair( kmer, position ));
+                        currentRange.setScore( score );
+                        currentRange.setMaximalSequence(  kmer, label , position );
                     }
                 }
             }
-            std::map<std::string_view, std::vector<size_t>> maximalKmers;
-            for (SequenceRange &range : ranges)
-                maximalKmers[range.getMaximalSequence().first]
-                        .push_back( range.getMaximalSequence().second );
-
-            return maximalKmers;
+            return ranges;
         }
 
     protected:

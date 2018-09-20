@@ -502,7 +502,7 @@ private:
 template<typename T, typename Comp>
 struct PriorityQueueFixed
 {
-    using Queue = std::set<T, Comp>;
+    using Queue = std::multiset<T, Comp>;
     using ConstantIterator = typename Queue::const_iterator;
     using ValueType = T;
 

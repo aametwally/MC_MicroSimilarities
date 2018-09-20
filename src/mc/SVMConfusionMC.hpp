@@ -12,6 +12,7 @@
 #include "MCPropensityClassifier.hpp"
 #include "MacroSimilarityClassifier.hpp"
 #include "MicroSimilarityVotingClassifier.hpp"
+#include "MCKmersClassifier.hpp"
 
 namespace MC {
 
@@ -24,15 +25,15 @@ namespace MC {
         using HeteroHistograms = typename MCModel::HeteroHistograms;
         using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
-        using ModelTrainer = ModelGenerator< Grouping >;
+        using ModelTrainer = ModelGenerator<Grouping>;
         using Similarity = MetricFunction<Histogram>;
 
     public:
 
-        explicit SVMConfusionMC( ModelTrainer modelTrainer ,
-                                 std::optional<double> lambda = 5 ,
-                                 std::optional<double> gamma  = SVMModel::Auto  )
-                : _modelTrainer( modelTrainer ) , SVMModel( lambda , gamma )
+        explicit SVMConfusionMC( ModelTrainer modelTrainer,
+                                 std::optional<double> lambda = 1,
+                                 std::optional<double> gamma = 10 )
+                : _modelTrainer( modelTrainer ), SVMModel( lambda, gamma )
         {}
 
         void fit( const BackboneProfiles &backbones,
@@ -54,6 +55,10 @@ namespace MC {
             _ensemble.emplace( ClassificationEnum::Voting,
                                new MicroSimilarityVotingClassifier<Grouping>( backbones, background,
                                                                               selection, trainer, similarity ));
+
+            _ensemble.emplace( ClassificationEnum::KMERS,
+                               new MCKmersClassifier<Grouping>( backbones, background ));
+            MLConfusedMC::setLDA( backbones.size() );
             MLConfusedMC::fit( training );
         }
 
@@ -71,24 +76,24 @@ namespace MC {
         }
 
     protected:
-        std::optional<FeatureVector> extractFeatures( std::string_view sequence ) const override
+        std::optional<FeatureVector> _extractFeatures( std::string_view sequence ) const override
         {
             FeatureVector f;
             for (auto &[enumm, classifier] : _ensemble)
             {
-                auto propensityPredictions = classifier->scoredPredictions( sequence );
+                auto relativeAffinities = classifier->scoredPredictions( sequence );
                 for (auto &[cluster, _] : _backbones->get())
-                    f.push_back( propensityPredictions.at( cluster ));
+                    f.push_back( relativeAffinities.at( cluster ));
             }
             return f;
         }
 
-        void fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) override
+        void _fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) override
         {
-            SVMModel::fit( labels , std::move( f ));
+            SVMModel::fit( labels, std::move( f ));
         }
 
-        std::string_view predictML( const FeatureVector &f ) const override
+        std::string_view _predictML( const FeatureVector &f ) const override
         {
             return SVMModel::predict( f );
         }

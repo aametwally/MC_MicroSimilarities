@@ -7,6 +7,7 @@
 
 #include "CrossValidationStatistics.hpp"
 #include "LabeledEntry.hpp"
+#include "FeatureScoreAUC.hpp"
 
 template<typename Label = std::string_view>
 class EnsembleCrossValidation
@@ -23,13 +24,11 @@ public:
 
     static constexpr std::string_view unclassified = std::string_view();
 
-    EnsembleCrossValidation( FoldID k, const std::vector<ItemID> &members,
-                             const std::vector<Label> &labels )
-            : _k( k ), _actualLabels( _getActualLabels( members, labels ))
-    {}
 
     explicit EnsembleCrossValidation( const Folds &folds )
-            : _k( folds.size()), _actualLabels( _getActualLabels( folds ))
+            : _k( folds.size()),
+              _actualLabels( _getActualLabels( folds )),
+              _features( _getFeatures( folds ))
     {}
 
     void countInstance( FoldID k, ClassifierLabel classifier, ItemID id, PredictionLabel prediction )
@@ -39,7 +38,7 @@ public:
         _predictions[k][classifier].emplace_back( id, prediction );
     }
 
-    void countInstance( FoldID k, ClassifierLabel classifier, ItemID id, PredictionLabel prediction , Label label )
+    void countInstance( FoldID k, ClassifierLabel classifier, ItemID id, PredictionLabel prediction, Label label )
     {
         assert( _actualLabels.at( id ) == label );
         assert( k >= 0 && k < _k );
@@ -48,24 +47,33 @@ public:
     }
 
 
-    std::vector<std::pair<std::vector<ClassifierLabel>, CrossValidationStatistics<Label> >>
+    std::vector<std::tuple<
+            std::vector<ClassifierLabel>,
+            CrossValidationStatistics<Label>,
+            std::map< std::string_view , FeatureScoreAUC >>>
     majorityVotingOverallAccuracy() const
     {
-        std::vector<std::pair<std::vector<ClassifierLabel>, CrossValidationStatistics<Label> >> majorityCrossValidation;
+        std::vector<std::tuple<
+                std::vector<ClassifierLabel>,
+                        CrossValidationStatistics<Label>,
+                               std::map< std::string_view , FeatureScoreAUC> >> majorityCrossValidation;
 
         for (auto &combination : _getClassifiersCombinations())
         {
             CrossValidationStatistics<Label> validation( _k, _getLabels());
+            std::map<std::string_view, FeatureScoreAUC> auc;
             for (auto &[k, assignments] : _predictions)
             {
                 auto majorityPredictions = _majorityVoting( combination, assignments );
                 for (auto &[id, predicted] : majorityPredictions)
                 {
-
-                    validation.countInstance( k, predicted, _actualLabels.at( id ));
+                    std::string_view actualLabel = _actualLabels.at( id );
+                    validation.countInstance( k, predicted, actualLabel );
+                    for( auto &[feature,value] : _features.at( id ))
+                        auc[feature].record( value , predicted == actualLabel );
                 }
             }
-            majorityCrossValidation.emplace_back( combination, validation );
+            majorityCrossValidation.emplace_back( combination, validation , auc );
         }
         return majorityCrossValidation;
     }
@@ -95,6 +103,17 @@ private:
             m.emplace( id, label );
 
         assert( v.size() == m.size());
+        return m;
+    }
+
+    static std::map<ItemID, std::map< std::string , double>>
+    _getFeatures( const Folds &folds )
+    {
+        std::map<ItemID, std::map< std::string , double>> m;
+        for (auto &fold : folds)
+            for (auto &[label, entry] : fold)
+                m[ entry.getMemberId() ][ "length" ] = entry.getSequence().length();
+
         return m;
     }
 
@@ -150,7 +169,7 @@ private:
 
     const FoldID _k;
     const std::map<ItemID, ClassLabel> _actualLabels;
-
+    const std::map<ItemID, std::map<std::string, double>> _features;
     std::unordered_map<FoldID,
             std::map<ClassifierLabel,
                     std::vector<std::pair<ItemID, PredictionLabel >>>> _predictions;

@@ -14,6 +14,7 @@
 #include "MCPropensityClassifier.hpp"
 #include "MicroSimilarityVotingClassifier.hpp"
 #include "MacroSimilarityClassifier.hpp"
+#include "MCKmersClassifier.hpp"
 
 namespace MC {
     template<typename Grouping>
@@ -43,8 +44,8 @@ namespace MC {
         {
             _backbones = backbones;
             _background = background;
-//            _ensemble.emplace( ClassificationEnum::Propensity,
-//                               new MCPropensityClassifier<Grouping>( backbones, background ));
+            _ensemble.emplace( ClassificationEnum::Propensity,
+                               new MCPropensityClassifier<Grouping>( backbones, background ));
 
             _ensemble.emplace( ClassificationEnum::Accumulative,
                                new MacroSimilarityClassifier<Grouping>( backbones, background,
@@ -53,6 +54,10 @@ namespace MC {
             _ensemble.emplace( ClassificationEnum::Voting,
                                new MicroSimilarityVotingClassifier<Grouping>( backbones, background,
                                                                               selection, trainer, similarity ));
+
+            _ensemble.emplace( ClassificationEnum::KMERS,
+                               new MCKmersClassifier<Grouping>( backbones, background ));
+            MLConfusedMC::setLDA( backbones.size() );
             MLConfusedMC::fit( training );
         }
 
@@ -70,7 +75,7 @@ namespace MC {
         }
 
     protected:
-        std::optional<FeatureVector> extractFeatures( std::string_view sequence ) const override
+        std::optional<FeatureVector> _extractFeatures( std::string_view sequence ) const override
         {
             FeatureVector f;
             for (auto &[enumm, classifier] : _ensemble)
@@ -82,12 +87,12 @@ namespace MC {
             return f;
         }
 
-        void fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) override
+        void _fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) override
         {
             KNN::fit( labels, std::move( f ));
         }
 
-        std::string_view predictML( const FeatureVector &f ) const override
+        std::string_view _predictML( const FeatureVector &f ) const override
         {
             return KNN::predict( f );
         }

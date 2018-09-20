@@ -171,7 +171,6 @@ namespace MC {
         void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries, const size_t k,
                                      const std::vector<std::string> &classificationStrategy )
         {
-
             std::set<std::string> classifiers;
             for (const auto &classifier : classificationStrategy)
                 classifiers.insert( classifier );
@@ -256,22 +255,20 @@ namespace MC {
                         const auto &label = fold.at( proteinIdx ).first;
                         const auto &prediction = predictions.at( proteinIdx );
 
-                        cValidation.countInstance( i, prediction, label );
+//                        cValidation.countInstance( i, prediction, label );
                         ensembleValidation.countInstance( i, classifier, id, prediction );
                     }
                 }
             }
 
-            for (auto &classifier : classifiers)
+            for (auto&[ensemble, cv, aucs ] : ensembleValidation.majorityVotingOverallAccuracy())
             {
-                validation[classifier].printReport( classifier );
-                fmt::print( "\n" );
-            }
-
-            for (auto&[ensemble, cv] : ensembleValidation.majorityVotingOverallAccuracy())
-            {
-                fmt::print( "Ensemble{{{}}} Cross-validation\n", io::join( ensemble, "," ));
+                fmt::print((ensemble.size() > 1) ?
+                           "Ensemble{{{}}} Cross-validation\n" :
+                           "{}", io::join( ensemble, "," ));
                 cv.printReport();
+                for( auto &[feature, auc] : aucs )
+                    fmt::print("AUC({}):{}\n" , feature , auc.auc());
             }
         }
 

@@ -3,8 +3,8 @@
 //
 #include "SVMModel.hpp"
 
-SVMModel::SVMModel( std::optional<double> lambda , std::optional<double> gamma )
-        : _lambda( lambda ), _gamma( gamma )
+SVMModel::SVMModel( std::optional<double> c , std::optional<double> gamma )
+        : _lambda( std::move( c )), _gamma( std::move( gamma ))
 {
 
 }
@@ -16,12 +16,11 @@ void SVMModel::fit( const std::vector<std::string_view> &labels, std::vector<std
     auto nFeatures = featuresVector.front().size();
     auto svmFeatures = _svmFeatures( std::move( featuresVector ));
 
-    SVMTrainer trainer;
     SVMBinaryTrainer btrainer;
     btrainer.set_lambda( (_lambda)? _lambda.value() : 1.0 );
-    btrainer.set_kernel( SVMBinaryKernel( (_gamma)? _gamma.value() : 1.0 / nFeatures ));
-//        histogramTrainer.set_max_num_sv(10);
+    btrainer.set_kernel( SVMRBFKernel( (_gamma)? _gamma.value() : 1.0 / nFeatures));
 
+    SVMTrainer trainer;
     trainer.set_trainer( btrainer );
     trainer.set_num_threads( std::thread::hardware_concurrency());
 
@@ -36,7 +35,7 @@ std::string_view SVMModel::predict( const std::vector<double> &features ) const
 
 SVMModel::SampleType SVMModel::_svmFeatures( const std::vector<double> &features )
 {
-    return vector_to_matrix( features );
+    return vector_to_cmatrix( features );
 }
 
 std::vector<SVMModel::SampleType> SVMModel::_svmFeatures( std::vector<std::vector<double >> &&features )

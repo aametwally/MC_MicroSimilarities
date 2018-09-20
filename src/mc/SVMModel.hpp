@@ -22,10 +22,13 @@ public:
     static constexpr std::optional< double > Auto = std::nullopt;
 
 private:
-    using SVMBinaryKernel = dlib::radial_basis_kernel<SampleType>;
+
     using SVMRBFKernel = dlib::radial_basis_kernel<SampleType>;
-    using SVMRBFTrainer = dlib::krr_trainer<SVMRBFKernel>;
-    using SVMBinaryTrainer = dlib::krr_trainer<SVMBinaryKernel>;
+    using SVMLinearKernel = dlib::linear_kernel<SampleType>;
+
+    using SVMMultiTrainer = dlib::svm_multiclass_linear_trainer< SVMLinearKernel >;
+    using SVMBinaryTrainer = dlib::krr_trainer<SVMRBFKernel>;
+
     using SVMTrainer = dlib::one_vs_one_trainer<dlib::any_trainer<SampleType>, Label>;
     using DecisionFunction = SVMTrainer::trained_function_type;
 public:

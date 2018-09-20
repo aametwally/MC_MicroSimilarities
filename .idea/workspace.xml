@@ -30,25 +30,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="029ea99b-3622-4c30-a791-005fa27d1bef" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/mc/AbstractClassifier.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/mc/AbstractClassifier.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/mc/MCKmersClassifier.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/mc/MCKmersClassifier.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/mc/MCPropensityClassifier.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/mc/MCPropensityClassifier.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/report/EnsembleCrossValidation.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/report/EnsembleCrossValidation.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/MC_pipeline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/MC_pipeline.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mc/AbstractMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/AbstractMC.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/data/dlib_utilities.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/data/dlib_utilities.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/KNNConfusionMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/KNNConfusionMC.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/KNNMCParameters.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/KNNMCParameters.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mc/MCFeatures.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/MCFeatures.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/mc/MCKmersClassifier.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/MCKmersClassifier.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/MLConfusedMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/MLConfusedMC.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mc/MacroSimilarityClassifier.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/MacroSimilarityClassifier.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mc/MicroSimilarityVotingClassifier.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/MicroSimilarityVotingClassifier.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mc/MicroSimilarityVotingClassifier.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/MicroSimilarityVotingClassifier.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/Pipeline.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/Pipeline.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/SVMConfusionMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/SVMConfusionMC.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/SVMMCParameters.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/SVMMCParameters.hpp" afterDir="false" />
@@ -56,9 +43,7 @@
       <change beforePath="$PROJECT_DIR$/src/mc/SVMModel.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/SVMModel.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/SimilarityMetrics.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/SimilarityMetrics.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/common.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/common.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/report/CrossValidationStatistics.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/CrossValidationStatistics.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/report/crossvalidation.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/crossvalidation.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/report/EnsembleCrossValidation.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/report/EnsembleCrossValidation.hpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/cmake-build-release/" />
@@ -69,7 +54,7 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Release" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="FavoritesManager">
     <favorites_list name="markovian_features" />
   </component>
@@ -78,8 +63,8 @@
       <file leaf-file-name="KNNConfusionMC.hpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/mc/KNNConfusionMC.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="76">
-              <caret line="45" column="63" lean-forward="true" selection-start-line="45" selection-start-column="63" selection-end-line="45" selection-end-column="63" />
+            <state relative-caret-position="-1175">
+              <caret line="20" column="73" selection-start-line="20" selection-start-column="73" selection-end-line="20" selection-end-column="73" />
               <folding>
                 <element signature="e#128#153#0" expanded="true" />
               </folding>
@@ -87,20 +72,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SVMModel.hpp" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/mc/SVMModel.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="100">
-              <caret line="21" column="11" selection-start-line="21" selection-start-column="11" selection-end-line="21" selection-end-column="11" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SVMConfusionMC.hpp" pinned="false" current-in-tab="false">
+      <file leaf-file-name="SVMConfusionMC.hpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/mc/SVMConfusionMC.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="82">
-              <caret line="32" column="65" selection-start-line="32" selection-start-column="65" selection-end-line="32" selection-end-column="65" />
+            <state relative-caret-position="220">
+              <caret line="60" column="50" selection-start-line="60" selection-start-column="50" selection-end-line="60" selection-end-column="50" />
               <folding>
                 <element signature="e#132#164#0" expanded="true" />
               </folding>
@@ -108,47 +84,23 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SVMModel.cpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/mc/SVMModel.cpp">
+      <file leaf-file-name="EnsembleCrossValidation.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/report/EnsembleCrossValidation.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="128">
-              <caret line="8" selection-start-line="8" selection-end-line="8" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="SVMMCParameters.hpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/mc/SVMMCParameters.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="160">
-              <caret line="28" column="69" selection-start-line="28" selection-start-column="69" selection-end-line="28" selection-end-column="69" />
+            <state relative-caret-position="162">
+              <caret line="115" lean-forward="true" selection-start-line="115" selection-end-line="115" />
               <folding>
-                <element signature="e#138#163#0" expanded="true" />
+                <element signature="e#150#190#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MCPropensityClassifier.hpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/mc/MCPropensityClassifier.hpp">
+      <file leaf-file-name="ZYMC.hpp" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/mc/ZYMC.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="681">
-              <caret line="48" column="54" selection-start-line="48" selection-start-column="54" selection-end-line="48" selection-end-column="54" />
-              <folding>
-                <element signature="e#148#181#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="MLConfusedMC.hpp" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/mc/MLConfusedMC.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="80">
-              <caret line="20" lean-forward="true" selection-start-line="20" selection-end-line="20" />
-              <folding>
-                <element signature="e#128#149#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="243">
+              <caret line="102" selection-start-line="102" selection-end-line="102" />
             </state>
           </provider>
         </entry>
@@ -179,6 +131,8 @@
       <find>unc</find>
       <find>normalize</find>
       <find>n_th</find>
+      <find>lambda</find>
+      <find>sample_type</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/src/algorithm</dir>
@@ -192,7 +146,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/algorithm/Histogram.hpp" />
         <option value="$PROJECT_DIR$/src/algorithm/SimilarityMetrics.hpp" />
         <option value="$PROJECT_DIR$/src/report/ConfusionMatrix.cpp" />
         <option value="$PROJECT_DIR$/src/algorithm/MCDefs.h" />
@@ -220,7 +173,6 @@
         <option value="$PROJECT_DIR$/src/report/ConfusionMatrix.hpp" />
         <option value="$PROJECT_DIR$/src/report/CrossValidationStatistics.cpp" />
         <option value="$PROJECT_DIR$/src/report/EnsembleCrossValidation.cpp" />
-        <option value="$PROJECT_DIR$/src/report/EnsembleCrossValidation.hpp" />
         <option value="$PROJECT_DIR$/src/report/crossvalidation.hpp" />
         <option value="$PROJECT_DIR$/src/report/CrossValidationStatistics.hpp" />
         <option value="$PROJECT_DIR$/src/mc/MCFeatures.hpp" />
@@ -229,20 +181,22 @@
         <option value="$PROJECT_DIR$/src/mc/MCPropensityClassifier.cpp" />
         <option value="$PROJECT_DIR$/src/mc/KNNMCParameters.hpp" />
         <option value="$PROJECT_DIR$/src/app/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/src/mc/Pipeline.hpp" />
         <option value="$PROJECT_DIR$/src/mc/AbstractClassifier.hpp" />
-        <option value="$PROJECT_DIR$/src/mc/SimilarityMetrics.hpp" />
-        <option value="$PROJECT_DIR$/src/mc/MCKmersClassifier.hpp" />
-        <option value="$PROJECT_DIR$/src/mc/common.hpp" />
-        <option value="$PROJECT_DIR$/src/mc/KNNConfusionMC.hpp" />
         <option value="$PROJECT_DIR$/src/mc/MacroSimilarityClassifier.hpp" />
         <option value="$PROJECT_DIR$/src/mc/MicroSimilarityVotingClassifier.hpp" />
         <option value="$PROJECT_DIR$/src/mc/MCPropensityClassifier.hpp" />
-        <option value="$PROJECT_DIR$/src/mc/MLConfusedMC.hpp" />
         <option value="$PROJECT_DIR$/src/mc/SVMMCParameters.hpp" />
-        <option value="$PROJECT_DIR$/src/mc/SVMModel.cpp" />
-        <option value="$PROJECT_DIR$/src/mc/SVMConfusionMC.hpp" />
         <option value="$PROJECT_DIR$/src/mc/SVMModel.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/SVMModel.cpp" />
+        <option value="$PROJECT_DIR$/src/mc/common.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/SimilarityMetrics.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/MCKmersClassifier.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/Pipeline.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/KNNConfusionMC.hpp" />
+        <option value="$PROJECT_DIR$/src/data/dlib_utilities.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/MLConfusedMC.hpp" />
+        <option value="$PROJECT_DIR$/src/report/EnsembleCrossValidation.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/SVMConfusionMC.hpp" />
       </list>
     </option>
   </component>
@@ -349,7 +303,7 @@
   </component>
   <component name="RunManager" selected="Application.MC_pipeline">
     <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features_scoring" EXPLICIT_BUILD_TARGET_NAME="all" />
-    <configuration name="MC_pipeline" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../Caraga_C_2011/psortNeg --fformat psort -l [0] -h [7] --model [zymc] --grouping [nogrouping] --criteria [cos] -s [svm_stack]" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="MC_pipeline" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="MC_pipeline" />
+    <configuration name="MC_pipeline" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../Caraga_C_2011/psortNeg --fformat psort -l [0] -h [7] --model [zymc] --grouping [nogrouping] --criteria [cos] -s [kmers,acc,voting,svm_stack,knn_stack]" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="MC_pipeline" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="MC_pipeline" />
     <configuration name="confusionMatrix" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="confusionMatrix" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="confusionMatrix" />
     <configuration name="fmt" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="fmt" CONFIG_NAME="Debug" />
     <configuration name="markovian_features_scoring" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="markovian_features_scoring" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features_scoring" />
@@ -385,26 +339,26 @@
       <workItem from="1537135095556" duration="13331000" />
       <workItem from="1537197126552" duration="1437000" />
       <workItem from="1537219606309" duration="1857000" />
-      <workItem from="1537265238740" duration="41754000" />
+      <workItem from="1537265238740" duration="63397000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="198181000" />
+    <option name="totallyTimeSpent" value="219824000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="51" y="25" width="1315" height="743" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49756098" visible="true" weight="0.2616099" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49756098" weight="0.2616099" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Messages" order="7" sideWeight="0.47523218" weight="0.4180328" />
-      <window_info anchor="bottom" id="CMake" order="7" weight="0.06885246" />
-      <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.5247678" side_tool="true" weight="0.4180328" />
-      <window_info anchor="bottom" id="Version Control" order="7" weight="0.3295082" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.47600618" visible="true" weight="0.42295083" />
+      <window_info active="true" anchor="bottom" id="Messages" order="7" sideWeight="0.47523218" visible="true" weight="0.4180328" />
+      <window_info anchor="bottom" id="CMake" order="8" weight="0.06885246" />
+      <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.5247678" side_tool="true" weight="0.4180328" />
+      <window_info anchor="bottom" id="Version Control" order="10" weight="0.3295082" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.47600618" weight="0.42295083" />
       <window_info id="Structure" order="1" sideWeight="0.502439" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="7" />
+      <window_info anchor="bottom" id="Terminal" order="11" />
       <window_info id="Favorites" order="2" sideWeight="0.502439" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.498452" weight="0.46065575" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -417,22 +371,22 @@
     </layout>
     <layout-to-restore>
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.31967214" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.47600618" weight="0.42295083" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49756098" visible="true" weight="0.25" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49756098" visible="true" weight="0.2616099" />
       <window_info id="Structure" order="1" sideWeight="0.502439" side_tool="true" weight="0.25" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.76393443" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.22459017" />
-      <window_info anchor="bottom" id="Messages" order="7" weight="0.4180328" />
-      <window_info anchor="bottom" id="Terminal" order="8" />
-      <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.498452" weight="0.46065575" />
+      <window_info active="true" anchor="bottom" id="Messages" order="7" sideWeight="0.47523218" visible="true" weight="0.4180328" />
+      <window_info anchor="bottom" id="Terminal" order="11" />
+      <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.5247678" side_tool="true" weight="0.4180328" />
       <window_info anchor="bottom" id="Version Control" order="10" weight="0.3295082" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="CMake" order="11" weight="0.06885246" />
+      <window_info anchor="bottom" id="CMake" order="8" weight="0.06885246" />
       <window_info id="Favorites" order="2" sideWeight="0.502439" side_tool="true" weight="0.25" />
     </layout-to-restore>
   </component>
@@ -444,69 +398,10 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="18" />
+      <option name="time" value="20" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/algorithm/MCOperations.cpp" />
-    <entry file="file://$PROJECT_DIR$/src/algorithm/MCOperations.hpp" />
-    <entry file="file://$PROJECT_DIR$/src/mc/Selection.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="32">
-          <caret line="8" selection-start-line="8" selection-end-line="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/MC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="144">
-          <caret line="114" column="9" selection-start-line="114" selection-start-column="9" selection-end-line="114" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/RangedOrderMC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="16">
-          <caret line="76" selection-start-line="76" selection-end-line="76" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/Selection.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="122">
-          <caret line="275" column="42" selection-start-line="275" selection-start-column="42" selection-end-line="275" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/ZYMC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="16">
-          <caret line="71" selection-start-line="71" selection-end-line="71" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/tuple">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="138">
-          <caret line="1651" column="69" selection-start-line="1651" selection-start-column="69" selection-end-line="1651" selection-end-column="69" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/SequenceEntry.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="336">
-          <caret line="21" column="4" selection-start-line="21" selection-start-column="4" selection-end-line="21" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/features/FeatureScoreAUC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2592">
-          <caret line="162" column="3" selection-start-line="162" selection-start-column="3" selection-end-line="162" selection-end-column="3" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/MCClassifier.hpp" />
     <entry file="file://$PROJECT_DIR$/src/mc/MacroSimilarityClassifier.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="64">
@@ -542,20 +437,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/Pipeline.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="64">
-          <caret line="4" selection-start-line="4" selection-end-line="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/c++/7/bits/stl_map.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="541" selection-start-line="541" selection-end-line="541" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/report/EnsembleCrossValidation.cpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="128">
@@ -567,13 +448,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="7328">
           <caret line="473" column="28" selection-start-line="473" selection-start-column="28" selection-end-line="473" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/report/EnsembleCrossValidation.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="64" selection-start-line="64" selection-end-line="64" />
         </state>
       </provider>
     </entry>
@@ -673,17 +547,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/MCKmersClassifier.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="80">
-          <caret line="94" column="13" lean-forward="true" selection-start-line="94" selection-start-column="13" selection-end-line="94" selection-end-column="13" />
-          <folding>
-            <element signature="e#138#171#0" expanded="true" />
-            <element signature="e#226#247#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/mc/AbstractMC.hpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="646">
@@ -698,46 +561,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/SimilarityMetrics.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="533">
-          <caret line="539" column="5" selection-start-line="539" selection-start-column="5" selection-end-line="539" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/common.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="121">
-          <caret line="114" column="1" selection-start-line="114" selection-start-column="1" selection-end-line="114" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/Pipeline.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-4151">
-          <caret line="50" column="46" selection-start-line="50" selection-start-column="46" selection-end-line="50" selection-end-column="46" />
-          <folding>
-            <element signature="e#140#158#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/mc/MicroSimilarityVotingClassifier.hpp">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="68">
           <caret line="62" column="67" selection-start-line="62" selection-start-column="67" selection-end-line="62" selection-end-column="67" />
           <folding>
             <element signature="e#235#254#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/MacroSimilarityClassifier.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="384">
-          <caret line="78" column="59" selection-start-line="78" selection-start-column="59" selection-end-line="78" selection-end-column="59" />
-          <folding>
-            <element signature="e#154#179#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -752,13 +581,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/MLConfusedMC.hpp">
+    <entry file="file://$PROJECT_DIR$/../dlib-install-debug/include/dlib/svm/krr_trainer_abstract.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="80">
-          <caret line="20" lean-forward="true" selection-start-line="20" selection-end-line="20" />
-          <folding>
-            <element signature="e#128#149#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="118">
+          <caret line="238" column="75" selection-start-line="238" selection-start-column="75" selection-end-line="238" selection-end-column="75" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../dlib-install-debug/include/dlib/svm/krr_trainer.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="96">
+          <caret line="12" column="18" selection-start-line="12" selection-start-column="18" selection-end-line="12" selection-end-column="18" />
         </state>
       </provider>
     </entry>
@@ -772,44 +605,186 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/data/dlib_utilities.hpp">
+    <entry file="file://$PROJECT_DIR$/../dlib-install-debug/include/dlib/svm/svm_multiclass_linear_trainer.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="930">
-          <caret line="60" column="47" selection-start-line="60" selection-start-column="47" selection-end-line="60" selection-end-column="47" />
+        <state relative-caret-position="108">
+          <caret line="172" selection-start-line="172" selection-end-line="172" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/SVMModel.cpp">
+    <entry file="file://$PROJECT_DIR$/src/mc/common.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="128">
-          <caret line="8" selection-start-line="8" selection-end-line="8" />
+        <state relative-caret-position="201">
+          <caret line="513" column="14" selection-start-line="513" selection-start-column="14" selection-end-line="513" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/include/c++/7/bits/stl_map.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="91">
+          <caret line="532" selection-start-line="532" selection-end-line="532" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/Pipeline.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="160">
+          <caret line="10" selection-start-line="10" selection-end-line="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/FeatureScoringPipeline.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3504" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/SimilarityMetrics.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="463" column="5" selection-start-line="463" selection-start-column="5" selection-end-line="463" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/MCKmersClassifier.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1799">
+          <caret line="56" column="40" lean-forward="true" selection-start-line="56" selection-start-column="40" selection-end-line="56" selection-end-column="40" />
+          <folding>
+            <element signature="e#138#171#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/features/FeatureScoreAUC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1904">
+          <caret line="162" column="3" selection-start-line="162" selection-start-column="3" selection-end-line="162" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/MacroSimilarityClassifier.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="722">
+          <caret line="78" column="59" selection-start-line="78" selection-start-column="59" selection-end-line="78" selection-end-column="59" />
+          <folding>
+            <element signature="e#154#179#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/Pipeline.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="208">
+          <caret line="270" column="69" selection-start-line="270" selection-start-column="69" selection-end-line="270" selection-end-column="69" />
+          <folding>
+            <element signature="e#140#158#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/mc/KNNConfusionMC.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="76">
-          <caret line="45" column="63" lean-forward="true" selection-start-line="45" selection-start-column="63" selection-end-line="45" selection-end-column="63" />
+        <state relative-caret-position="-1175">
+          <caret line="20" column="73" selection-start-line="20" selection-start-column="73" selection-end-line="20" selection-end-column="73" />
           <folding>
             <element signature="e#128#153#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/SVMConfusionMC.hpp">
+    <entry file="file://$PROJECT_DIR$/../dlib-install-debug/include/dlib/svm/one_vs_one_trainer_abstract.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="82">
-          <caret line="32" column="65" selection-start-line="32" selection-start-column="65" selection-end-line="32" selection-end-column="65" />
+        <state relative-caret-position="144">
+          <caret line="9" column="29" selection-start-line="9" selection-start-column="29" selection-end-line="9" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../dlib-install-debug/include/dlib/any/any_trainer_abstract.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="89">
+          <caret line="37" column="53" selection-start-line="37" selection-start-column="42" selection-end-line="37" selection-end-column="53" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../dlib-install-debug/include/dlib/any/any_trainer.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="140">
+          <caret line="9" column="24" selection-start-line="9" selection-start-column="24" selection-end-line="9" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../dlib-install-debug/include/dlib/any.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="96">
+          <caret line="6" column="24" selection-start-line="6" selection-start-column="24" selection-end-line="6" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../dlib-install-debug/include/dlib/svm/one_vs_one_trainer.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="112">
+          <caret line="16" column="15" lean-forward="true" selection-start-line="16" selection-start-column="15" selection-end-line="16" selection-end-column="15" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/data/dlib_utilities.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="372">
+          <caret line="60" column="57" selection-start-line="60" selection-start-column="57" selection-end-line="60" selection-end-column="57" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/SVMModel.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="12">
+          <caret line="17" lean-forward="true" selection-start-line="17" selection-end-line="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/MLConfusedMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-468">
+          <caret line="22" column="31" selection-start-line="22" selection-start-column="31" selection-end-line="22" selection-end-column="31" />
           <folding>
-            <element signature="e#132#164#0" expanded="true" />
+            <element signature="e#128#149#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/mc/SVMModel.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="100">
-          <caret line="21" column="11" selection-start-line="21" selection-start-column="11" selection-end-line="21" selection-end-column="11" />
+        <state relative-caret-position="137">
+          <caret line="36" column="10" selection-start-line="31" selection-start-column="36" selection-end-line="31" selection-end-column="39" />
+          <folding>
+            <element signature="e#121#142#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/report/EnsembleCrossValidation.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="162">
+          <caret line="115" lean-forward="true" selection-start-line="115" selection-end-line="115" />
+          <folding>
+            <element signature="e#150#190#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/ZYMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="243">
+          <caret line="102" selection-start-line="102" selection-end-line="102" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/SVMConfusionMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="220">
+          <caret line="60" column="50" selection-start-line="60" selection-start-column="50" selection-end-line="60" selection-end-column="50" />
+          <folding>
+            <element signature="e#132#164#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
