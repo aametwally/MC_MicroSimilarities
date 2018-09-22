@@ -18,7 +18,6 @@ public:
     using PredictionLabel = Label;
     using FoldID = size_t;
     using ClassifierLabel = std::string_view;
-
     using Fold = std::vector<std::pair<std::string, LabeledEntry >>;
     using Folds = std::vector<Fold>;
 
@@ -31,19 +30,19 @@ public:
               _features( _getFeatures( folds ))
     {}
 
-    void countInstance( FoldID k, ClassifierLabel classifier, ItemID id, PredictionLabel prediction )
+    void countInstance( FoldID k, ClassifierLabel classifier, ItemID id, ScoredLabels predictions )
     {
         assert( k >= 0 && k < _k );
         assert( _actualLabels.find( id ) != _actualLabels.cend());
-        _predictions[k][classifier].emplace_back( id, prediction );
+        _predictions[k][classifier].emplace_back( id, predictions );
     }
 
-    void countInstance( FoldID k, ClassifierLabel classifier, ItemID id, PredictionLabel prediction, Label label )
+    void countInstance( FoldID k, ClassifierLabel classifier, ItemID id, ScoredLabels predictions, Label label )
     {
         assert( _actualLabels.at( id ) == label );
         assert( k >= 0 && k < _k );
         assert( _actualLabels.find( id ) != _actualLabels.cend());
-        _predictions[k][classifier].emplace_back( id, prediction );
+        _predictions[k][classifier].emplace_back( id, predictions );
     }
 
 
@@ -53,10 +52,33 @@ public:
             std::map< std::string_view , FeatureScoreAUC >>>
     majorityVotingOverallAccuracy() const
     {
+        return ensembleOverallAccuracy( [this]( auto &combination, auto &assignment ){
+            return _majorityVoting( combination , assignment );
+        });
+    }
+
+    std::vector<std::tuple<
+            std::vector<ClassifierLabel>,
+            CrossValidationStatistics<Label>,
+            std::map< std::string_view , FeatureScoreAUC >>>
+    weightedVotingOverallAccuracy() const
+    {
+        return ensembleOverallAccuracy( [this]( auto &combination, auto &assignment ){
+            return _weightedVoting( combination , assignment );
+        });
+    }
+
+    template< typename VotingMethod >
+    std::vector<std::tuple<
+            std::vector<ClassifierLabel>,
+            CrossValidationStatistics<Label>,
+            std::map< std::string_view , FeatureScoreAUC >>>
+    ensembleOverallAccuracy( VotingMethod votingMethod ) const
+    {
         std::vector<std::tuple<
                 std::vector<ClassifierLabel>,
-                        CrossValidationStatistics<Label>,
-                               std::map< std::string_view , FeatureScoreAUC> >> majorityCrossValidation;
+                CrossValidationStatistics<Label>,
+                std::map< std::string_view , FeatureScoreAUC> >> ensembleCrossValidation;
 
         for (auto &combination : _getClassifiersCombinations())
         {
@@ -64,8 +86,8 @@ public:
             std::map<std::string_view, FeatureScoreAUC> auc;
             for (auto &[k, assignments] : _predictions)
             {
-                auto majorityPredictions = _majorityVoting( combination, assignments );
-                for (auto &[id, predicted] : majorityPredictions)
+                auto predictions = votingMethod( combination, assignments );
+                for (auto &[id, predicted] : predictions )
                 {
                     std::string_view actualLabel = _actualLabels.at( id );
                     validation.countInstance( k, predicted, actualLabel );
@@ -73,9 +95,9 @@ public:
                         auc[feature].record( value , predicted == actualLabel );
                 }
             }
-            majorityCrossValidation.emplace_back( combination, validation , auc );
+            ensembleCrossValidation.emplace_back( combination, validation , auc );
         }
-        return majorityCrossValidation;
+        return ensembleCrossValidation;
     }
 
 private:
@@ -141,12 +163,13 @@ private:
 
     std::vector<std::pair<ItemID, PredictionLabel>>
     _majorityVoting( const std::vector<ClassifierLabel> &voters,
-                     const std::map<ClassifierLabel, std::vector<std::pair<ItemID, PredictionLabel>>> &predictions ) const
+                     const std::map<ClassifierLabel, std::vector<std::pair<ItemID, ScoredLabels >>> &predictions ) const
     {
         std::map<ItemID, std::map<PredictionLabel, size_t >> votes;
         for (auto &voter : voters)
             for (auto&[id, prediction] : predictions.at( voter ))
-                ++votes[id][prediction];
+                if( auto top = prediction.top() ; top )
+                    ++votes[id][ top->get().getLabel()];
 
         std::vector<std::pair<ItemID, PredictionLabel>> majorityPredictions;
         for (auto &[id, _votes] : votes)
@@ -164,6 +187,31 @@ private:
         return majorityPredictions;
     }
 
+    std::vector<std::pair<ItemID, PredictionLabel>>
+    _weightedVoting( const std::vector<ClassifierLabel> &voters,
+                     const std::map<ClassifierLabel, std::vector<std::pair<ItemID, ScoredLabels >>> &predictions ) const
+    {
+        std::map<ItemID, std::map<PredictionLabel, size_t >> votes;
+        for (auto &voter : voters)
+            for (auto&[id, prediction] : predictions.at( voter ))
+                if( auto top = prediction.top() ; top )
+                    votes[id][ top->get().getLabel()] += top->get().getValue();
+
+        std::vector<std::pair<ItemID, PredictionLabel>> majorityPredictions;
+        for (auto &[id, _votes] : votes)
+        {
+            auto top = std::pair<PredictionLabel, size_t>( unclassified, 0 );
+            for (auto &[prediction, __votes] : _votes)
+            {
+                if ( __votes > top.second )
+                {
+                    top = {prediction, __votes};
+                }
+            }
+            majorityPredictions.emplace_back( id, top.first );
+        }
+        return majorityPredictions;
+    }
 
 private:
 
@@ -172,7 +220,7 @@ private:
     const std::map<ItemID, std::map<std::string, double>> _features;
     std::unordered_map<FoldID,
             std::map<ClassifierLabel,
-                    std::vector<std::pair<ItemID, PredictionLabel >>>> _predictions;
+                    std::vector<std::pair<ItemID, ScoredLabels  >>>> _predictions;
 };
 
 

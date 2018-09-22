@@ -12,8 +12,6 @@ template<typename Distance = Euclidean>
 class KNNModel
 {
 public:
-    using DistancePriorityQueue = typename MatchSet<Cost>::Queue<size_t>;
-    using VoterPriorityQueue = typename MatchSet<Score>::Queue<std::string_view>;
 
     static constexpr auto distance = Criteria<Distance>:: template function<std::vector< double >>;
 
@@ -53,9 +51,9 @@ public:
             }
     }
 
-    std::string_view predict( const std::vector< double > &f ) const
+    ScoredLabels predict( const std::vector< double > &f ) const
     {
-        DistancePriorityQueue topK( _k );
+        PenalizedIndices topK( _k );
         size_t id = 0;
         for (const auto &[clusterLabel, cluster] : _population)
             for (const auto &point : cluster)
@@ -64,15 +62,20 @@ public:
                 ++id;
             }
         std::map<std::string_view, double> voter;
+
         topK.forTopK( _k , [&]( const auto &candidate, size_t index ) {
             size_t label = candidate.getLabel();
             voter[ _indices.at( label ) ] += 1;
         });
+        double max = 0;
+        for( auto &[idx,label] : _indices )
+            max = std::max( max , voter[label] += 0);
 
-        VoterPriorityQueue vPQ( _population.size());
+
+        ScoredLabels vPQ( _population.size());
         for (const auto &[label, votes]: voter)
-            vPQ.emplace( label, votes );
-        return vPQ.top()->get().getLabel();
+            vPQ.emplace( label, votes / max );
+        return vPQ;
     }
 
 private:

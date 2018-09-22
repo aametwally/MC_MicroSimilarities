@@ -30,9 +30,8 @@ namespace MC {
         }
 
     protected:
-        AbstractClassifier::PriorityQueue _predict( std::string_view sequence  ) const override
+        ScoredLabels _predict( std::string_view sequence  ) const override
         {
-            using PriorityQueue = typename MatchSet<Score>::Queue<std::string_view>;
             std::map<std::string_view, double> voter;
 
             if ( auto query = this->_modelTrainer( sequence, this->_selectedHistograms ); *query )
@@ -41,7 +40,7 @@ namespace MC {
                 {
                     for (const auto &[id, histogram1] : isoHistograms)
                     {
-                        PriorityQueue pq( this->_backbones->get().size());
+                        ScoredLabels pq( this->_backbones->get().size());
                         for (const auto &[clusterName, profile] : this->_backbones->get())
                         {
                             auto &bg = this->_background->get().at( clusterName );
@@ -67,13 +66,11 @@ namespace MC {
                 }
             }
 
-            double sum = 0;
-            for( auto &[label,votes] : voter )
-                sum += votes;
+            voter = minmaxNormalize( std::move( voter ));
 
-            PriorityQueue scoredQueue( this->_backbones->get().size());
+            ScoredLabels scoredQueue( this->_backbones->get().size());
             for (auto[label, votes] : voter)
-                scoredQueue.emplace( label, votes / sum );
+                scoredQueue.emplace( label, votes  );
 
             return scoredQueue;
         }

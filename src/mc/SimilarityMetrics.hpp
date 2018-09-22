@@ -452,33 +452,33 @@ private:
 };
 
 template<typename Label = std::string_view>
-struct Measurement
+struct ValuedLabel
 {
-    Measurement( Label label, double val )
+    ValuedLabel( Label label, double val )
             : _label( label ), _value( val )
     {}
 
-    bool operator==( const Measurement &other ) const
+    bool operator==( const ValuedLabel &other ) const
     {
         return _label == other._label && _value == other._value;
     }
 
-    bool operator>( const Measurement &other ) const
+    bool operator>( const ValuedLabel &other ) const
     {
         return _value > other._value;
     }
 
-    bool operator<( const Measurement &other ) const
+    bool operator<( const ValuedLabel &other ) const
     {
         return _value < other._value;
     }
 
-    bool operator>=( const Measurement &other ) const
+    bool operator>=( const ValuedLabel &other ) const
     {
         return _value >= other._value;
     }
 
-    bool operator<=( const Measurement &other ) const
+    bool operator<=( const ValuedLabel &other ) const
     {
         return _value <= other._value;
     }
@@ -499,12 +499,12 @@ private:
 };
 
 
-template<typename T, typename Comp>
+template<typename Label, typename Comp>
 struct PriorityQueueFixed
 {
-    using Queue = std::multiset<T, Comp>;
+    using Queue = std::multiset<ValuedLabel<Label>, Comp>;
     using ConstantIterator = typename Queue::const_iterator;
-    using ValueType = T;
+    using ValueType = ValuedLabel<Label>;
 
     explicit PriorityQueueFixed( const Comp &cmp, size_t kTop )
             : _kTop( kTop ), _q( cmp )
@@ -539,8 +539,13 @@ struct PriorityQueueFixed
         return _q.cend();
     }
 
-    void forTopK( size_t k, const std::function<void( T )> &op ) const
+
+
+    void forTopK( size_t k, const std::function<void( const ValueType& )> &op ) const
     {
+        if( k == 0 )
+            k = _q.size();
+
         auto lastIt = (size() < k) ?
                       std::crend( _q ) :
                       std::next( std::crbegin( _q ), k );
@@ -548,8 +553,11 @@ struct PriorityQueueFixed
         std::for_each( std::crbegin( _q ), lastIt, op );
     }
 
-    void forTopK( size_t k, const std::function<void( T, size_t )> &op ) const
+    void forTopK( size_t k, const std::function<void( const ValueType&, size_t )> &op ) const
     {
+        if( k == 0 )
+            k = _q.size();
+
         auto lastIt = (size() < k) ?
                       std::crend( _q ) :
                       std::next( std::crbegin( _q ), k );
@@ -562,7 +570,15 @@ struct PriorityQueueFixed
         }
     }
 
-    const std::optional<std::reference_wrapper<const T >> top() const
+    std::map< Label , double > toMap() const
+    {
+        std::map< Label , double > m;
+        for( auto &vl : _q )
+            m[ vl.getLabel() ] = vl.getValue();
+        return m;
+    }
+
+    const std::optional<std::reference_wrapper<const ValueType >> top() const
     {
         if ( !empty())
             return *_q.crbegin();
@@ -583,7 +599,7 @@ struct PriorityQueueFixed
         return res;
     };
 
-    auto insert( const T &val )
+    auto insert( const ValueType &val )
     {
         auto res = _q.insert( val );
         if ( _q.size() > _kTop )
@@ -591,7 +607,7 @@ struct PriorityQueueFixed
         return res;
     }
 
-    auto insert( T &&val )
+    auto insert( ValueType &&val )
     {
         auto res = _q.insert( val );
         if ( _q.size() > _kTop )
@@ -626,21 +642,26 @@ template<typename T>
 struct MatchSet<T, typename std::enable_if<std::is_base_of<Cost, T>::value>::type>
 {
     template<typename Label>
-    using Queue = PriorityQueueFixed<Measurement<Label>, std::greater<> >;
+    using Queue = PriorityQueueFixed<Label, std::greater<> >;
 };
 
 template<typename T>
 struct MatchSet<T, typename std::enable_if<std::is_base_of<Score, T>::value>::type>
 {
     template<typename Label>
-    using Queue = PriorityQueueFixed<Measurement<Label>, std::less<>>;
+    using Queue = PriorityQueueFixed<Label, std::less<>>;
 };
 
+
+using ScoredLabels = typename MatchSet<Score>::Queue<std::string_view>;
+using ScoredIndices =  typename MatchSet<Score>::Queue<size_t>;
+using PenalizedLabels = typename MatchSet<Cost>::Queue<std::string_view>;
+using PenalizedIndices = typename MatchSet<Cost>::Queue<size_t>;
 
 template<typename Criteria>
 struct ClassificationCandidates
 {
-    using M = Measurement<std::string_view>;
+    using M = ValuedLabel<std::string_view>;
 
     using Queue =  typename MatchSet<Criteria>::template Queue<std::string_view>;
 

@@ -27,9 +27,18 @@ void SVMModel::fit( const std::vector<std::string_view> &labels, std::vector<std
     _decisionFunction = trainer.train( svmFeatures, svmLabels );
 }
 
-std::string_view SVMModel::predict( const std::vector<double> &features ) const
+ScoredLabels SVMModel::predict( const std::vector<double> &features ) const
 {
-    return _index2Label.at( _decisionFunction( _svmFeatures( features )));
+    auto bestLabel = _index2Label.at( _decisionFunction( _svmFeatures( features )));
+    std::map< std::string_view , size_t > votes;
+    for( auto &[label,idx] : _label2Index )
+        votes[label] += 0;
+    votes[bestLabel] += 1;
+
+    ScoredLabels vPQ( _label2Index.size());
+    for( auto&[label,n] : votes )
+        vPQ.emplace( label , n );
+    return vPQ;
 }
 
 

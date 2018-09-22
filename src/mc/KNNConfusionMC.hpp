@@ -15,10 +15,12 @@
 #include "MicroSimilarityVotingClassifier.hpp"
 #include "MacroSimilarityClassifier.hpp"
 #include "MCKmersClassifier.hpp"
+#include "KNNMCParameters.hpp"
+#include "SVMMCParameters.hpp"
 
 namespace MC {
     template<typename Grouping>
-    class KNNConfusionMC : protected KNNModel<Euclidean>, protected MLConfusedMC
+    class KNNConfusionMC : protected KNNModel<Euclidean>, public MLConfusedMC
     {
         using KNN = KNNModel<Euclidean>;
         using MCModel = AbstractMC<Grouping>;
@@ -55,35 +57,36 @@ namespace MC {
                                new MicroSimilarityVotingClassifier<Grouping>( backbones, background,
                                                                               selection, trainer, similarity ));
 
-            _ensemble.emplace( ClassificationEnum::KMERS,
-                               new MCKmersClassifier<Grouping>( backbones, background ));
-            MLConfusedMC::setLDA( backbones.size() );
+            _ensemble.emplace( ClassificationEnum::KNN,
+                               new KNNMCParameters<Grouping>( backbones , background , training,
+                                                              7 , trainer, similarity ));
+
+            _ensemble.emplace( ClassificationEnum::SVM,
+                               new SVMMCParameters<Grouping>( backbones , background , training, trainer, similarity ));
+
+//            _ensemble.emplace( ClassificationEnum::KMERS,
+//                               new MCKmersClassifier<Grouping>( backbones, background ));
+            MLConfusedMC::enableLDA( );
             MLConfusedMC::fit( training );
         }
 
-
-        std::vector<std::string_view> predict( const std::vector<std::string> &test ) const
+        using AbstractClassifier::predict;
+    protected:
+        bool _validTraining() const override
         {
-            if ( _backbones && _background && !_ensemble.empty())
-            {
-                std::vector<std::string_view> labels;
-                for (auto &seq : test)
-                    labels.emplace_back( MLConfusedMC::predict( seq ));
-
-                return labels;
-            } else throw std::runtime_error( fmt::format( "Bad training" ));
+            return _backbones && _background && !_ensemble.empty();
         }
 
-    protected:
-        std::optional<FeatureVector> _extractFeatures( std::string_view sequence ) const override
+        FeatureVector _extractFeatures( std::string_view sequence ) const override
         {
             FeatureVector f;
             for (auto &[enumm, classifier] : _ensemble)
             {
-                auto propensityPredictions = classifier->scoredPredictions( sequence );
+                auto propensityPredictions = classifier->scoredPredictions( sequence ).toMap();
                 for (auto &[cluster, _] : _backbones->get())
                     f.push_back( propensityPredictions.at( cluster ));
             }
+            f.push_back( sequence.length());
             return f;
         }
 
@@ -92,7 +95,7 @@ namespace MC {
             KNN::fit( labels, std::move( f ));
         }
 
-        std::string_view _predictML( const FeatureVector &f ) const override
+        ScoredLabels _predictML( const FeatureVector &f ) const override
         {
             return KNN::predict( f );
         }

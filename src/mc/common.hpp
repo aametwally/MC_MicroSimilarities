@@ -97,20 +97,24 @@ inline std::vector<double> unitNormalize( std::vector<double> &&vec )
 
 inline std::map< std::string_view , double> minmaxNormalize( std::map< std::string_view , double> &&map )
 {
-    auto[min, max] = std::minmax_element( map.cbegin(), map.cend(), []( auto &p1 , auto &p2 ){
+    auto[minIt, maxIt] = std::minmax_element( map.cbegin(), map.cend(), []( auto &p1 , auto &p2 ){
         return p1.second < p2.second;
     });
+    const double min = minIt->second;
+    const double max = maxIt->second;
     for (auto &[_,f] : map)
-        f = (f - min->second) / (max->second - min->second);
+        f = (f - min) / (max - min);
+
     return map;
 }
 
 inline std::vector<double> minmaxNormalize( std::vector<double> &&vec )
 {
-    auto[min, max] = std::minmax_element( vec.cbegin(), vec.cend());
-
+    auto[minIt, maxIt] = std::minmax_element( vec.cbegin(), vec.cend());
+    const double min = *minIt;
+    const double max = *maxIt;
     for (double &f : vec)
-        f = (f - *min) / (*max - *min);
+        f = (f - min) / (max - min);
     return vec;
 }
 

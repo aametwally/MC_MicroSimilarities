@@ -15,13 +15,11 @@ namespace MC {
     {
         using MCModel = AbstractMC<Grouping>;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
-        using PriorityQueue = typename MatchSet<Score>::Queue<std::string_view>;
 
     public:
         explicit MCKmersClassifier( const BackboneProfiles &backbones,
                                     const BackboneProfiles &background )
-                : AbstractClassifier( backbones.size()),
-                  _backbones( backbones ),
+                : _backbones( backbones ),
                   _background( background )
         {
         }
@@ -30,10 +28,10 @@ namespace MC {
     protected:
         bool _validTraining() const override
         {
-            return _backbones.size() == _background.size() && _backbones.size() == _nLabels;
+            return _backbones.size() == _background.size() ;
         }
 
-        PriorityQueue _predict( std::string_view sequence ) const override
+        ScoredLabels _predict( std::string_view sequence ) const override
         {
             auto kmers = extractKmersWithPositions( sequence, {20, 30, 40, 50, 60, 70, 80} );
 
@@ -62,7 +60,7 @@ namespace MC {
             for( auto &[label,_] : _backbones )
                 classesAffinity[ label ] += 0;
 
-            PriorityQueue vPQ( _nLabels );
+            ScoredLabels vPQ( _backbones.size() );
             for (auto &[label, aff] : classesAffinity)
                 vPQ.emplace( label, aff / sum );
 

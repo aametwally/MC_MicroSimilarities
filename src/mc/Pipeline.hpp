@@ -97,8 +97,8 @@ namespace MC {
             return LabeledEntry::reducedAlphabetEntries<Grouping>( std::forward<Entries>( entries ));
         }
 
-        std::vector<std::string_view>
-        predict( const std::vector<std::string> &queries,
+        std::vector<ScoredLabels >
+        scoredPredictions( const std::vector<std::string> &queries,
                  const BackboneProfiles &targets,
                  const BackboneProfiles &background,
                  const std::map<std::string_view, std::vector<std::string >> &trainingClusters,
@@ -111,48 +111,48 @@ namespace MC {
                 {
                     auto model = MacroSimilarityClassifier<Grouping>(
                             targets, background, selection, _modelTrainer, _similarity );
-                    return model.predict( queries );
+                    return model.scoredPredictions( queries );
                 }
                 case ClassificationEnum::Voting :
                 {
                     auto model = MicroSimilarityVotingClassifier<Grouping>(
                             targets, background, selection, _modelTrainer, _similarity );
-                    return model.predict( queries );
+                    return model.scoredPredictions( queries );
                 }
                 case ClassificationEnum::Propensity :
                 {
                     MCPropensityClassifier<Grouping> classifier( targets, background );
-                    return classifier.predict( queries );
+                    return classifier.scoredPredictions( queries );
                 }
                 case ClassificationEnum::SVM :
                 {
-                    SVMMCParameters<Grouping> svm( _modelTrainer );
+                    SVMMCParameters<Grouping> svm( _modelTrainer, _similarity );
                     svm.fit( targets, background, trainingClusters );
-                    return svm.predict( queries );
+                    return svm.scoredPredictions( queries );
                 }
                 case ClassificationEnum::KNN :
                 {
-                    KNNMCParameters<Grouping> knn( _modelTrainer, _similarity );
+                    KNNMCParameters<Grouping> knn( 7, _modelTrainer, _similarity );
                     knn.fit( targets, background, trainingClusters );
-                    return knn.predict( queries );
+                    return knn.scoredPredictions( queries );
 
                 }
                 case ClassificationEnum::SVM_Stack :
                 {
                     SVMConfusionMC<Grouping> svm( _modelTrainer );
                     svm.fit( targets, background, trainingClusters, _modelTrainer, selection, _similarity );
-                    return svm.predict( queries );
+                    return svm.scoredPredictions( queries );
                 }
                 case ClassificationEnum::KNN_Stack :
                 {
-                    KNNConfusionMC<Grouping> knn( 3 );
+                    KNNConfusionMC<Grouping> knn( 7 );
                     knn.fit( targets, background, trainingClusters, _modelTrainer, selection, _similarity );
-                    return knn.predict( queries );
+                    return knn.scoredPredictions( queries );
                 }
                 case ClassificationEnum::KMERS :
                 {
                     MCKmersClassifier<Grouping> classifier( targets, background );
-                    return classifier.predict( queries );
+                    return classifier.scoredPredictions( queries );
                 }
                 default:
                     throw std::runtime_error( "Undefined Strategy" );
@@ -199,13 +199,22 @@ namespace MC {
                 return fSequences;
             };
 
+            std::set<std::string_view> uniqueIds;
+            for (auto &e : entries)
+                uniqueIds.insert( e.getMemberId());
+
+            fmt::print( "[All Sequences:{} (unique:{})]\n", entries.size(), uniqueIds.size());
+
+
             auto groupedEntries = LabeledEntry::groupEntriesByLabels( reducedAlphabetEntries( std::move( entries )));
-//            fmt::print( "[All Sequences:{}]\n", entries.size());
-//            auto labels = keys( groupedEntries );
-//            for (auto &l : labels) l = fmt::format( "{}({})", l, groupedEntries.at( l ).size());
-//            fmt::print( "[Clusters:{}][{}]\n",
-//                        groupedEntries.size(),
-//                        io::join( labels, "|" ));
+
+
+            auto labelsInfo = keys( groupedEntries );
+            for (auto &l : labelsInfo) l = fmt::format( "{}({})", l, groupedEntries.at( l ).size());
+            fmt::print( "[Clusters:{}][{}]\n",
+                        groupedEntries.size(),
+                        io::join( labelsInfo, "|" ));
+
             const Folds folds = kFoldStratifiedSplit( std::move( groupedEntries ), k );
             const FoldsSequences sFolds = extractSequences( folds );
 
@@ -239,9 +248,9 @@ namespace MC {
                 for (auto &classifier : classifiers)
                 {
                     auto classifierEnum = ClassifierEnum.at( classifier );
-                    auto predictions = predict( queries, trained, background,
-                                                trainingClusters, selection,
-                                                classifierEnum );
+                    auto predictions = scoredPredictions( queries, trained, background,
+                                                          trainingClusters, selection,
+                                                          classifierEnum );
 
                     assert( predictions.size() == qLabels.size() && qLabels.size() == queries.size() &&
                             queries.size() == ids.size());
@@ -255,20 +264,32 @@ namespace MC {
                         const auto &label = fold.at( proteinIdx ).first;
                         const auto &prediction = predictions.at( proteinIdx );
 
-//                        cValidation.countInstance( i, prediction, label );
+                        cValidation.countInstance( i, prediction.top()->get().getLabel() , label );
                         ensembleValidation.countInstance( i, classifier, id, prediction );
                     }
                 }
             }
 
-            for (auto&[ensemble, cv, aucs ] : ensembleValidation.majorityVotingOverallAccuracy())
+            for (auto&[classifier, cvalidation] : validation)
             {
-                fmt::print((ensemble.size() > 1) ?
-                           "Ensemble{{{}}} Cross-validation\n" :
-                           "{}", io::join( ensemble, "," ));
+                fmt::print( "{{{}}} Cross-validation\n", classifier );
+                cvalidation.printReport();
+            }
+
+            for (auto&[ensemble, cv, aucs] : ensembleValidation.majorityVotingOverallAccuracy())
+            {
+                fmt::print( "Majority Voting {{{}}} Cross-validation\n" , io::join( ensemble, "," ));
                 cv.printReport();
-                for( auto &[feature, auc] : aucs )
-                    fmt::print("AUC({}):{}\n" , feature , auc.auc());
+                for (auto &[feature, auc] : aucs)
+                    fmt::print( "AUC({}):{}\n", feature, auc.auc());
+            }
+
+            for (auto&[ensemble, cv, aucs] : ensembleValidation.weightedVotingOverallAccuracy())
+            {
+                fmt::print("Weighted Voting {{{}}} Cross-validation\n" , io::join( ensemble, "," ));
+                cv.printReport();
+                for (auto &[feature, auc] : aucs)
+                    fmt::print( "AUC({}):{}\n", feature, auc.auc());
             }
         }
 

@@ -7,25 +7,31 @@
 
 #include "common.hpp"
 #include "AbstractMC.hpp"
+#include "AbstractClassifier.hpp"
 
 #include "dlib_utilities.hpp"
 #include "dlib/svm.h"
 
+
 namespace MC {
-    class MLConfusedMC
+    class MLConfusedMC : public AbstractClassifier
     {
 
     public:
+        MLConfusedMC() : _enableLDA( false )
+        {}
+
         using FeatureVector = std::vector<double>;
 
-        void setLDA( size_t ldaDims )
+        void enableLDA( std::optional<size_t> ldaDims = std::nullopt )
         {
+            _enableLDA = true;
             _ldaDims = ldaDims;
         }
 
         void fit( const std::map<std::string_view, std::vector<std::string >> &training )
         {
-//            _normalizer = [this]( auto &&f ) { return _centerScaleColumns( std::move( f )); };
+            _normalizer = [this]( auto &&f ) { return _minmaxScaleColumns( std::move( f )); };
 
             std::vector<std::string_view> labels;
             std::vector<FeatureVector> featuresVector;
@@ -33,14 +39,13 @@ namespace MC {
             {
                 for (auto &seq : trainSeqs)
                 {
-                    if ( auto features = _extractFeatures( seq ); features )
-                    {
-                        assert( std::all_of( features->begin(), features->end(),
-                                             []( double v ) { return !std::isnan( v ); } ));
+                    auto features = _extractFeatures( seq );
 
-                        featuresVector.emplace_back( features.value());
-                        labels.push_back( trainLabel );
-                    }
+                    assert( std::all_of( features.begin(), features.end(),
+                                         []( double v ) { return !std::isnan( v ); } ));
+
+                    featuresVector.emplace_back( features );
+                    labels.push_back( trainLabel );
                 }
             }
             if ( _normalizer )
@@ -48,7 +53,7 @@ namespace MC {
                 _trainNormalizers( featuresVector );
                 featuresVector = _normalizeFeatures( std::move( featuresVector ));
             }
-            if ( _ldaDims )
+            if ( _enableLDA )
             {
                 _trainLDA( featuresVector, labels );
                 featuresVector = _transformFeatures( std::move( featuresVector ));
@@ -56,49 +61,43 @@ namespace MC {
             _fitML( labels, std::move( featuresVector ));
         }
 
-
-        std::string_view predict( const std::string &sequence ) const
+    protected:
+        ScoredLabels _predict( std::string_view sequence ) const override
         {
+            auto features = _extractFeatures( sequence );
+            assert( std::all_of( features.begin(), features.end(),
+                                 []( double v ) { return !std::isnan( v ); } ));
 
-            if ( auto features = _extractFeatures( sequence ); features )
-            {
-                assert( std::all_of( features->begin(), features->end(),
-                                     []( double v ) { return !std::isnan( v ); } ));
+            if ( _normalizer )
+                features = _normalizeFeatures( std::move( features ));
 
-                if ( _normalizer )
-                {
-                    features = _normalizeFeatures( std::move( features.value()));
-                }
-                if( _ldaDims && _Z && _M )
-                {
-                    features = _transformFeatures( features.value() );
-                }
-                return _predictML( features.value());
-            } else return unclassified;
+            if ( _enableLDA && _Z && _M )
+                features = _transformFeatures( features );
+
+            return _predictML( features );
         }
 
-    protected:
         virtual void _fitML( const std::vector<std::string_view> &labels, std::vector<FeatureVector> &&f ) = 0;
 
-        virtual std::string_view _predictML( const FeatureVector &f ) const = 0;
+        virtual ScoredLabels _predictML( const FeatureVector &f ) const = 0;
 
-        virtual std::optional<FeatureVector> _extractFeatures( std::string_view sequence ) const = 0;
+        virtual FeatureVector _extractFeatures( std::string_view sequence ) const = 0;
 
     private:
         using NormalizerFunction = std::function<std::vector<double>( std::vector<double> && )>;
 
-        static std::vector< size_t > _numericLabels( const std::vector<std::string_view> &labels )
+        static std::vector<size_t> _numericLabels( const std::vector<std::string_view> &labels )
         {
-            std::set< std::string_view > uniqueLabels( labels.cbegin() , labels.cend());
-            std::map< std::string_view , size_t  > labelsMap;
+            std::set<std::string_view> uniqueLabels( labels.cbegin(), labels.cend());
+            std::map<std::string_view, size_t> labelsMap;
             {
                 size_t labelIdx = 0;
-                for( auto l : uniqueLabels )
-                    labelsMap[ l ] = labelIdx++;
+                for (auto l : uniqueLabels)
+                    labelsMap[l] = labelIdx++;
             }
 
-            std::vector< size_t > numericLabels;
-            for( auto l : labels )
+            std::vector<size_t> numericLabels;
+            for (auto l : labels)
                 numericLabels.push_back( labelsMap.at( l ));
             return numericLabels;
         }
@@ -113,16 +112,19 @@ namespace MC {
             const auto numericLabels = _numericLabels( labels );
 
             dlib::matrix<double> X;
-            dlib::matrix<double,0,1> M;
-            X.set_size( features.size() , ncol );
-            for( size_t r = 0 ; r < features.size() ; ++r )
-                for( size_t c = 0 ; c < ncol ; ++c )
-                    X(r,c) = features.at( r ).at( c );
+            dlib::matrix<double, 0, 1> M;
+            X.set_size( features.size(), ncol );
+            for (size_t r = 0; r < features.size(); ++r)
+                for (size_t c = 0; c < ncol; ++c)
+                    X( r, c ) = features.at( r ).at( c );
 
-            dlib::compute_lda_transform( X , M , numericLabels , _ldaDims.value());
+            if ( _ldaDims )
+                dlib::compute_lda_transform( X, M, numericLabels, _ldaDims.value());
+            else dlib::compute_lda_transform( X, M, numericLabels );
 
             _Z = std::move( X );
             _M = std::move( M );
+
         }
 
         virtual std::vector<FeatureVector> _transformFeatures( std::vector<FeatureVector> &&features ) const
@@ -134,13 +136,13 @@ namespace MC {
 
         virtual FeatureVector _transformFeatures( const FeatureVector &f ) const
         {
-            assert( _ldaDims && _Z && _M );
-            if ( _ldaDims && _Z && _M )
+            assert( _enableLDA && _Z && _M );
+            if ( _enableLDA && _Z && _M )
             {
-                dlib::matrix<double, 0 , 1> fv =
+                dlib::matrix<double, 0, 1> fv =
                         _Z.value() * vector_to_cmatrix( f ) - _M.value();
 
-                return std::vector<double>( fv.begin() , fv.end() );
+                return std::vector<double>( fv.begin(), fv.end());
             } else return f;
         }
 
@@ -206,16 +208,19 @@ namespace MC {
 
         std::vector<double> _minmaxScaleRow( std::vector<double> &&features ) const
         {
-            auto[min, max] = std::minmax_element( features.cbegin(), features.cend());
-
+            auto[minIt, maxIt] = std::minmax_element( features.cbegin(), features.cend());
+            const double min = *minIt;
+            const double max = *maxIt;
             for (double &f : features)
-                f = (f - *min) / (*max - *min);
+                f = (f - min) / (max - min);
             return features;
         }
 
         std::vector<double> _radiusNormalizeRow( std::vector<double> &&features ) const
         {
-            auto[min, max] = std::minmax_element( features.cbegin(), features.cend());
+            auto[minIt, maxIt] = std::minmax_element( features.cbegin(), features.cend());
+            const double min = *minIt;
+            const double max = *maxIt;
             double magnitude = std::accumulate( features.cbegin(), features.cend(), double( 0 ),
                                                 []( double acc, double val ) {
                                                     return acc + val * val;
@@ -245,6 +250,7 @@ namespace MC {
         std::optional<dlib::matrix<double>> _Z;
         std::optional<dlib::matrix<double, 0, 1>> _M;
         std::optional<size_t> _ldaDims;
+        bool _enableLDA;
     };
 }
 #endif //MARKOVIAN_FEATURES_MLCONFUSEDMC_HPP

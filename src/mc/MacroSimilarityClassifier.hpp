@@ -24,7 +24,6 @@ namespace MC {
         using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
         using ModelTrainer =  ModelGenerator<Grouping>;
-        using PriorityQueue = typename MatchSet<Score>::Queue<std::string_view>;
 
     public:
 
@@ -35,7 +34,7 @@ namespace MC {
                                             const Similarity similarityFunction )
                 : _backbones( backbones ), _background( background ),
                   _modelTrainer( modelTrainer ), _selectedHistograms( selection ),
-                  _similarity( similarityFunction ), AbstractClassifier( backbones.size())
+                  _similarity( similarityFunction )
         {
 
         }
@@ -44,14 +43,12 @@ namespace MC {
         bool _validTraining() const override
         {
             return _backbones && _background
-                   && _backbones->get().size() == _background->get().size()
-                   && _backbones->get().size() == _nLabels;
+                   && _backbones->get().size() == _background->get().size();
         }
 
-        PriorityQueue _predict( std::string_view sequence ) const override
+        ScoredLabels _predict( std::string_view sequence ) const override
         {
             std::map<std::string_view, double> macros;
-            double sum = 0;
             if ( auto query = _modelTrainer( sequence, _selectedHistograms ); *query )
             {
                 for (const auto &[label, profile] : _backbones->get())
@@ -71,14 +68,16 @@ namespace MC {
 //                                    sum += similarity( histogram1 - hBG->get(), histogram2->get() - hBG->get());
                             }
                         }
+
                     macros[label] = macro;
-                    sum += macro;
                 }
             }
 
-            PriorityQueue matchSet( _backbones->get().size());
+            macros = minmaxNormalize( std::move( macros ));
+
+            ScoredLabels matchSet( _backbones->get().size());
             for (auto &[label, macro] : macros)
-                matchSet.emplace( label, macro / sum );
+                matchSet.emplace( label, macro );
 
             return matchSet;
         }

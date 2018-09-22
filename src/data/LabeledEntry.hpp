@@ -14,6 +14,7 @@ enum class DBFormatProcessor
 {
     UniRef,
     TargetP,
+    Files1,
     PSORT,
     DeepLoc_Location,
     DeepLoc_Solubility
@@ -22,6 +23,7 @@ const std::map<std::string, DBFormatProcessor> FormatLabels = {
         {"uniref",      DBFormatProcessor::UniRef},
         {"psort",       DBFormatProcessor::PSORT},
         {"targetp",     DBFormatProcessor::TargetP},
+        {"files1",    DBFormatProcessor::Files1},
         {"deeploc_loc", DBFormatProcessor::DeepLoc_Location},
         {"deeploc_sol", DBFormatProcessor::DeepLoc_Solubility}
 };
@@ -72,6 +74,19 @@ public:
         LabeledEntry entry;
         auto tokens = split( fEntry.getId());
         entry._memberId = split( tokens.front(), ";" ).front();
+        entry._label = clusterName;
+        entry._sequence = fEntry.getSequence();
+        return entry;
+    }
+
+    static LabeledEntry from_fasta_FILES1( const FastaEntry &fEntry, const std::string &clusterName )
+    {
+        using io::split;
+        using io::join;
+
+        LabeledEntry entry;
+        auto tokens = split( fEntry.getId());
+        entry._memberId = split( tokens.front(), "|" ).at( 1 );
         entry._label = clusterName;
         entry._sequence = fEntry.getSequence();
         return entry;
@@ -128,10 +143,10 @@ public:
         return _sequence;
     }
 
-    template< typename Sequence >
+    template<typename Sequence>
     void setSequence( Sequence &&sequence )
     {
-        _sequence = std::forward<Sequence>(sequence);
+        _sequence = std::forward<Sequence>( sequence );
     }
 
     static std::vector<LabeledEntry>
@@ -165,6 +180,18 @@ public:
     }
 
     static std::vector<LabeledEntry>
+    fasta2LabeledEntries_FILES1( const std::map<std::string, std::vector<FastaEntry >> &fastaEntries )
+    {
+        std::vector<LabeledEntry> entries;
+        for (const auto &[clusterName, fEntries] : fastaEntries)
+            std::transform( fEntries.cbegin(), fEntries.cend(),
+                            std::back_inserter( entries ), [&]( const auto &fi ) {
+                        return from_fasta_FILES1( fi, clusterName );
+                    } );
+        return entries;
+    }
+
+    static std::vector<LabeledEntry>
     fasta2LabeledEntries_DEEPLOC_LOCATION( const std::vector<FastaEntry> &fastaEntries )
     {
         std::vector<LabeledEntry> entries;
@@ -193,6 +220,8 @@ public:
                 return fasta2LabeledEntries_PSORTDB( FastaEntry::readFasta( input ));
             case DBFormatProcessor::TargetP:
                 return fasta2LabeledEntries_TARGETP( FastaEntry::readFastaGroupByFilename( input ));
+            case DBFormatProcessor::Files1:
+                return fasta2LabeledEntries_FILES1( FastaEntry::readFastaGroupByFilename( input ));
             case DBFormatProcessor::DeepLoc_Location:
                 return fasta2LabeledEntries_DEEPLOC_LOCATION( FastaEntry::readFasta( input ));
             case DBFormatProcessor::DeepLoc_Solubility:
