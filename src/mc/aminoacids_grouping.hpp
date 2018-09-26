@@ -93,6 +93,31 @@ using SupportedAAGrouping  = AAGroupingList<
         AAGrouping_OFER15
 >;
 
+/**
+ * http://prowl.rockefeller.edu/aainfo/struct.htm
+ * Amino Acids Mass
+ * A: 71.079
+ * R: 156.188
+ * N: 114.104
+ * D: 115.089
+ * C: 103.145
+ * Q: 128.131
+ * E: 129.116
+ * G: 57.052
+ * H: 137.141
+ * I: 113.160
+ * L: 113.160
+ * K: 128.17
+ * M: 131.199
+ * F: 147.177
+ * P: 97.117
+ * S: 87.078
+ * T: 101.105
+ * W: 186.213
+ * Y: 163.176
+ * V: 99.133
+ */
+
 
 
 #endif //MARKOVIAN_FEATURES_AMINOACIDS_GROUPING_HPP
