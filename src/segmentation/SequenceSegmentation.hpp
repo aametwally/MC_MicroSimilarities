@@ -1,0 +1,14 @@
+//
+// Created by asem on 30/10/18.
+//
+
+#ifndef MARKOVIAN_FEATURES_SEQUENCESEGMENTATION_H
+#define MARKOVIAN_FEATURES_SEQUENCESEGMENTATION_H
+
+
+class SequenceSegmentation {
+
+};
+
+
+#endif //MARKOVIAN_FEATURES_SEQUENCESEGMENTATION_H

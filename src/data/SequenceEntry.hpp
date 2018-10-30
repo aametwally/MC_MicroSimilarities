@@ -6,9 +6,9 @@
 #define MARKOVIAN_FEATURES_SEQUENCEENTRY_HPP
 
 #include <experimental/filesystem>
-
-#include "common.hpp"
 #include "aminoacids_grouping.hpp"
+#include "common.hpp"
+
 
 template<typename T>
 class SequenceEntry

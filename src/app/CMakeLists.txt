@@ -1,105 +1,30 @@
 ## Dependencies
+find_package( dlib )
 
-set( COMMON_INCLUDE_DIRECTORIES
-        ../mc
-        ../report
-        ../data
-        ../features )
-
-set( MC_SOURCE_FILES
-        ../mc/Selection.cpp
-        ../mc/AbstractMC.cpp
-        ../mc/AbstractClassifier.cpp
-        ../mc/MCKmersClassifier.cpp
-        ../mc/MCPropensityClassifier.cpp
-        ../mc/MacroSimilarityClassifier.cpp
-        ../mc/MicroSimilarityVotingClassifier.cpp
-        ../mc/KNNConfusionMC.cpp
-        ../mc/KNNMCParameters.cpp
-        ../mc/KNNModel.cpp
-        ../mc/LSMC.cpp
-        ../mc/MC.cpp
-        ../mc/Pipeline.cpp
-        ../mc/SVMConfusionMC.cpp
-        ../mc/SVMMCParameters.cpp
-        ../mc/SVMModel.cpp
-        ../mc/ZYMC.cpp
-        ../report/ConfusionMatrix.cpp
-        ../report/CrossValidationStatistics.cpp
-        ../report/EnsembleCrossValidation.cpp )
+set( INCLUDES ../report ../mc ../features ../data ../segmentation ${dlib_INCLUDE_DIRS})
 
 
-set( MC_DETAILS_TEMPLATE_FILES
-        ../mc/AbstractMC.hpp
-        ../mc/MCKmersClassifier.hpp
-        ../mc/AbstractClassifier.hpp
-        ../mc/MCPropensityClassifier.hpp
-        ../mc/MacroSimilarityClassifier.hpp
-        ../mc/MicroSimilarityVotingClassifier.hpp
-        ../mc/KNNConfusionMC.hpp
-        ../mc/KNNMCParameters.hpp
-        ../mc/KNNModel.hpp
-        ../mc/LSMC.hpp
-        ../mc/MC.hpp
-        ../mc/Pipeline.hpp
-        ../mc/SVMConfusionMC.hpp
-        ../mc/SVMMCParameters.hpp
-        ../mc/SVMModel.hpp
-        ../mc/ZYMC.hpp
-        ../mc/MLConfusedMC.hpp)
 
-set( COMMON_INCLUDES
-        ../mc/common.hpp
-        ../report/Timers.hpp
-        ../data/SequenceEntry.hpp
-        ../data/FastaEntry.hpp
-        ../data/LabeledEntry.hpp
-        ../report/ConfusionMatrix.hpp
-        ../mc/SimilarityMetrics.hpp
-        ../mc/aminoacids_grouping.hpp
-        ../report/CrossValidationStatistics.hpp
-        ../report/EnsembleCrossValidation.hpp
-        ../report/crossvalidation.hpp
-        ../mc/Pipeline.hpp
-        ../mc/Series.hpp
-        ../mc/VariantGenerator.hpp
-        ../data/dlib_utilities.hpp
-        ../features/FeatureScoreAUC.hpp
-        ../mc/FeatureScoringPipeline.hpp
-        ../mc/Histogram.hpp
-        ../mc/MCDefs.h
-        ../mc/Selection.hpp)
+set( LIBS ${MC_LIB} )
 
 add_definitions(-ftemplate-backtrace-limit=0)
 
-find_package( dlib )
-#message( ${dlib_LIBS} )
 ### Generate the MC Pipeline executable
-add_executable( MC_pipeline ${COMMON_INCLUDES} ${MC_SOURCE_FILES} ${MC_DETAILS_TEMPLATE_FILES} MC_pipeline.cpp)
-target_include_directories( MC_pipeline PRIVATE
-        ${CMAKE_SOURCE_DIR}/src/include
-        ${COMMON_INCLUDE_DIRECTORIES}
-        ${dlib_INCLUDE_DIRS}  )
-
-target_link_libraries( MC_pipeline PRIVATE fmt-header-only stdc++fs dlib::dlib )
+add_executable( MC_pipeline  MC_pipeline.cpp )
+target_include_directories( MC_pipeline PRIVATE ${INCLUDES} ${CMAKE_SOURCE_DIR}/src/include )
+target_link_libraries( MC_pipeline PRIVATE ${LIBS} fmt-header-only stdc++fs )
 target_compile_features( MC_pipeline PRIVATE cxx_std_17)
 
 ### Generate the feature scoring executable
-add_executable( markovian_features_scoring  ${COMMON_INCLUDES}  ${MC_SOURCE_FILES}
-        ${MC_DETAILS_TEMPLATE_FILES} markovian_features_analysis.cpp ../mc/AbstractMC.cpp)
-target_include_directories( markovian_features_scoring PRIVATE
-        ${CMAKE_SOURCE_DIR}/src/include
-        ${COMMON_INCLUDE_DIRECTORIES}
-        ${dlib_INCLUDE_DIRS} )
-target_link_libraries( markovian_features_scoring PRIVATE fmt-header-only stdc++fs  dlib::dlib )
+add_executable( markovian_features_scoring  markovian_features_analysis.cpp )
+target_include_directories( markovian_features_scoring PRIVATE ${INCLUDES} ${CMAKE_SOURCE_DIR}/src/include )
+target_link_libraries( markovian_features_scoring PRIVATE  ${LIBS} fmt-header-only stdc++fs  )
 target_compile_features( markovian_features_scoring PRIVATE cxx_std_17 )
 
 ### Confusion Matrix Test
-add_executable( confusionMatrix  ${COMMON_INCLUDES} confusionMatrix.cpp ../mc/MCFeatures.cpp ../mc/RangedOrderMC.cpp)
-target_include_directories( confusionMatrix PRIVATE
-        ${CMAKE_SOURCE_DIR}/src/include
-        ${COMMON_INCLUDE_DIRECTORIES} )
-target_link_libraries( confusionMatrix PRIVATE fmt-header-only  )
+add_executable( confusionMatrix confusionMatrix.cpp )
+target_include_directories( confusionMatrix PRIVATE ${INCLUDES} ${CMAKE_SOURCE_DIR}/src/include )
+target_link_libraries( confusionMatrix PRIVATE  ${LIBS} fmt-header-only  )
 target_compile_features( confusionMatrix PRIVATE cxx_std_17)
 
 

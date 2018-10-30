@@ -5,6 +5,8 @@
 #ifndef MARKOVIAN_FEATURES_ENSEMBLECROSSVALIDATION_HPP
 #define MARKOVIAN_FEATURES_ENSEMBLECROSSVALIDATION_HPP
 
+#include "SimilarityMetrics.hpp"
+
 #include "CrossValidationStatistics.hpp"
 #include "LabeledEntry.hpp"
 #include "FeatureScoreAUC.hpp"
@@ -34,7 +36,7 @@ public:
     {
         assert( k >= 0 && k < _k );
         assert( _actualLabels.find( id ) != _actualLabels.cend());
-        _predictions[k][classifier].emplace_back( id, predictions );
+        _predictions[k][classifier].emplace_back( id, std::move( predictions ));
     }
 
     void countInstance( FoldID k, ClassifierLabel classifier, ItemID id, ScoredLabels predictions, Label label )
@@ -42,7 +44,7 @@ public:
         assert( _actualLabels.at( id ) == label );
         assert( k >= 0 && k < _k );
         assert( _actualLabels.find( id ) != _actualLabels.cend());
-        _predictions[k][classifier].emplace_back( id, predictions );
+        _predictions[k][classifier].emplace_back( id, std::move( predictions ));
     }
 
 

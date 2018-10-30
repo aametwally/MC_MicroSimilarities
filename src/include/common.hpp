@@ -12,6 +12,7 @@
 #include <set>
 #include <tuple>
 #include <list>
+#include <string_view>
 
 // STL streaming
 #include <iostream>
@@ -25,9 +26,10 @@
 #include <functional>
 #include <cassert>
 #include <random>
+#include <memory>
+#include <chrono>
 
 #include <fmt/format.h>
-#include <chrono>
 
 
 template<size_t Base>
@@ -449,7 +451,7 @@ template<typename K, typename V>
 inline std::vector<V> values( const std::unordered_map<K, V> &m )
 {
     std::vector<V> vs;
-    for (auto[k, v] : m)
+    for (auto &[k, v] : m)
         vs.push_back( v );
     return vs;
 };
