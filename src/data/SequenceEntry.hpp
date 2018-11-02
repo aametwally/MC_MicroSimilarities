@@ -66,7 +66,7 @@ public:
         for (const auto &[clusterId, cluster] : clusters)
             if ( clusterSize( cluster ) >= averageClusterSequenceSize * threshold )
             {
-                const auto[subset_, rest_] = subsetRandomSeparation( cluster, percentage );
+                const auto[subset_, rest_] = subsetRandomSeparation( cluster, percentage * cluster.size() );
                 subset.insert( subset.end(), subset_.cbegin(), subset_.cend());
                 rest.insert( rest.end(), rest_.cbegin(), rest_.cend());
             }
@@ -88,7 +88,7 @@ public:
         for (const auto &[clusterId, cluster] : clusters)
             if ( cluster.size() >= averageClusterMembers * threshold )
             {
-                const auto[subset_, rest_] = subsetRandomSeparation( cluster, percentage );
+                const auto[subset_, rest_] = subsetRandomSeparation( cluster, percentage * cluster.size());
                 subset.insert( subset.end(), subset_.cbegin(), subset_.cend());
                 rest.insert( rest.end(), rest_.cbegin(), rest_.cend());
             }

@@ -246,7 +246,7 @@ public:
             [ids, queries, qLabels] = unzip( folds.at( i ));
             const auto
             [selection, trained] = featureSelection( trainingClusters );
-            const BackboneProfiles background = AbstractModel::backgroundProfiles(
+            const BackboneProfiles background = AbstractModel::backgroundProfilesSampled(
                     trainingClusters, _modelTrainer, selection );
             for ( auto &classifier : classifiers )
             {
