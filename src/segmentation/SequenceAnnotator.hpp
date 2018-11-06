@@ -76,10 +76,15 @@ public:
 
     class BacktraceGraph
     {
+        using BacktraceLabel = bool;
+        static constexpr BacktraceLabel horizontal = false;
+        static constexpr BacktraceLabel vertical = true;
+        using BacktraceRow = std::vector<BacktraceLabel>;
+        using BacktraceBuffer = std::vector< BacktraceRow >;
     public:
-        explicit BacktraceGraph( size_t columns , size_t maxSegments )
+        explicit BacktraceGraph( size_t columns , size_t rows )
         {
-            _paths = std::vector<std::vector<bool >>( maxSegments , std::vector<bool>( columns , false ));
+            _paths = BacktraceBuffer( rows , BacktraceRow( columns , horizontal ));
             assert( nRows() > 0 );
             assert( nColumns() > 0 );
         }
@@ -97,19 +102,19 @@ public:
         inline void setHorizontal( size_t row , size_t column )
         {
             assert( row < _paths.size() && column < _paths.front().size());
-            _paths[row][column] = true;
+            _paths[row][column] = horizontal;
         }
 
         inline void setVertical( size_t row , size_t column )
         {
             assert( row < _paths.size() && column < _paths.front().size());
-            _paths[row][column] = false;
+            _paths[row][column] = vertical;
         }
 
         inline bool isHorizontal( size_t row , size_t column ) const
         {
             assert( row < _paths.size() && column < _paths.front().size());
-            return _paths[row][column];
+            return _paths[row][column] == horizontal;
         }
 
         inline bool isVertical( size_t row , size_t column ) const
@@ -117,16 +122,18 @@ public:
             return !isHorizontal( row , column );
         }
 
-        std::list<std::pair<size_t , size_t >> getBacktrace() const
+        std::list<std::pair<size_t , size_t >> getBacktrace( std::optional<int> row = std::nullopt ) const
         {
             std::list<std::pair<size_t , size_t >> horizontalPaths;
             std::pair<size_t , size_t> currentPath;
+
             currentPath.second = nColumns() - 1;
-            for ( int row = nRows() - 1; row >= 0; --row )
+
+            for ( int _row = row.value_or( nRows() - 1 ); row >= 0; --_row )
             {
                 for ( int column = currentPath.second; column >= 0; --column )
                 {
-                    if ( isVertical( row , column ))
+                    if ( isVertical( _row , column ))
                     {
                         currentPath.first = column;
                         horizontalPaths.push_front( currentPath );
@@ -139,12 +146,12 @@ public:
         }
 
     private:
-        std::vector<std::vector<bool >> _paths;
+        BacktraceBuffer _paths;
     };
 
     inline size_t nColumns() const
     {
-        return _sequence.size();
+        return _sequence.size() + 1;
     }
 
     inline size_t nLabels() const
@@ -174,10 +181,10 @@ protected:
     {
         std::vector<ForwardEdge> forwardEdges( nColumns() , ForwardEdge( nLabels()));
 
-        forwardEdges.front() = _scores.front();
+        forwardEdges.front().reset();
 
         for ( auto i = 1; i < nColumns(); ++i )
-            forwardEdges[i] = forwardEdges[i - 1] + _scores[i];
+            forwardEdges[i] = forwardEdges[i - 1] + _scores[i - 1];
 
         for ( auto i = 0; i < nColumns(); ++i )
             backtrace.setHorizontal( 0 , i );
@@ -193,17 +200,18 @@ protected:
     {
         assert( row > 0 );
 
-        ForwardEdge vertical = currentLine.front();
+        ForwardEdge up = currentLine.front();
         for ( auto column = 0; column < nColumns() - 1; ++column )
         {
-            auto[maxVLane , maxVLaneValue] = vertical.getMaxLane();
-            auto[maxHLane , maxHLaneValue] = currentLine[column].getMaxLane();
+            auto &left = currentLine[column];
+            auto[maxVLane , maxVLaneValue] = up.getMaxLane();
+            auto[maxHLane , maxHLaneValue] = left.getMaxLane();
 
-            vertical = currentLine[column + 1];
+            up = currentLine[column + 1];
 
             if ( maxVLaneValue >= maxHLaneValue )
             {
-                vMultiplexes[row - 1][column] = maxVLane;
+                vMultiplexes[row][column] = maxVLane;
                 backtrace.setVertical( row , column );
                 currentLine[column + 1].reset( maxVLaneValue );
                 currentLine[column + 1] += _scores[column + 1];
