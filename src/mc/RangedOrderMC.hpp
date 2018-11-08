@@ -116,7 +116,7 @@ namespace MC {
                 double p = probability( query.substr( 0, o ), query[o] );
                 acc += std::log( p );
             }
-            for (auto i = 0; i < int64_t( query.size()) - maxOrder() - 1; ++i)
+            for (auto i = 0; i < int64_t( query.size()) - maxOrder()  ; ++i)
             {
                 double p = probability( query.substr( i, maxOrder()), query[i + maxOrder()] );
                 acc += std::log( p );

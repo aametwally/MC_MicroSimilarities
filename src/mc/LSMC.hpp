@@ -67,7 +67,7 @@ namespace MC {
                 propensities.push_back( std::log( p ));;
             }
 
-            for (auto i = 0; i < int64_t( query.size()) - this->_order - 1; ++i)
+            for (auto i = 0; i < int64_t( query.size()) - this->_order  ; ++i)
             {
                 double p = this->probability( query.substr( i, this->_order ), query[i + this->_order] );
                 propensities.push_back( std::log( p ));;

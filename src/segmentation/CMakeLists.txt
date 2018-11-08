@@ -11,5 +11,3 @@ add_library( ${SEGMENTATION_LIB} STATIC ${SEGMENTATION_INCLUDES} ${SEGMENTATION_
 target_include_directories( ${SEGMENTATION_LIB} PUBLIC ../include  )
 target_link_libraries( ${SEGMENTATION_LIB} PUBLIC fmt-header-only stdc++fs )
 target_compile_features( ${SEGMENTATION_LIB} PUBLIC cxx_std_17)
-
-set( SEGMENTATION_LIB ${SEGMENTATION_LIB} PARENT_SCOPE )

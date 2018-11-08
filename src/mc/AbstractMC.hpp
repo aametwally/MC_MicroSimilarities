@@ -135,7 +135,7 @@ public:
             double p = probability( query.substr( 0 , distance ) , query[distance] );
             pVector.push_back( std::log( p ));
         }
-        for ( int i = 0; i < int( query.size()) - maxOrder - 1; ++i )
+        for ( int i = 0; i < int( query.size()) - maxOrder ; ++i )
         {
             double p = probability( query.substr( i , maxOrder ) , query[i + maxOrder] );
             pVector.push_back( std::log( p ));
