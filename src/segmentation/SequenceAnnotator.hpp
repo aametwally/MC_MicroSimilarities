@@ -91,19 +91,24 @@ class SequenceAnnotator
 
 public:
     explicit SequenceAnnotator( std::string_view sequence , std::vector<std::vector<double >> &&scores )
-            : _sequence( sequence ) , _scores( center( transpose( std::move( scores ))))
+            : _sequence( sequence ) , _scores( normalize( transpose( std::move( scores ))))
     {
         assert( _sequence.size() == _scores.size());
         size_t k = _scores.front().size();
         assert( std::all_of( _scores.cbegin() , _scores.cend() , [k]( const auto &v ) { return v.size() == k; } ));
     }
 
-    static std::vector<std::vector<double>> center( std::vector<std::vector<double >> &&scores )
+    static std::vector<std::vector<double>> normalize( std::vector<std::vector<double >> &&scores )
     {
         for( auto &v : scores )
         {
-            double sum = std::accumulate( v.cbegin() , v.cend() , double(0));
-            for( auto &s : v ) s -= sum;
+            const double mean = std::accumulate( v.cbegin() , v.cend() , double(0)) / v.size();
+            const double var = std::accumulate( v.cbegin() , v.cend() , double(0) ,
+                    [mean]( double acc , double val ){
+                return acc + (val - mean) * (val - mean);
+            }) / v.size();
+            const double std = std::sqrt( var );
+            for( auto &s : v ) s = ( s - mean ) / std;
         }
         return scores;
     }
@@ -298,7 +303,7 @@ protected:
         assert( row > 0 );
         const size_t maxSegments = backtrace.nRows();
         const size_t len = backtrace.nColumns();
-        const double penalty = - std::log( maxSegments );
+        const double penalty = 0 ;
 
         Node up = currentLine.front();
 

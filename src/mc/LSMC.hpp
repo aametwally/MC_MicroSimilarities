@@ -63,13 +63,13 @@ namespace MC {
             propensities.push_back( std::log( this->_histograms.at( 0 ).at( 0 ).at( Base::_char2ID( query.front()))));
             for (Order distance = 1; distance < this->_order && distance < query.size(); ++distance)
             {
-                double p = this->probability( query.substr( 0, distance ), query[distance] );
+                double p = this->probability( query.substr( 0 , distance ) , query[distance] );
                 propensities.push_back( std::log( p ));;
             }
 
             for (auto i = 0; i < int64_t( query.size()) - this->_order  ; ++i)
             {
-                double p = this->probability( query.substr( i, this->_order ), query[i + this->_order] );
+                double p = this->probability( query.substr( i , this->_order ) , query[i + this->_order] );
                 propensities.push_back( std::log( p ));;
             }
 //            for( auto p : propensities )

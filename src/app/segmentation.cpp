@@ -78,8 +78,8 @@ public:
         }();
 
 
-        std::vector< std::string > labelsInfo;
-        for ( auto &l : labels ) labelsInfo.push_back(fmt::format( "{}({})" , l , groupedEntries.at( l ).size()));
+        std::vector<std::string> labelsInfo;
+        for ( auto &l : labels ) labelsInfo.push_back( fmt::format( "{}({})" , l , groupedEntries.at( l ).size()));
         fmt::print( "[Clusters:{}][{}]\n" ,
                     groupedEntries.size() ,
                     io::join( labelsInfo , "|" ));
@@ -94,18 +94,32 @@ public:
 
             for ( auto &s : sequences )
             {
-                std::vector<std::vector<double >> scores;
+                std::vector<std::vector<double >> scoresForward;
+                std::vector<std::vector<double >> scoresBackward;
+
 
                 for ( auto &[l , profile] : profiles )
-                    scores.emplace_back( std::move( profile->propensityVector( s )));
+                {
+                    auto forward = profile->forwardPropensityVector( s );
+                    auto backward = profile->backwardPropensityVector( s );
 
-                SequenceAnnotator annotator( std::string_view( s ) , std::move( scores ));
+                    scoresForward.emplace_back( std::move( forward ));
+                    scoresBackward.emplace_back( std::move( backward ));
+                }
+
+                for ( auto i = 0; i < scoresForward.size(); ++i )
+                    for ( auto j = 0; j < scoresForward.front().size(); ++j )
+                    {
+                        scoresForward[i][j] += scoresBackward[i][j];
+                    }
+
+                SequenceAnnotator annotator( std::string_view( s ) , std::move( scoresForward ));
 
                 auto annotations = annotator.annotate( 8 );
 
-                fmt::print("{}\n",SequenceAnnotation::toString( annotations , fmt::format("Label={}",labelIdx))) ;
+                fmt::print( "{}\n" , SequenceAnnotation::toString( annotations , fmt::format( "Label={}" , labelIdx )));
 
-                fmt::print("\n");
+                fmt::print( "\n" );
             }
             ++labelIdx;
         }

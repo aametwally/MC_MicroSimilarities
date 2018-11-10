@@ -122,7 +122,15 @@ public:
         _normalize();
     }
 
-    virtual std::vector<double> propensityVector( std::string_view query ) const
+    virtual std::vector<double> backwardPropensityVector( std::string_view query ) const
+    {
+        std::string rev( query.crbegin() , query.crend());
+        auto propensityVector = forwardPropensityVector( rev );
+        std::reverse( propensityVector.begin() , propensityVector.end());
+        return propensityVector;
+    }
+
+    virtual std::vector<double> forwardPropensityVector( std::string_view query ) const
     {
         auto maxOrder = std::max_element( _histograms.cbegin() , _histograms.cend() ,
                 []( const auto &p1 , const auto &p2 ){ return p1.first < p2.first;})->first;
@@ -147,6 +155,7 @@ public:
     }
 
     virtual double probability( std::string_view , char ) const = 0;
+
 
     virtual double propensity( std::string_view ) const = 0;
 

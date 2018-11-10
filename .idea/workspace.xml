@@ -32,12 +32,12 @@
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true" buildAllGenerated="true">
     <generated>
       <config projectName="markovian_features" targetName="report_lib" />
+      <config projectName="markovian_features" targetName="markovian_features_scoring" />
       <config projectName="markovian_features" targetName="segmentation" />
       <config projectName="markovian_features" targetName="confusionMatrix" />
-      <config projectName="markovian_features" targetName="mc_lib" />
       <config projectName="markovian_features" targetName="segmentation_lib" />
       <config projectName="markovian_features" targetName="MC_pipeline" />
-      <config projectName="markovian_features" targetName="markovian_features_scoring" />
+      <config projectName="markovian_features" targetName="mc_lib" />
       <config projectName="markovian_features" targetName="fmt" />
     </generated>
   </component>
@@ -63,15 +63,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="029ea99b-3622-4c30-a791-005fa27d1bef" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/app/segmentation.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/segmentation.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/segmentation.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/AbstractMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/AbstractMC.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/LSMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/LSMC.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/MC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/MC.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/mc/RangedOrderMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/RangedOrderMC.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mc/ZYMC.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/mc/ZYMC.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/segmentation/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/segmentation/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/segmentation/SequenceAnnotator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/segmentation/SequenceAnnotator.hpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -100,10 +97,10 @@
           <entry key="project.open.time.14" value="1" />
           <entry key="project.open.time.18" value="2" />
           <entry key="project.open.time.2" value="1" />
-          <entry key="project.open.time.20" value="2" />
+          <entry key="project.open.time.20" value="3" />
           <entry key="project.open.time.3" value="1" />
           <entry key="project.open.time.4" value="2" />
-          <entry key="project.opened" value="9" />
+          <entry key="project.opened" value="10" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -111,7 +108,7 @@
           <entry key="MC_pipeline (disassembly)" value="1" />
           <entry key="cpp" value="13" />
           <entry key="h" value="4" />
-          <entry key="hpp" value="42" />
+          <entry key="hpp" value="53" />
           <entry key="segmentation (disassembly)" value="9" />
           <entry key="string_view" value="2" />
           <entry key="txt" value="24" />
@@ -121,22 +118,22 @@
         <counts>
           <entry key="CMakeLists.txt" value="24" />
           <entry key="Disassembly" value="10" />
-          <entry key="ObjectiveC" value="59" />
+          <entry key="ObjectiveC" value="70" />
           <entry key="Scratch" value="2" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="cpp" value="1129" />
+          <entry key="cpp" value="1480" />
           <entry key="dummy" value="10" />
-          <entry key="hpp" value="11681" />
+          <entry key="hpp" value="13263" />
           <entry key="txt" value="1235" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="CMakeLists.txt" value="1235" />
-          <entry key="ObjectiveC" value="12776" />
+          <entry key="ObjectiveC" value="14709" />
           <entry key="PLAIN_TEXT" value="10" />
           <entry key="Scratch" value="34" />
         </counts>
@@ -149,31 +146,10 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/app/MC_pipeline.cpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="75">
-              <caret line="5" column="37" selection-start-line="5" selection-start-column="37" selection-end-line="5" selection-end-column="37" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/mc/Pipeline.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="375">
-              <caret line="300" column="33" selection-start-line="300" selection-start-column="33" selection-end-line="300" selection-end-column="33" />
-              <folding>
-                <element signature="e#11531#11573#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/app/segmentation.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="330">
-              <caret line="103" column="56" selection-start-line="103" selection-start-column="56" selection-end-line="103" selection-end-column="56" />
+            <state relative-caret-position="585">
+              <caret line="115" column="93" selection-start-line="115" selection-start-column="93" selection-end-line="115" selection-end-column="93" />
               <folding>
                 <element signature="e#40#63#0" expanded="true" />
               </folding>
@@ -184,8 +160,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/segmentation/SequenceAnnotator.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
-              <caret line="300" column="54" selection-start-line="300" selection-start-column="54" selection-end-line="300" selection-end-column="54" />
+            <state relative-caret-position="-3555">
+              <caret line="72" selection-start-line="72" selection-end-line="72" />
             </state>
           </provider>
         </entry>
@@ -193,8 +169,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/mc/AbstractMC.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="393">
-              <caret line="143" selection-start-line="143" selection-end-line="143" />
+            <state relative-caret-position="93">
+              <caret line="244" lean-forward="true" selection-start-line="244" selection-end-line="244" />
               <folding>
                 <element signature="e#128#149#0" expanded="true" />
               </folding>
@@ -203,28 +179,10 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/mc/LSMC.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1035">
-              <caret line="69" column="72" selection-start-line="69" selection-start-column="72" selection-end-line="69" selection-end-column="72" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/mc/MC.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1620">
-              <caret line="108" column="64" selection-start-line="108" selection-start-column="64" selection-end-line="108" selection-end-column="64" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/mc/RangedOrderMC.hpp">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1770">
-              <caret line="118" column="70" selection-start-line="118" selection-start-column="70" selection-end-line="118" selection-end-column="70" />
+            <state relative-caret-position="1078">
+              <caret line="78" column="62" selection-start-line="78" selection-start-column="62" selection-end-line="78" selection-end-column="62" />
             </state>
           </provider>
         </entry>
@@ -232,8 +190,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/mc/ZYMC.hpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1755">
-              <caret line="117" column="13" selection-start-line="117" selection-start-column="13" selection-end-line="117" selection-end-column="13" />
+            <state relative-caret-position="675">
+              <caret line="69" column="5" selection-start-line="69" selection-start-column="5" selection-end-line="69" selection-end-column="5" />
             </state>
           </provider>
         </entry>
@@ -336,13 +294,13 @@
         <option value="$APPLICATION_CONFIG_DIR$/scratches/scratch_1.cpp" />
         <option value="$PROJECT_DIR$/src/segmentation/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/src/app/CMakeLists.txt" />
-        <option value="$PROJECT_DIR$/src/mc/LSMC.hpp" />
-        <option value="$PROJECT_DIR$/src/mc/MC.hpp" />
-        <option value="$PROJECT_DIR$/src/mc/RangedOrderMC.hpp" />
-        <option value="$PROJECT_DIR$/src/mc/ZYMC.hpp" />
-        <option value="$PROJECT_DIR$/src/mc/AbstractMC.hpp" />
-        <option value="$PROJECT_DIR$/src/app/segmentation.cpp" />
         <option value="$PROJECT_DIR$/src/segmentation/SequenceAnnotator.hpp" />
+        <option value="$PROJECT_DIR$/src/app/segmentation.cpp" />
+        <option value="$PROJECT_DIR$/src/mc/AbstractMC.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/MC.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/LSMC.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/ZYMC.hpp" />
+        <option value="$PROJECT_DIR$/src/mc/RangedOrderMC.hpp" />
       </list>
     </option>
   </component>
@@ -364,6 +322,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -414,7 +373,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -445,13 +403,13 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Application.segmentation">
+  <component name="RunManager" selected="Application.MC_pipeline">
     <configuration name="Build All" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="markovian_features_scoring" EXPLICIT_BUILD_TARGET_NAME="all">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MC_pipeline" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../datasets/psort-neg-v2 --fformat psort -l [0] -h [7] --model [zymc,romc,rmc,lsmc] --grouping [nogrouping] --criteria [cos] -s [propensity]" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="MC_pipeline" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="MC_pipeline">
+    <configuration name="MC_pipeline" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="$PROJECT_DIR$/../datasets/psort-neg-v2 --fformat psort -l [0] -h [5] --model [zymc] --grouping [nogrouping] --criteria [cos] -s [propensity]" PASS_PARENT_ENVS_2="true" PROJECT_NAME="markovian_features" TARGET_NAME="MC_pipeline" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="markovian_features" RUN_TARGET_NAME="MC_pipeline">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -526,30 +484,31 @@
       <workItem from="1541504517439" duration="6526000" />
       <workItem from="1541580319836" duration="6218000" />
       <workItem from="1541630562078" duration="12475000" />
-      <workItem from="1541695457957" duration="3352000" />
+      <workItem from="1541695457957" duration="5766000" />
+      <workItem from="1541729385688" duration="14205000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="344190000" />
+    <option name="totallyTimeSpent" value="360809000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="57" y="25" width="1311" height="743" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49756098" visible="true" weight="0.23241107" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49756098" visible="true" weight="0.15019763" />
       <window_info id="Structure" order="1" sideWeight="0.502439" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" sideWeight="0.502439" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.38336053" />
       <window_info anchor="bottom" id="Run" order="2" sideWeight="0.47600618" weight="0.42251223" />
-      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.498452" weight="0.3344209" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.498452" weight="0.29363784" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
-      <window_info active="true" anchor="bottom" id="Messages" order="8" sideWeight="0.47523218" visible="true" weight="0.24959217" />
-      <window_info anchor="bottom" id="CMake" order="9" weight="0.31707317" />
+      <window_info anchor="bottom" id="Messages" order="8" sideWeight="0.47523218" weight="0.24959217" />
+      <window_info anchor="bottom" id="CMake" order="9" weight="0.31810766" />
       <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.5247678" side_tool="true" weight="0.4180328" />
       <window_info anchor="bottom" id="Version Control" order="11" weight="0.3295082" />
       <window_info anchor="bottom" id="Terminal" order="12" />
@@ -602,13 +561,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-1136">
           <caret line="41" column="53" selection-start-line="41" selection-start-column="53" selection-end-line="41" selection-end-column="53" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/MCPropensityClassifier.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="256">
-          <caret line="16" selection-start-line="16" selection-end-line="16" />
         </state>
       </provider>
     </entry>
@@ -845,63 +797,70 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/app/MC_pipeline.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
+        <state relative-caret-position="-1662">
           <caret line="5" column="37" selection-start-line="5" selection-start-column="37" selection-end-line="5" selection-end-column="37" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/LSMC.hpp">
+    <entry file="file://$PROJECT_DIR$/src/mc/MCPropensityClassifier.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1035">
-          <caret line="69" column="72" selection-start-line="69" selection-start-column="72" selection-end-line="69" selection-end-column="72" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/MC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1620">
-          <caret line="108" column="64" selection-start-line="108" selection-start-column="64" selection-end-line="108" selection-end-column="64" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/RangedOrderMC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1770">
-          <caret line="118" column="70" selection-start-line="118" selection-start-column="70" selection-end-line="118" selection-end-column="70" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/ZYMC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1755">
-          <caret line="117" column="13" selection-start-line="117" selection-start-column="13" selection-end-line="117" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/mc/AbstractMC.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="393">
-          <caret line="143" selection-start-line="143" selection-end-line="143" />
-          <folding>
-            <element signature="e#128#149#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="526">
+          <caret line="57" column="33" selection-start-line="57" selection-start-column="33" selection-end-line="57" selection-end-column="33" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/mc/Pipeline.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="375">
-          <caret line="300" column="33" selection-start-line="300" selection-start-column="33" selection-end-line="300" selection-end-column="33" />
+        <state relative-caret-position="135">
+          <caret line="317" selection-start-line="317" selection-end-line="317" />
           <folding>
             <element signature="e#11531#11573#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/AbstractMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="93">
+          <caret line="244" lean-forward="true" selection-start-line="244" selection-end-line="244" />
+          <folding>
+            <element signature="e#128#149#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/LSMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="93">
+          <caret line="10" lean-forward="true" selection-start-line="10" selection-end-line="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/MC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1078">
+          <caret line="78" column="62" selection-start-line="78" selection-start-column="62" selection-end-line="78" selection-end-column="62" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/RangedOrderMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-30">
+          <caret line="126" lean-forward="true" selection-start-line="126" selection-end-line="126" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/mc/ZYMC.hpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="675">
+          <caret line="69" column="5" selection-start-line="69" selection-start-column="5" selection-end-line="69" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/app/segmentation.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="103" column="56" selection-start-line="103" selection-start-column="56" selection-end-line="103" selection-end-column="56" />
+        <state relative-caret-position="585">
+          <caret line="115" column="93" selection-start-line="115" selection-start-column="93" selection-end-line="115" selection-end-column="93" />
           <folding>
             <element signature="e#40#63#0" expanded="true" />
           </folding>
@@ -910,8 +869,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/segmentation/SequenceAnnotator.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="300" column="54" selection-start-line="300" selection-start-column="54" selection-end-line="300" selection-end-column="54" />
+        <state relative-caret-position="-3555">
+          <caret line="72" selection-start-line="72" selection-end-line="72" />
         </state>
       </provider>
     </entry>
