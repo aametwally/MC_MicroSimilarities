@@ -25,6 +25,7 @@
 #include "MCFeatures.hpp"
 
 #include "MCPropensityClassifier.hpp"
+#include "MCSegmentationClassifier.hpp"
 #include "MCKmersClassifier.hpp"
 #include "MicroSimilarityVotingClassifier.hpp"
 #include "MacroSimilarityClassifier.hpp"
@@ -34,6 +35,7 @@
 #include "KNNConfusionMC.hpp"
 
 #include "SimilarityMetrics.hpp"
+#include "MCSegmentationClassifier.hpp"
 
 
 namespace MC
@@ -123,6 +125,11 @@ public:
         case ClassificationEnum::Propensity :
         {
             MCPropensityClassifier<Grouping> classifier( targets, background );
+            return classifier.scoredPredictions( queries );
+        }
+        case ClassificationEnum::Segmentation :
+        {
+            MCSegmentationClassifier<Grouping> classifier( targets, background , trainingClusters , _modelTrainer );
             return classifier.scoredPredictions( queries );
         }
         case ClassificationEnum::SVM :

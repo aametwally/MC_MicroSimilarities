@@ -58,7 +58,7 @@ namespace MC {
                     for (const auto &[order, isoKernels] : query->histograms().get())
                         for (const auto &[id, histogram1] : isoKernels)
                         {
-//                                double score = getOr( relevance, order, id, double( 0 ));
+//                                double _score = getOr( relevance, order, id, double( 0 ));
                             auto histogram2 = profile->histogram( order, id );
                             auto hBG = bg->histogram( order, id );
                             if ( histogram2 && hBG )

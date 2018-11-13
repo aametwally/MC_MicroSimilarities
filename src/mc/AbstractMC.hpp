@@ -82,7 +82,6 @@ public:
         return features;
     }
 
-
     template < typename Sequence >
     static inline bool isReducedSequences( const std::vector<Sequence> &sequences )
     {
@@ -122,20 +121,16 @@ public:
         _normalize();
     }
 
-    virtual std::vector<double> backwardPropensityVector( std::string_view query ) const
-    {
-        std::string rev( query.crbegin() , query.crend());
-        auto propensityVector = forwardPropensityVector( rev );
-        std::reverse( propensityVector.begin() , propensityVector.end());
-        return propensityVector;
-    }
-
     virtual std::vector<double> forwardPropensityVector( std::string_view query ) const
     {
         auto maxOrder = std::max_element( _histograms.cbegin() , _histograms.cend() ,
-                []( const auto &p1 , const auto &p2 ){ return p1.first < p2.first;})->first;
+                                          []( const auto &p1 , const auto &p2 )
+                                          {
+                                              return p1.first < p2.first;
+                                          } )->first;
 
-        std::vector< double > pVector; pVector.reserve( query.size() );
+        std::vector<double> pVector;
+        pVector.reserve( query.size());
 
         pVector.push_back( std::log( this->_histograms.at( 0 ).at( 0 ).at( _char2ID( query.front()))));
         for ( Order distance = 1; distance < maxOrder && distance < query.size(); ++distance )
@@ -143,7 +138,7 @@ public:
             double p = probability( query.substr( 0 , distance ) , query[distance] );
             pVector.push_back( std::log( p ));
         }
-        for ( int i = 0; i < int( query.size()) - maxOrder ; ++i )
+        for ( int i = 0; i < int( query.size()) - maxOrder; ++i )
         {
             double p = probability( query.substr( i , maxOrder ) , query[i + maxOrder] );
             pVector.push_back( std::log( p ));
@@ -154,8 +149,35 @@ public:
         return pVector;
     }
 
-    virtual double probability( std::string_view , char ) const = 0;
+    virtual std::vector<double> compensatedPropensityVector( std::string_view query ) const
+    {
+        auto maxOrder = std::max_element( _histograms.cbegin() , _histograms.cend() ,
+                                          []( const auto &p1 , const auto &p2 )
+                                          {
+                                              return p1.first < p2.first;
+                                          } )->first;
 
+        std::vector<double> pVector;
+        pVector.reserve( query.size());
+
+        pVector.push_back( std::log( this->_histograms.at( 0 ).at( 0 ).at( _char2ID( query.front()))));
+        for ( Order distance = 1; distance < maxOrder && distance < query.size(); ++distance )
+        {
+            double p = probability( query.substr( 0 , distance ) , query[distance] );
+            pVector.push_back( std::log( p ) / distance );
+        }
+        for ( int i = 0; i < int( query.size()) - maxOrder; ++i )
+        {
+            double p = probability( query.substr( i , maxOrder ) , query[i + maxOrder] );
+            pVector.push_back( std::log( p ) / maxOrder );
+        }
+
+        assert( pVector.size() == query.size());
+
+        return pVector;
+    }
+
+    virtual double probability( std::string_view , char ) const = 0;
 
     virtual double propensity( std::string_view ) const = 0;
 
@@ -378,9 +400,9 @@ public:
     }
 
 
-    template < typename ModelGenerator >
+    template < typename ModelGenerator , typename Sequence >
     static BackboneProfiles
-    train( const std::map<std::string_view , std::vector<std::string >> &training ,
+    train( const std::map<std::string_view , std::vector<Sequence >> &training ,
            ModelGenerator trainer ,
            std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt )
     {

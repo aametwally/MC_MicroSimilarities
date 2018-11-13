@@ -139,7 +139,7 @@ protected:
         }
 
         for ( Order distance = 1; distance <= _order; ++distance )
-            for ( auto i = 0; i < sequence.size() - distance; ++i )
+            for ( auto i = 0; i + distance < sequence.size()  ; ++i )
                 _incrementInstance( sequence[i] , sequence[i + distance] , distance );
     }
 

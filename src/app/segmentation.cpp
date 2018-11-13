@@ -86,7 +86,7 @@ public:
 
 
         BackboneProfiles profiles = AbstractModel::train( groupedEntries , _modelTrainer , std::nullopt );
-
+        
         size_t labelIdx = 0;
         for ( const auto &[label , sequences] : groupedEntries )
         {
@@ -95,24 +95,13 @@ public:
             for ( auto &s : sequences )
             {
                 std::vector<std::vector<double >> scoresForward;
-                std::vector<std::vector<double >> scoresBackward;
-
 
                 for ( auto &[l , profile] : profiles )
                 {
                     auto forward = profile->forwardPropensityVector( s );
-                    auto backward = profile->backwardPropensityVector( s );
-
                     scoresForward.emplace_back( std::move( forward ));
-                    scoresBackward.emplace_back( std::move( backward ));
                 }
-
-                for ( auto i = 0; i < scoresForward.size(); ++i )
-                    for ( auto j = 0; j < scoresForward.front().size(); ++j )
-                    {
-                        scoresForward[i][j] += scoresBackward[i][j];
-                    }
-
+                
                 SequenceAnnotator annotator( std::string_view( s ) , std::move( scoresForward ));
 
                 auto annotations = annotator.annotate( 8 );

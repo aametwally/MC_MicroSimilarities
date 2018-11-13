@@ -7,6 +7,7 @@ set( MC_SOURCES
         AbstractClassifier.cpp
         MCKmersClassifier.cpp
         MCPropensityClassifier.cpp
+        MCSegmentationClassifier.cpp
         MacroSimilarityClassifier.cpp
         MicroSimilarityVotingClassifier.cpp
         KNNConfusionMC.cpp
@@ -26,6 +27,7 @@ set( MC_DETAILS_TEMPLATE_FILES
         MCKmersClassifier.hpp
         AbstractClassifier.hpp
         MCPropensityClassifier.hpp
+        MCSegmentationClassifier.hpp
         MacroSimilarityClassifier.hpp
         MicroSimilarityVotingClassifier.hpp
         KNNConfusionMC.hpp

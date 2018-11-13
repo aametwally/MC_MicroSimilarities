@@ -14,12 +14,66 @@ struct SequenceAnnotation
 
     struct Segment
     {
-        explicit Segment( std::string_view subsequence , size_t label , double score )
-                : subsequence( subsequence ) , label( label ) , score( score ) {}
+        template < typename IdentitiesMapType >
+        explicit Segment( std::string_view subsequence , size_t label , double score , IdentitiesMapType &&identites )
+                : _subsequence( subsequence ) , _label( label ) ,
+                  _score( score ) , _counter( std::forward<IdentitiesMapType>( identites )) {}
 
-        std::string_view subsequence;
-        size_t label;
-        double score;
+        inline std::string_view getSubsequence() const
+        {
+            return _subsequence;
+        }
+
+        inline size_t size() const
+        {
+            return _subsequence.size();
+        }
+
+        inline bool empty() const
+        {
+            return _subsequence.empty();
+        }
+
+        inline size_t getLabel() const
+        {
+            return _label;
+        }
+
+        inline double getIdentity( std::optional<size_t> label = std::nullopt ) const
+        {
+            auto it = _counter.find( label.value_or( _label ));
+            if ( it != _counter.cend())
+                return it->second / double( size());
+            else return 0.0;
+        }
+
+        inline double getScore() const
+        {
+            return _score;
+        }
+
+        inline double getEntropy() const
+        {
+            return std::accumulate( _counter.cbegin() , _counter.cend() ,
+                                    double( 0 ) ,
+                                    [=]( double acc ,
+                                         const std::pair<size_t , size_t> &count )
+                                    {
+                                        double p = count.second / double( size());
+                                        return acc - p * std::log2( p );
+                                    } );
+        }
+
+        const std::map<size_t , size_t> &getCounter() const
+        {
+            return _counter;
+        }
+
+    private:
+        std::string_view _subsequence;
+        size_t _label;
+        std::map<size_t , size_t> _counter;
+        double _score;
     };
 
     std::string toString( std::string_view prefix = "" ) const
@@ -28,9 +82,9 @@ struct SequenceAnnotation
         ss << prefix;
         std::vector<std::string> segmented;
 
-        for ( const auto &segment : segments )
+        for ( const auto &segment : _segments )
             segmented.push_back( io::join2string(
-                    std::vector<size_t>( segment.subsequence.size() , segment.label ) , "." ));
+                    std::vector<size_t>( segment.size() , segment.getLabel()) , "." ));
 
         ss << io::join( segmented , "|" );
         return std::move( ss.str());
@@ -40,19 +94,20 @@ struct SequenceAnnotation
     {
         std::stringstream ss;
         ss << prefix;
-        for ( const auto &segment: segments )
-            ss << fmt::format( "[C{}:L={}]" , segment.label , segment.subsequence.size());
+        for ( const auto &segment: _segments )
+            ss << fmt::format( "[C{},L={},I={:.2f},E={:.2f}]" ,
+                               segment.getLabel() , segment.size() , segment.getIdentity() , segment.getEntropy());
         return ss.str();
     }
 
     std::pair<size_t , double> topLabel() const
     {
         std::map<size_t , double> acc;
-        for ( auto &s : segments )
+        for ( auto &s : _segments )
         {
-            assert( !s.subsequence.empty());
-            const size_t n = s.subsequence.size();
-            acc[s.label] += ( s.score );
+            assert( !s.empty());
+            const size_t n = s.size();
+            acc[s.getLabel()] += (n);
         }
         auto max = std::max_element( acc.cbegin() , acc.cend() , []( const auto &p1 , const auto &p2 )
         {
@@ -68,21 +123,71 @@ struct SequenceAnnotation
         double max = -inf;
         for ( auto annotation : annotations )
         {
-            max = std::max( max , annotation.score );
+            max = std::max( max , annotation._score );
         }
 
         for ( const auto &annotation : annotations )
         {
             auto[label , score] = annotation.topLabel();
-            char flag = (annotation.score == max) ? '*' : ' ';
+            char flag = (annotation._score == max) ? '*' : ' ';
             ss << fmt::format( "{}\n" ,
-                               annotation.toStringCompact( fmt::format( "{},top={},{}" , prefix , label , flag )));
+                               annotation.toStringCompact( fmt::format( "{},ΣE={:.2f},ΣI={:.2f},top={}:\n{}" ,
+                                                                        prefix , annotation.totalEntropy() ,
+                                                                        annotation.totalIdentity() ,
+                                                                        label , flag )));
         }
         return ss.str();
     }
 
-    std::vector<Segment> segments;
-    double score;
+    size_t size() const
+    {
+        return std::accumulate( _segments.cbegin() , _segments.cend() , size_t( 0 ) ,
+                                []( size_t acc , const auto &s )
+                                {
+                                    return acc + s.size();
+                                } );
+    }
+
+    double totalEntropy() const
+    {
+        auto n = size();
+        return std::accumulate( _segments.cbegin() , _segments.cend() , double( 0 ) ,
+                                [=]( double acc , const Segment &s )
+                                {
+                                    return acc + (double( s.size()) / n) * s.getEntropy();
+                                } );
+    }
+
+    double totalIdentity() const
+    {
+        auto n = size();
+        return std::accumulate( _segments.cbegin() , _segments.cend() , double( 0 ) ,
+                                [=]( double acc , const Segment &s )
+                                {
+                                    return acc + (double( s.size()) / n) * s.getIdentity();
+                                } );
+    }
+
+    const std::vector<Segment> &getSegments() const
+    {
+        return _segments;
+    }
+
+    template < typename IdentitiesMapType >
+    void addSegment( std::string_view seq , size_t label , double score , IdentitiesMapType &&identities )
+    {
+        _segments.emplace_back( seq , label , score , std::forward<IdentitiesMapType>( identities ));
+        _score += score;
+    }
+
+    double getScore() const
+    {
+        return _score;
+    }
+
+private:
+    std::vector<Segment> _segments;
+    double _score;
 };
 
 class SequenceAnnotator
@@ -91,24 +196,27 @@ class SequenceAnnotator
 
 public:
     explicit SequenceAnnotator( std::string_view sequence , std::vector<std::vector<double >> &&scores )
-            : _sequence( sequence ) , _scores( normalize( transpose( std::move( scores ))))
+            : _sequence( sequence ) , _scores( transpose( std::move( scores ))) ,
+              _identities( _evaluateIdentities( _scores ))
     {
         assert( _sequence.size() == _scores.size());
+        assert( _sequence.size() == _identities.size());
         size_t k = _scores.front().size();
         assert( std::all_of( _scores.cbegin() , _scores.cend() , [k]( const auto &v ) { return v.size() == k; } ));
     }
 
     static std::vector<std::vector<double>> normalize( std::vector<std::vector<double >> &&scores )
     {
-        for( auto &v : scores )
+        for ( auto &v : scores )
         {
-            const double mean = std::accumulate( v.cbegin() , v.cend() , double(0)) / v.size();
-            const double var = std::accumulate( v.cbegin() , v.cend() , double(0) ,
-                    [mean]( double acc , double val ){
-                return acc + (val - mean) * (val - mean);
-            }) / v.size();
+            const double mean = std::accumulate( v.cbegin() , v.cend() , double( 0 )) / v.size();
+            const double var = std::accumulate( v.cbegin() , v.cend() , double( 0 ) ,
+                                                [mean]( double acc , double val )
+                                                {
+                                                    return acc + (val - mean) * (val - mean);
+                                                } ) / v.size();
             const double std = std::sqrt( var );
-            for( auto &s : v ) s = ( s - mean ) / std;
+            for ( auto &s : v ) s = (s - mean) / std;
         }
         return scores;
     }
@@ -303,7 +411,20 @@ protected:
         assert( row > 0 );
         const size_t maxSegments = backtrace.nRows();
         const size_t len = backtrace.nColumns();
-        const double penalty = 0 ;
+        constexpr size_t standardSegmentLength = 10;
+
+        size_t lastSplit = 0;
+        auto penalty = [&]( size_t column ) -> double
+        {
+            return 0;
+            if ( backtrace.isVertical( row - 1 , column ))
+                lastSplit = column;
+            auto diff = double( column - lastSplit );
+            if ( diff == 0 ) 0;//return -inf;
+            else if ( diff <= standardSegmentLength )
+                return -inf;//std::log2( 0.5 * diff / standardSegmentLength );
+            else return 0;
+        };
 
         Node up = currentLine.front();
 
@@ -315,11 +436,12 @@ protected:
 
             up = currentLine[column + 1];
 
-            if ( maxVLaneValue + penalty >= maxHLaneValue )
+            double penalty_ = penalty( column );
+            if ( maxVLaneValue + penalty_ >= maxHLaneValue )
             {
                 labels[row - 1][column] = std::make_pair( maxVLane , maxVLaneValue );
                 backtrace.setVertical( row , column );
-                currentLine[column].reset( maxVLaneValue + penalty );
+                currentLine[column].reset( maxVLaneValue + penalty_ );
             } else
             {
                 backtrace.setHorizontal( row , column );
@@ -330,11 +452,12 @@ protected:
         auto[maxVLane , maxVLaneValue] = up.getMaxLane();
         auto[maxHLane , maxHLaneValue] = currentLine.back().getMaxLane();
 
-        if ( maxVLaneValue + penalty >= maxHLaneValue )
+        double penalty_ = penalty( nColumns() - 1 );
+        if ( maxVLaneValue + penalty_ >= maxHLaneValue )
         {
             labels[row - 1][nColumns() - 1] = std::make_pair( maxVLane , maxVLaneValue );
             backtrace.setVertical( row , nColumns() - 1 );
-            currentLine[nColumns() - 1].reset( maxVLaneValue + penalty );
+            currentLine[nColumns() - 1].reset( maxVLaneValue + penalty_ );
         } else
             backtrace.setHorizontal( row , nColumns() - 1 );
 
@@ -362,24 +485,51 @@ protected:
                 assert( last >= first );
                 if ( last - first > 0 )
                 {
-                    auto[label , score] = labels.at( row ).at( last );
-                    annotation.segments.emplace_back( _sequence.substr( first , last - first ) , label , score );
+                    auto[label , _] = labels.at( row ).at( last );
+                    double score = std::accumulate( _scores.cbegin() + first , _scores.cbegin() + last , double( 0 ) ,
+                                                    [label]( double acc , const auto &v )
+                                                    {
+                                                        return acc + v.at( label );
+                                                    } );
+
+
+                    std::map<size_t , size_t> counter;
+                    std::for_each( _identities.cbegin() + first , _identities.cbegin() + last ,
+                                   [&]( size_t label )
+                                   {
+                                       ++counter[label];
+                                   } );
+
+
+                    annotation.addSegment( _sequence.substr( first , last - first ) , label , score ,
+                                           std::move( counter ));
                 }
                 ++row;
             }
-
-            annotation.score = annotation.segments.back().score;
-            for ( auto i = 1; i < annotation.segments.size(); ++i )
-                annotation.segments[i].score -= annotation.segments[i - 1].score;
 
             annotations.emplace_back( std::move( annotation ));
         }
         return annotations;
     }
 
+protected:
+    static std::vector<size_t> _evaluateIdentities( const std::vector<std::vector<double >> &scores )
+    {
+        std::vector<size_t> identities;
+        identities.reserve( scores.size());
+        std::transform( scores.cbegin() , scores.cend() , std::back_inserter( identities ) ,
+                        []( const std::vector<double> &v )
+                        {
+                            auto maxIt = std::max_element( v.cbegin() , v.cend());
+                            return std::distance( v.cbegin() , maxIt );
+                        } );
+        return identities;
+    }
+
 private:
     std::string_view _sequence;
     const std::vector<std::vector<double >> _scores;
+    const std::vector<size_t> _identities;
 };
 
 
