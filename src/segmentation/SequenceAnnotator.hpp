@@ -12,6 +12,8 @@ struct SequenceAnnotation
 {
     static constexpr double inf = std::numeric_limits<double>::infinity();
 
+    using ScoreFunction = std::function<double(std::string_view)>;
+
     struct Segment
     {
         template < typename IdentitiesMapType >
@@ -196,11 +198,9 @@ class SequenceAnnotator
 
 public:
     explicit SequenceAnnotator( std::string_view sequence , std::vector<std::vector<double >> &&scores )
-            : _sequence( sequence ) , _scores( transpose( std::move( scores ))) ,
-              _identities( _evaluateIdentities( _scores ))
+            : _sequence( sequence ) , _scores( transpose( std::move( scores )))
     {
         assert( _sequence.size() == _scores.size());
-        assert( _sequence.size() == _identities.size());
         size_t k = _scores.front().size();
         assert( std::all_of( _scores.cbegin() , _scores.cend() , [k]( const auto &v ) { return v.size() == k; } ));
     }
@@ -494,12 +494,6 @@ protected:
 
 
                     std::map<size_t , size_t> counter;
-                    std::for_each( _identities.cbegin() + first , _identities.cbegin() + last ,
-                                   [&]( size_t label )
-                                   {
-                                       ++counter[label];
-                                   } );
-
 
                     annotation.addSegment( _sequence.substr( first , last - first ) , label , score ,
                                            std::move( counter ));
@@ -527,9 +521,9 @@ protected:
     }
 
 private:
-    std::string_view _sequence;
+    const std::string_view _sequence;
     const std::vector<std::vector<double >> _scores;
-    const std::vector<size_t> _identities;
+
 };
 
 

@@ -269,7 +269,7 @@ inline auto split( const std::string &s ,
 template < typename SeqIt >
 inline std::string join( SeqIt first , SeqIt last , const std::string &sep )
 {
-    auto binaryJoinString = [sep]( std::string &a , std::string_view b ) -> std::string &
+    auto binaryJoinString = [&sep]( std::string &a , std::string_view b ) -> std::string &
     {
         return a.append((a.empty()) ? "" : sep ).append( b );
     };
@@ -305,7 +305,7 @@ inline void rtrim( std::string &s )
 // trim from start (in place)
 inline void ltrim( std::string &s , const std::string &trimmed )
 {
-    s.erase( s.begin() , std::find_if( s.begin() , s.end() , [trimmed]( int ch )
+    s.erase( s.begin() , std::find_if( s.begin() , s.end() , [&trimmed]( int ch )
     {
         return trimmed.find( ch ) == std::string::npos;
     } ));
@@ -314,7 +314,7 @@ inline void ltrim( std::string &s , const std::string &trimmed )
 // trim from end (in place)
 inline void rtrim( std::string &s , const std::string &trimmed )
 {
-    s.erase( std::find_if( s.rbegin() , s.rend() , [trimmed]( int ch )
+    s.erase( std::find_if( s.rbegin() , s.rend() , [&trimmed]( int ch )
     {
         return trimmed.find( ch ) == std::string::npos;
     } ).base() , s.end());

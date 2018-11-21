@@ -54,7 +54,7 @@ int main( int argc, char *argv[] )
               ["-l"]["--min-order"]
                       ( fmt::format( "Markovian lower order, default:{}", minOrder ))
               | clara::Opt( maxOrder, "maximum order" )
-              ["-h"]["--max-order"]
+              ["-u"]["--max-order"]
                       ( fmt::format( "Markovian higher order, default:{}", maxOrder ))
               | clara::Opt( k, "k-fold" )
               ["-k"]["--k-fold"]

@@ -630,6 +630,17 @@ struct PriorityQueueFixed
         return std::find_if( _q.cbegin(), _q.cend(), predicate ) != _q.cend();
     }
 
+    void findOrInsert( const Label &label , double value = 0 )
+    {
+        auto it =  std::find_if( _q.crbegin(), _q.crend(), [&]( const ValueType &item ){
+          return item.getLabel() == label;
+        });
+        if( it == _q.crend())
+        {
+            emplace( label , value );
+        }
+    }
+
 private:
     Queue _q;
     const size_t _kTop;

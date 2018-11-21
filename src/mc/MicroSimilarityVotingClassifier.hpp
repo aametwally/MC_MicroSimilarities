@@ -33,6 +33,7 @@ namespace MC {
         ScoredLabels _predict( std::string_view sequence  ) const override
         {
             std::map<std::string_view, double> voter;
+            const size_t k = this->_backbones->get().size();
 
             if ( auto query = this->_modelTrainer( sequence, this->_selectedHistograms ); *query )
             {
@@ -40,7 +41,7 @@ namespace MC {
                 {
                     for (const auto &[id, histogram1] : isoHistograms)
                     {
-                        ScoredLabels pq( this->_backbones->get().size());
+                        ScoredLabels pq( k );
                         for (const auto &[clusterName, profile] : this->_backbones->get())
                         {
                             auto &bg = this->_background->get().at( clusterName );
@@ -68,10 +69,13 @@ namespace MC {
 
             voter = minmaxNormalize( std::move( voter ));
 
-            ScoredLabels scoredQueue( this->_backbones->get().size());
+            ScoredLabels scoredQueue( k );
             for (auto[label, votes] : voter)
                 scoredQueue.emplace( label, votes  );
-
+            for( auto &[label,profile] : this->_backbones->get() )
+            {
+                scoredQueue.findOrInsert( label );
+            }
             return scoredQueue;
         }
 

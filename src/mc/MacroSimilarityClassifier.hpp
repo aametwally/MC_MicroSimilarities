@@ -79,6 +79,11 @@ namespace MC {
             for (auto &[label, macro] : macros)
                 matchSet.emplace( label, macro );
 
+            for( auto &[label,profile] : this->_backbones->get() )
+            {
+                matchSet.findOrInsert( label );
+            }
+
             return matchSet;
         }
 

@@ -170,7 +170,8 @@ public:
     std::pair<Selection, BackboneProfiles>
     featureSelection( const std::map<std::string_view, std::vector<std::string> > &trainingClusters )
     {
-        auto selection = AbstractModel::withinJointAllUnionKernels( trainingClusters, _modelTrainer, 0.3 );
+//        auto selection = AbstractModel::withinJointAllUnionKernels( trainingClusters, _modelTrainer, 0.3 );
+        auto selection = AbstractModel::withinJointAllUnionKernels( trainingClusters, _modelTrainer, 0.05 );
         auto trainedProfiles = AbstractModel::train( trainingClusters, _modelTrainer, selection );
 
         return std::make_pair( std::move( selection ), std::move( trainedProfiles ));
@@ -284,23 +285,24 @@ public:
         {
             fmt::print( "{{{}}} Cross-validation\n", classifier );
             cvalidation.printReport();
+            cvalidation.printPerClassReport();
         }
 
-        for ( auto & [ensemble, cv, aucs] : ensembleValidation.majorityVotingOverallAccuracy())
-        {
-            fmt::print( "Majority Voting {{{}}} Cross-validation\n", io::join( ensemble, "," ));
-            cv.printReport();
-            for ( auto & [feature, auc] : aucs )
-                fmt::print( "AUC({}):{}\n", feature, auc.auc());
-        }
-
-        for ( auto & [ensemble, cv, aucs] : ensembleValidation.weightedVotingOverallAccuracy())
-        {
-            fmt::print( "Weighted Voting {{{}}} Cross-validation\n", io::join( ensemble, "," ));
-            cv.printReport();
-            for ( auto & [feature, auc] : aucs )
-                fmt::print( "AUC({}):{}\n", feature, auc.auc());
-        }
+//        for ( auto & [ensemble, cv, aucs] : ensembleValidation.majorityVotingOverallAccuracy())
+//        {
+//            fmt::print( "Majority Voting {{{}}} Cross-validation\n", io::join( ensemble, "," ));
+//            cv.printReport();
+//            for ( auto & [feature, auc] : aucs )
+//                fmt::print( "AUC({}):{}\n", feature, auc.auc());
+//        }
+//
+//        for ( auto & [ensemble, cv, aucs] : ensembleValidation.weightedVotingOverallAccuracy())
+//        {
+//            fmt::print( "Weighted Voting {{{}}} Cross-validation\n", io::join( ensemble, "," ));
+//            cv.printReport();
+//            for ( auto & [feature, auc] : aucs )
+//                fmt::print( "AUC({}):{}\n", feature, auc.auc());
+//        }
     }
 
 private:

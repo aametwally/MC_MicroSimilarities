@@ -18,7 +18,7 @@ private:
     static constexpr double eps = std::numeric_limits<double>::epsilon();
 public:
 
-    explicit ConfusionMatrix( const std::set<Label> &labels ) :
+    explicit ConfusionMatrix( const std::set <Label> &labels ) :
             _dictionary( _makeDictionary( labels )),
             _order( _dictionary.size()),
             _matrix( Matrix( _order, Row( _order, 0 )))
@@ -124,7 +124,7 @@ public:
         return double( allTp + eps ) / (allTp + allFp + eps);
     }
 
-    double recall( const Label &cl )
+    double recall( const Label &cl ) const
     {
         auto classIdx = _getClassIdx( cl );
         return _recall( classIdx );
@@ -237,28 +237,38 @@ public:
         return double( allTp + eps ) / (allTp + allFn + eps);
     }
 
-    std::map< Label , std::map< Label, size_t >> misclassifications() const
+    std::map <Label, std::map<Label, size_t >> misclassifications() const
     {
-        std::map< Label , std::map< Label, size_t >> missclassified;
-        for( auto &[label,idx] : _dictionary )
+        std::map <Label, std::map<Label, size_t >> missclassified;
+        for (auto &[label, idx] : _dictionary)
         {
-            for( auto &[misslabel,hits] : _misclassifications( idx ))
-                missclassified[ label ][ misslabel ] += hits;
+            for (auto &[misslabel, hits] : _misclassifications( idx ))
+                missclassified[label][misslabel] += hits;
         }
         return missclassified;
     }
 
-    std::map< Label, size_t > misclassifications( const Label &l ) const
+    std::map <Label, size_t> misclassifications( const Label &l ) const
     {
         auto classIdx = _getClassIdx( l );
         return _misclassifications( classIdx );
     }
 
-    std::vector< Label > labels() const
+    std::vector <Label> getLabels() const
     {
-        std::vector< Label > ls;
-        for( auto &[label,i] : _dictionary )
-            ls.push_back( label );
+        std::vector <Label> ls;
+        for (auto &[label, i] : _dictionary)
+            if ( label != _unclassifiedLabel())
+                ls.push_back( label );
+        return ls;
+    }
+
+    std::map< Label , size_t > getLabelsWithCounts() const
+    {
+        std::map <Label, size_t > ls;
+        for (auto &[label, index ] : _dictionary)
+            if ( label != _unclassifiedLabel())
+                ls.emplace( label , _population( index ));
         return ls;
     }
 
@@ -328,9 +338,9 @@ private:
         };
     }
 
-    static std::map<Label, size_t> _makeDictionary( const std::set<Label> &labels )
+    static std::map <Label, size_t> _makeDictionary( const std::set <Label> &labels )
     {
-        std::map<Label, size_t> dic;
+        std::map <Label, size_t> dic;
         size_t i = 0;
         for (auto &label : labels)
             dic.emplace( label, i++ );
@@ -423,7 +433,9 @@ private:
         auto tn = _trueNegatives( classIdx );
         auto fp = _falsePositives( classIdx );
         auto fn = _falseNegatives( classIdx );
-        return (tp * tn - fp * fn) / std::sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn));
+        auto den = (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn);
+        if ( den == 0 ) den = 1;
+        return (tp * tn - fp * fn) / std::sqrt( den );
     }
 
     double _precision( size_t classIdx ) const
@@ -455,14 +467,14 @@ private:
         return (double( tp + eps ) / (tp + fn + eps) + double( tn + eps ) / (tn + fp + eps)) / 2;
     }
 
-    std::map< Label, size_t > _misclassifications( size_t classIdx ) const
+    std::map <Label, size_t> _misclassifications( size_t classIdx ) const
     {
-        std::map< Label, size_t > misclassified;
+        std::map <Label, size_t> misclassified;
         auto &row = _matrix.at( classIdx );
-        for( auto &[label , col] : _dictionary )
+        for (auto &[label, col] : _dictionary)
         {
-            if( col == classIdx ) continue;
-            else misclassified[ label ] = row.at( col );
+            if ( col == classIdx ) continue;
+            else misclassified[label] = row.at( col );
         }
         return misclassified;
     }
@@ -481,7 +493,7 @@ private:
     }
 
 private:
-    const std::map<Label, size_t> _dictionary;
+    const std::map <Label, size_t> _dictionary;
     const size_t _order;
     Matrix _matrix;
 };
