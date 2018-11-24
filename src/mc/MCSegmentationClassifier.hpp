@@ -19,19 +19,23 @@ namespace MC {
         using BackboneProfiles = typename MCModel::BackboneProfiles;
         using BackboneProfile = typename MCModel::BackboneProfile;
 
+        using ScoreFunction = SequenceAnnotator::ScoreFunction;
     public:
         explicit MCSegmentationClassifier( const BackboneProfiles &backbones,
-                                           const BackboneProfiles &background,
+                                           const BackboneProfiles &backgrounds,
                                            const std::map<std::string_view, std::vector<std::string>> &trainingSequences,
                                            const ModelGenerator <Grouping> &modelTrainer )
                 : _backbones( backbones ),
-                  _background( background ),
-                  _segmentationLearners(
-                          _learnBySegmentation( backbones , trainingSequences, modelTrainer )),
+                  _background( backgrounds ),
+                  _scoringFunctions( _extractScoringFunctions( backbones , backgrounds )),
                   _modelTrainer( modelTrainer )
         {
+            _segmentationLearners =
+                    _learnBySegmentation( backbones, backgrounds , _scoringFunctions ,
+                            trainingSequences, modelTrainer );
         }
 
+        virtual ~MCSegmentationClassifier() = default;
 
     protected:
         bool _validTraining() const override
@@ -39,21 +43,22 @@ namespace MC {
             return _backbones.size() == _background.size();
         }
 
-        static std::vector<std::vector<double >>
-        _extractScores( std::string_view query, const BackboneProfiles &profiles )
+        static std::vector<ScoreFunction>
+        _extractScoringFunctions( const BackboneProfiles &profiles , const BackboneProfiles &backgrounds )
         {
-            std::vector<std::vector<double >> scoresForward;
-
+            std::vector<ScoreFunction> scoringFunctions;
             for (auto &[l, profile] : profiles)
             {
-                auto forward = profile->compensatedPropensityVector( query );
-//            auto forwardBackground = _background.at(l)->forwardPropensityVector( query );
-//            std::transform(forward.cbegin(), forward.cend(), forwardBackground.cbegin(),
-//                           forward.begin(), std::minus<double>());
-                scoresForward.emplace_back( std::move( forward ));
+                auto &background = backgrounds.at( l );
+                scoringFunctions.emplace_back( [&]( std::string_view query ) -> double {
+                    assert( !query.empty());
+                    char state = query.back();
+                    query.remove_suffix( 1 );
+                    return profile->transitionalPropensity( query, state ) -
+                           background->transitionalPropensity( query, state );
+                } );
             }
-
-            return scoresForward;
+            return scoringFunctions;
         }
 
         static std::vector<std::vector<double >>
@@ -71,6 +76,8 @@ namespace MC {
 
         static BackboneProfiles
         _learnBySegmentation( const BackboneProfiles &backbones,
+                              const BackboneProfiles &backgrounds,
+                              const std::vector< ScoreFunction > &scoringFunctions,
                               const std::map<std::string_view, std::vector<std::string>> &trainingSequences,
                               const ModelGenerator <Grouping> &modelTrainer )
         {
@@ -84,7 +91,7 @@ namespace MC {
                 auto &segments = trainingSegments[l];
                 for (auto &sequence : sequences)
                 {
-                    SequenceAnnotator annotator( sequence, _extractScores( sequence, backbones ));
+                    SequenceAnnotator annotator( sequence, scoringFunctions );
                     std::vector<SequenceAnnotation> annotations = annotator.annotate( MAX_SEGMENTS );
 
 //                    for( auto &annotation : annotations )
@@ -135,32 +142,12 @@ namespace MC {
             return MCModel::train( trainingSegments, modelTrainer );
         }
 
-        ScoredLabels _individualAAIdentitiesPredictor( const SequenceAnnotation &annotation ) const
-        {
-            assert( annotation.getSegments().size() == 1 );
-            std::map<std::string_view, double> relativeIdentities;
-
-            auto it = _backbones.cbegin();
-            for (auto &[l, count] : annotation.getSegments().front().getCounter())
-            {
-                relativeIdentities.emplace( it->first, count );
-                ++it;
-            }
-
-            relativeIdentities = minmaxNormalize( std::move( relativeIdentities ));
-            ScoredLabels matchSet( annotation.getSegments().size());
-            for (auto &[label, identity] : relativeIdentities)
-                matchSet.emplace( label, identity );
-
-            return matchSet;
-        }
-
         ScoredLabels _predict( std::string_view sequence ) const override
         {
-            const SequenceAnnotator annotator( sequence, _extractScores( sequence, _segmentationLearners ));
+            const SequenceAnnotator annotator( sequence, _scoringFunctions );
             const std::vector<SequenceAnnotation> annotations = annotator.annotate( MAX_SEGMENTS );
 
-            std::map< std::string_view , double > propensities;
+            std::map<std::string_view, double> propensities;
 
 //            for( auto &annotation : annotations )
 //            {
@@ -175,7 +162,7 @@ namespace MC {
 
             for (auto &segment : annotations.back().getSegments())
             {
-                for( auto &[learnerLabel,learner] : _segmentationLearners )
+                for (auto &[learnerLabel, learner] : _segmentationLearners)
                 {
                     propensities[learnerLabel] += learner->propensity( segment.getSubsequence());
                 }
@@ -184,7 +171,7 @@ namespace MC {
             propensities = minmaxNormalize( std::move( propensities ));
 
             ScoredLabels matchSet( _segmentationLearners.size());
-            for (auto &[label, relativeAffinity] : propensities )
+            for (auto &[label, relativeAffinity] : propensities)
                 matchSet.emplace( label, relativeAffinity );
 
             return matchSet;
@@ -202,7 +189,7 @@ namespace MC {
             propensities = minmaxNormalize( std::move( propensities ));
 
             ScoredLabels matchSet( _segmentationLearners.size());
-            for (auto &[label, relativeAffinity] : propensities )
+            for (auto &[label, relativeAffinity] : propensities)
                 matchSet.emplace( label, relativeAffinity );
 
             return matchSet;
@@ -211,7 +198,7 @@ namespace MC {
     protected:
         const BackboneProfiles &_backbones;
         const BackboneProfiles &_background;
-
+        const std::vector< ScoreFunction > &_scoringFunctions;
         const ModelGenerator <Grouping> _modelTrainer;
         BackboneProfiles _segmentationLearners;
     };

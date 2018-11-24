@@ -50,6 +50,8 @@ namespace MC {
                   SVMModel( lambda, gamma )
         {}
 
+        virtual ~SVMMCParameters() = default;
+
         void fit( const BackboneProfiles &backbones,
                   const BackboneProfiles &background,
                   const std::map<std::string_view, std::vector<std::string >> &training )

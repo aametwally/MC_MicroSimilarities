@@ -12,7 +12,6 @@
 #include "crossvalidation.hpp"
 #include "FeatureScoreAUC.hpp"
 #include "VariantGenerator.hpp"
-#include "RangedOrderMC.hpp"
 #include "MCFeatures.hpp"
 #include "Pipeline.hpp"
 
@@ -567,12 +566,10 @@ namespace MC {
     using FeatureScoringPipelineVariant = MakeVariantType<FeatureScoringPipeline, SupportedAAGrouping>;
 
     template<typename AAGrouping>
-    FeatureScoringPipelineVariant getFeatureScoringPipeline( const std::string &model,
-                                                             Order mnOrder, Order mxOrder )
+    FeatureScoringPipelineVariant getFeatureScoringPipeline( const std::string &model, Order mxOrder )
     {
         const MCModelsEnum modelEnum = MCModelLabels.at( model );
         using RMC = MC<AAGrouping>;
-        using ROMC = RangedOrderMC<AAGrouping>;
         using ZMC = ZYMC<AAGrouping>;
         auto modelLabel = MCModelLabels.at( model );
         switch (modelLabel)
@@ -580,9 +577,6 @@ namespace MC {
             case MCModelsEnum::RegularMC :
                 return FeatureScoringPipeline<AAGrouping>( RMC::getModelTrainer( mxOrder ),
                                                            RMC::getHistogramsTrainer( mxOrder ));
-            case MCModelsEnum::RangedOrderMC :
-                return FeatureScoringPipeline<AAGrouping>( ROMC::getModelTrainer( mnOrder, mxOrder ),
-                                                           ROMC::getHistogramsTrainer( mnOrder, mxOrder ));
             case MCModelsEnum::ZhengYuanMC :
                 return FeatureScoringPipeline<AAGrouping>( ZMC::getModelTrainer( mxOrder ),
                                                            ZMC::getHistogramsTrainer( mxOrder ));
@@ -592,20 +586,19 @@ namespace MC {
     };
 
     FeatureScoringPipelineVariant getFeatureScoringPipeline( const std::string &groupingLabel,
-                                                             const std::string &model,
-                                                             Order mnOrder, Order mxOrder )
+                                                             const std::string &model,  Order mxOrder )
     {
         const AminoAcidGroupingEnum grouping = GroupingLabels.at( groupingLabel );
         switch (grouping)
         {
             case AminoAcidGroupingEnum::NoGrouping20:
-                return getFeatureScoringPipeline<AAGrouping_NOGROUPING20>( model, mnOrder, mxOrder );
+                return getFeatureScoringPipeline<AAGrouping_NOGROUPING20>( model, mxOrder );
             case AminoAcidGroupingEnum::DIAMOND11 :
-                return getFeatureScoringPipeline<AAGrouping_DIAMOND11>( model, mnOrder, mxOrder );
+                return getFeatureScoringPipeline<AAGrouping_DIAMOND11>( model, mxOrder );
             case AminoAcidGroupingEnum::OFER8 :
-                return getFeatureScoringPipeline<AAGrouping_OFER8>( model, mnOrder, mxOrder );
+                return getFeatureScoringPipeline<AAGrouping_OFER8>( model, mxOrder );
             case AminoAcidGroupingEnum::OFER15 :
-                return getFeatureScoringPipeline<AAGrouping_OFER15>( model, mnOrder, mxOrder );
+                return getFeatureScoringPipeline<AAGrouping_OFER15>( model, mxOrder );
         }
     };
 }

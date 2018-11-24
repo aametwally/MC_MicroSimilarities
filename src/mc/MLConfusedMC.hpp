@@ -21,6 +21,8 @@ namespace MC {
         MLConfusedMC() : _enableLDA( false )
         {}
 
+        virtual ~MLConfusedMC() = default;
+
         using FeatureVector = std::vector<double>;
 
         void enableLDA( std::optional<size_t> ldaDims = std::nullopt )

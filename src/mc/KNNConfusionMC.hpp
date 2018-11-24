@@ -37,12 +37,14 @@ namespace MC {
                 : KNN( k )
         {}
 
+        virtual ~KNNConfusionMC() = default;
+
         void fit( const BackboneProfiles &backbones,
                   const BackboneProfiles &background,
                   const std::map<std::string_view, std::vector<std::string >> &training,
                   ModelTrainer trainer,
-                  const Selection &selection,
-                  Similarity similarity )
+                  Similarity similarity,
+                  std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt )
         {
             _backbones = backbones;
             _background = background;
@@ -51,22 +53,22 @@ namespace MC {
 
             _ensemble.emplace( ClassificationEnum::Accumulative,
                                new MacroSimilarityClassifier<Grouping>( backbones, background,
-                                                                        selection, trainer, similarity ));
+                                                                        trainer, similarity, selection ));
 
             _ensemble.emplace( ClassificationEnum::Voting,
                                new MicroSimilarityVotingClassifier<Grouping>( backbones, background,
-                                                                              selection, trainer, similarity ));
+                                                                              trainer, similarity, selection ));
 
             _ensemble.emplace( ClassificationEnum::KNN,
-                               new KNNMCParameters<Grouping>( backbones , background , training,
-                                                              7 , trainer, similarity ));
+                               new KNNMCParameters<Grouping>( backbones, background, training,
+                                                              7, trainer, similarity ));
 
             _ensemble.emplace( ClassificationEnum::SVM,
-                               new SVMMCParameters<Grouping>( backbones , background , training, trainer, similarity ));
+                               new SVMMCParameters<Grouping>( backbones, background, training, trainer, similarity ));
 
 //            _ensemble.emplace( ClassificationEnum::KMERS,
 //                               new MCKmersClassifier<Grouping>( backbones, background ));
-            MLConfusedMC::enableLDA( );
+            MLConfusedMC::enableLDA();
             MLConfusedMC::fit( training );
         }
 

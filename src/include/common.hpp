@@ -107,7 +107,7 @@ inline std::map<std::string_view , double> minmaxNormalize( std::map<std::string
     const double min = minIt->second;
     const double max = maxIt->second;
     for ( auto &[_ , f] : map )
-        f = (f - min) / (max - min);
+        f = (f - min) / (max - min + std::numeric_limits<double>::epsilon());
 
     return map;
 }

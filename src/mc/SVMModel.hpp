@@ -35,6 +35,8 @@ private:
 public:
     explicit SVMModel( std::optional<double> lambda, std::optional<double> gamma = Auto );
 
+    virtual ~SVMModel() = default;
+
     void fit( const std::vector<std::string_view> &labels, std::vector<std::vector<double >> &&featuresVector );
 
     ScoredLabels predict( const std::vector<double> &features ) const;

@@ -42,6 +42,8 @@ namespace MC {
             fit( backbones , background , training );
         }
 
+        virtual ~KNNMCParameters() = default;
+
         void fit( const BackboneProfiles &backbones,
                   const BackboneProfiles &background,
                   const std::map<std::string_view, std::vector<std::string >> &training )

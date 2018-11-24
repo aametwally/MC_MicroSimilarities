@@ -38,12 +38,14 @@ namespace MC {
                 : _modelTrainer( modelTrainer ), SVMModel( lambda, gamma )
         {}
 
+        virtual ~SVMConfusionMC() = default;
+
         void fit( const BackboneProfiles &backbones,
                   const BackboneProfiles &background,
                   const std::map<std::string_view, std::vector<std::string >> &training,
                   ModelTrainer trainer,
-                  const Selection &selection,
-                  Similarity similarity )
+                  Similarity similarity ,
+                  std::optional<std::reference_wrapper<const Selection>> selection = std::nullopt )
         {
             _backbones = backbones;
             _background = background;
@@ -52,11 +54,11 @@ namespace MC {
 
             _ensemble.emplace( ClassificationEnum::Accumulative,
                                new MacroSimilarityClassifier<Grouping>( backbones, background,
-                                                                        selection, trainer, similarity ));
+                                                                        trainer, similarity , selection ));
 
             _ensemble.emplace( ClassificationEnum::Voting,
                                new MicroSimilarityVotingClassifier<Grouping>( backbones, background,
-                                                                              selection, trainer, similarity ));
+                                                                              trainer, similarity, selection ));
 //
             _ensemble.emplace( ClassificationEnum::KNN,
                                new KNNMCParameters<Grouping>( backbones , background , training,
