@@ -7,144 +7,99 @@
 
 #include "AbstractMC.hpp"
 
-namespace MC
-{
+namespace MC {
 /**
  * @brief ZYMC
  * Zheng Yuan Approximated Higher-order Markov Chains
  * Paper: https://febs.onlinelibrary.wiley.com/doi/pdf/10.1016/S0014-5793%2899%2900506-2
  */
-template < typename AAGrouping >
-class ZYMC : public AbstractMC<AAGrouping>
-{
-public:
-    using Base = AbstractMC<AAGrouping>;
-    using Histogram = typename Base::Histogram;
-
-    using IsoHistograms = std::unordered_map<HistogramID , Histogram>;
-    using HeteroHistograms = std::unordered_map<Order , IsoHistograms>;
-
-public:
-    explicit ZYMC( Order order ) : _order( order )
+    template<typename AAGrouping>
+    class ZYMC : public AbstractMC<AAGrouping>
     {
-        assert( order >= 1 );
-    }
+    public:
+        using Base = AbstractMC<AAGrouping>;
+        using Histogram = typename Base::Histogram;
 
-    template < typename HistogramsCollection >
-    explicit ZYMC( Order order , HistogramsCollection &&histograms ) :
-            _order( order ) , Base( std::forward<HistogramsCollection>( histograms ))
-    {
-        assert( order >= 1 );
-    }
+        using IsoHistograms = std::unordered_map<HistogramID, Histogram>;
+        using HeteroHistograms = std::unordered_map<Order, IsoHistograms>;
 
-    explicit ZYMC( const std::vector<std::string> &sequences ,
-                   Order order ) : _order( order )
-    {
-        assert( order >= 1 );
-        this->train( sequences );
-    }
-
-    ZYMC() = delete;
-
-    ZYMC( const ZYMC &mE ) = default;
-
-    ZYMC( ZYMC &&mE ) noexcept
-            : _order( mE._order ) , Base( std::move( mE._histograms )) {}
-
-    ZYMC &operator=( const ZYMC &mE )
-    {
-        assert( _order == mE._order );
-        if ( _order != mE._order )
-            throw std::runtime_error( "Orders mismatch!" );
-        this->_histograms = mE._histograms;
-        return *this;
-    }
-
-    ZYMC &operator=( ZYMC &&mE )
-    {
-        assert( _order == mE._order );
-        if ( _order != mE._order )
-            throw std::runtime_error( "Orders mismatch!" );
-        this->_histograms = std::move( mE._histograms );
-        return *this;
-    }
-
-    const Order order() const
-    {
-        return _order;
-    }
-
-    static constexpr inline HistogramID lowerOrderID( HistogramID id ) { return id / Base::StatesN; }
-
-    double pairwiseProbability( char context , char s , Order distance ) const
-    {
-        if ( auto dIt = this->_histograms.find( distance ); dIt != this->_histograms.cend())
+    public:
+        explicit ZYMC( Order order ) : Base( order )
         {
-            auto &pairs = dIt->second;
-            auto _context = Base::_char2ID( context );
-            if ( auto contextIt = pairs.find( _context ); contextIt != pairs.cend())
+            assert( order >= 1 );
+        }
+
+        virtual ~ZYMC() = default;
+
+        template<typename HistogramsCollection>
+        explicit ZYMC( Order order, HistogramsCollection &&histograms )
+                :  Base( std::forward<HistogramsCollection>( histograms ), order )
+        {
+            assert( order >= 1 );
+        }
+
+        explicit ZYMC( const std::vector<std::string> &sequences,
+                       Order order ) : Base( order )
+        {
+            assert( order >= 1 );
+            this->train( sequences );
+        }
+
+
+        static constexpr inline HistogramID lowerOrderID( HistogramID id )
+        { return id / Base::StatesN; }
+
+        inline double pairwiseProbability( char context, char s, Order distance ) const
+        {
+            if ( auto dIt = this->_histograms.find( distance ); dIt != this->_histograms.cend())
             {
-                auto &p = contextIt->second;
-                auto _s = Base::_char2ID( s );
-                return p.at( _s );
+                auto &pairs = dIt->second;
+                auto _context = Base::_char2ID( context );
+                if ( auto contextIt = pairs.find( _context ); contextIt != pairs.cend())
+                {
+                    auto &p = contextIt->second;
+                    auto _s = Base::_char2ID( s );
+                    return p.at( _s );
+                } else return 0;
             } else return 0;
-        } else return 0;
-    }
-
-    double probability( std::string_view context , char currentState ) const override
-    {
-        double p = 1.0;
-        for ( auto i = 0; i < context.size(); ++i )
-        {
-            auto distance = Order( context.size() - i );
-            auto c = context[i];
-            p *= pairwiseProbability( c , currentState , distance );
-        }
-        return p;
-    }
-
-    double propensity( std::string_view query ) const override
-    {
-        double acc = 0;
-        acc += std::log( this->_histograms.at( 0 ).at( 0 ).at( Base::_char2ID( query.front())));
-        for ( Order distance = 1; distance < _order && distance < query.size(); ++distance )
-        {
-            double p = probability( query.substr( 0 , distance ) , query[distance] );
-            acc += std::log( p );
-        }
-        for ( auto i = 0; i < int64_t( query.size()) - _order; ++i )
-        {
-            double p = probability( query.substr( i , _order ) , query[i + _order] );
-            acc += std::log( p );
-        }
-        return acc;
-    }
-
-protected:
-    void _incrementInstance( char context ,
-                             char currentState ,
-                             Order distance )
-    {
-        auto c = Base::_char2ID( context );
-        auto s = Base::_char2ID( currentState );
-        this->_histograms[distance][c].increment( s );
-    }
-
-    void _countInstance( std::string_view sequence ) override
-    {
-        for ( auto a : sequence )
-        {
-            auto c = Base::_char2ID( a );
-            this->_histograms[0][0].increment( c );
         }
 
-        for ( Order distance = 1; distance <= _order; ++distance )
-            for ( auto i = 0; i + distance < sequence.size()  ; ++i )
-                _incrementInstance( sequence[i] , sequence[i + distance] , distance );
-    }
+        double probability( std::string_view context, char currentState ) const override
+        {
+            double p = 1.0;
+            int iFrom = std::max( 0, int( context.length()) - this->_order );
+            for (auto i = iFrom; i < context.size(); ++i)
+            {
+                auto distance = Order( context.size() - i );
+                auto c = context[i];
+                p *= pairwiseProbability( c, currentState, distance );
+            }
+            return p;
+        }
 
-protected:
-    Order _order;
-};
+    protected:
+        void _incrementInstance( char context,
+                                 char currentState,
+                                 Order distance )
+        {
+            auto c = Base::_char2ID( context );
+            auto s = Base::_char2ID( currentState );
+
+            this->_histograms[distance][c].increment( s );
+        }
+
+        void _countInstance( std::string_view sequence ) override
+        {
+            for (auto a : sequence)
+            {
+                auto c = Base::_char2ID( a );
+                this->_histograms[0][0].increment( c );
+            }
+
+            for (Order distance = 1; distance <= this->_order; ++distance)
+                for (auto i = 0; i + distance < sequence.size(); ++i)
+                    _incrementInstance( sequence[i], sequence[i + distance], distance );
+        }
+    };
 }
 #endif //MARKOVIAN_FEATURES_ZYMC_HPP

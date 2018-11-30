@@ -18,21 +18,23 @@ namespace MC {
         using MCF = typename Base::MCF;
         using HeteroHistogramsFeatures  = typename Base::HeteroHistogramsFeatures;
     public:
-        explicit MicroSimilarityVotingClassifier( const BackboneProfiles &backbones,
-                                                  const BackboneProfiles &background,
-                                                  const Selection &selection,
-                                                  const ModelTrainer modelTrainer,
-                                                  const Similarity similarity )
-                : Base( backbones, background, selection, modelTrainer, similarity ),
-                  _clustersIR( MCF::informationRadius_UNIFORM( backbones , selection )),
-                  _backgroundIR( MCF::informationRadius_UNIFORM( background , selection ))
+        explicit MicroSimilarityVotingClassifier(
+                const BackboneProfiles &backbones,
+                const BackboneProfiles &background,
+                const ModelTrainer modelTrainer,
+                const Similarity similarity,
+                std::optional<std::reference_wrapper<const Selection>> selection = std::nullopt )
+                : Base( backbones, background, modelTrainer, similarity, selection )
         {
         }
 
+        virtual ~MicroSimilarityVotingClassifier() = default;
+
     protected:
-        ScoredLabels _predict( std::string_view sequence  ) const override
+        ScoredLabels _predict( std::string_view sequence ) const override
         {
             std::map<std::string_view, double> voter;
+            const size_t k = this->_backbones->get().size();
 
             if ( auto query = this->_modelTrainer( sequence, this->_selectedHistograms ); *query )
             {
@@ -40,7 +42,7 @@ namespace MC {
                 {
                     for (const auto &[id, histogram1] : isoHistograms)
                     {
-                        ScoredLabels pq( this->_backbones->get().size());
+                        ScoredLabels pq( k );
                         for (const auto &[clusterName, profile] : this->_backbones->get())
                         {
                             auto &bg = this->_background->get().at( clusterName );
@@ -54,12 +56,10 @@ namespace MC {
                                 pq.emplace( clusterName, val );
                             }
                         }
-                        double score = getOr( _backgroundIR, order, id, double( 0 )) -
-                                       getOr( _clustersIR, order, id, double( 0 ));
 
                         pq.forTopK( 5, [&]( const auto &candidate, size_t index ) {
                             std::string_view label = candidate.getLabel();
-                            double val = (1 + score) / (index + 1);
+                            double val = (1) / (index + 1);
                             voter[label] += val;
                         } );
                     }
@@ -68,16 +68,15 @@ namespace MC {
 
             voter = minmaxNormalize( std::move( voter ));
 
-            ScoredLabels scoredQueue( this->_backbones->get().size());
+            ScoredLabels scoredQueue( k );
             for (auto[label, votes] : voter)
-                scoredQueue.emplace( label, votes  );
-
+                scoredQueue.emplace( label, votes );
+            for (auto &[label, profile] : this->_backbones->get())
+            {
+                scoredQueue.findOrInsert( label );
+            }
             return scoredQueue;
         }
-
-    protected:
-        const HeteroHistogramsFeatures _clustersIR;
-        const HeteroHistogramsFeatures _backgroundIR;
     };
 }
 

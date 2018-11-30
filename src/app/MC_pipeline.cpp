@@ -15,9 +15,7 @@ int main( int argc, char *argv[] )
     using io::join;
     std::string input, testFile;
     std::string fastaFormat = keys( FormatLabels ).front();
-    std::string minOrder = "3";
-    std::string maxOrder = "5";
-    std::string order = "";
+    std::string order = "3";
 
     size_t k = 10;
     bool showHelp = false;
@@ -49,13 +47,7 @@ int main( int argc, char *argv[] )
                       ( fmt::format( "Classification Strategy, default:{}", strategy ))
               | clara::Opt( order, "MC order" )
               ["-o"]["--order"]
-                      ( fmt::format( "Specify MC of higher order o, default:{}", maxOrder ))
-              | clara::Opt( minOrder, "minimum order" )
-              ["-l"]["--min-order"]
-                      ( fmt::format( "Markovian lower order, default:{}", minOrder ))
-              | clara::Opt( maxOrder, "maximum order" )
-              ["-h"]["--max-order"]
-                      ( fmt::format( "Markovian higher order, default:{}", maxOrder ))
+                      ( fmt::format( "Specify MC of higher order o, default:{}", order ))
               | clara::Opt( k, "k-fold" )
               ["-k"]["--k-fold"]
                       ( fmt::format( "cross validation k-fold, default:{}", k ))
@@ -72,26 +64,23 @@ int main( int argc, char *argv[] )
         cli.writeToStream( std::cout );
     } else if ( !testFile.empty())
     {
-        if ( !order.empty())
-            maxOrder = order;
 
-        fmt::print( "[Args][input:{}][testFile:{}][model:{}][order:{}-{}][kfold:{}]\n",
-                    input, testFile, model, minOrder, maxOrder, k );
+
+        fmt::print( "[Args][input:{}][testFile:{}][model:{}][order:{}][kfold:{}]\n",
+                    input, testFile, model, order, k );
 
 
     } else
     {
-        if ( !order.empty())
-            maxOrder = order;
         fmt::print( "[Args][input:{}]"
                     "[fformat:{}]"
                     "[model:{}]"
-                    "[order:{}-{}]"
+                    "[order:{}]"
                     "[k-fold:{}]"
                     "[criteria:{}]"
                     "[grouping:{}]"
                     "[strategy:{}]\n",
-                    input, fastaFormat, model, minOrder, maxOrder,
+                    input, fastaFormat, model, order,
                     k, criteria, grouping, strategy );
 
 
@@ -99,33 +88,23 @@ int main( int argc, char *argv[] )
         {
             for (auto &m : splitParameters( model ))
             {
-                std::string _minOrder;
-                if ( m == "romc" )
-                    _minOrder = minOrder;
-                else _minOrder = "0";
-                for (auto &min : splitParameters( _minOrder ))
-                    for (auto &max : splitParameters( maxOrder ))
+                    for (auto &o : splitParameters( order ))
                     {
-                        auto mnOrder = std::stoi( min );
-                        auto mxOrder = std::stoi( max );
-                        if ( mxOrder >= mnOrder )
-                        {
+
                             for (auto &g : splitParameters( grouping ))
                             {
 
                                 fmt::print( "[Params]"
                                             "[model:{}]"
-                                            "[order:{}-{}]"
+                                            "[order:{}]"
                                             "[criteria:{}]"
-                                            "[grouping:{}]\n", m, mnOrder, mxOrder, c, g );
+                                            "[grouping:{}]\n", m , o, c, g );
 
                                 std::visit( [&]( auto &&p ) {
                                     p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ), k,
                                                               splitParameters( strategy ));
-                                }, getConfiguredPipeline( g, c, m, mnOrder, mxOrder ));
+                                }, getConfiguredPipeline( g, c, m,  std::stoi( o )));
                             }
-                        }
-
                     }
             }
         }

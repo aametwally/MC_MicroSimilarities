@@ -29,15 +29,17 @@ namespace MC {
 
         explicit MacroSimilarityClassifier( const BackboneProfiles &backbones,
                                             const BackboneProfiles &background,
-                                            const Selection &selection,
                                             const ModelTrainer modelTrainer,
-                                            const Similarity similarityFunction )
+                                            const Similarity similarityFunction ,
+                                            std::optional<std::reference_wrapper<const Selection>> selection = std::nullopt )
                 : _backbones( backbones ), _background( background ),
                   _modelTrainer( modelTrainer ), _selectedHistograms( selection ),
                   _similarity( similarityFunction )
         {
 
         }
+
+        virtual ~MacroSimilarityClassifier() = default;
 
     protected:
         bool _validTraining() const override
@@ -79,13 +81,18 @@ namespace MC {
             for (auto &[label, macro] : macros)
                 matchSet.emplace( label, macro );
 
+            for( auto &[label,profile] : this->_backbones->get() )
+            {
+                matchSet.findOrInsert( label );
+            }
+
             return matchSet;
         }
 
     protected:
         std::optional<std::reference_wrapper<const BackboneProfiles >> _backbones;
         std::optional<std::reference_wrapper<const BackboneProfiles >> _background;
-        const Selection &_selectedHistograms;
+        std::optional<std::reference_wrapper<const Selection>> _selectedHistograms;
         const ModelTrainer _modelTrainer;
         const Similarity _similarity;
     };

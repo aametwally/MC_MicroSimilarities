@@ -7,13 +7,14 @@ set( MC_SOURCES
         AbstractClassifier.cpp
         MCKmersClassifier.cpp
         MCPropensityClassifier.cpp
+        MCDiscriminativeClassifier.cpp
         MCSegmentationClassifier.cpp
         MacroSimilarityClassifier.cpp
         MicroSimilarityVotingClassifier.cpp
         KNNConfusionMC.cpp
         KNNMCParameters.cpp
         KNNModel.cpp
-        LSMC.cpp
+        GappedMC.cpp
         MC.cpp
         Pipeline.cpp
         SVMConfusionMC.cpp
@@ -27,13 +28,14 @@ set( MC_DETAILS_TEMPLATE_FILES
         MCKmersClassifier.hpp
         AbstractClassifier.hpp
         MCPropensityClassifier.hpp
+        MCDiscriminativeClassifier.hpp
         MCSegmentationClassifier.hpp
         MacroSimilarityClassifier.hpp
         MicroSimilarityVotingClassifier.hpp
         KNNConfusionMC.hpp
         KNNMCParameters.hpp
         KNNModel.hpp
-        LSMC.hpp
+        GappedMC.hpp
         MC.hpp
         Pipeline.hpp
         SVMConfusionMC.hpp

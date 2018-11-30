@@ -21,6 +21,8 @@ namespace MC {
         MLConfusedMC() : _enableLDA( false )
         {}
 
+        virtual ~MLConfusedMC() = default;
+
         using FeatureVector = std::vector<double>;
 
         void enableLDA( std::optional<size_t> ldaDims = std::nullopt )
@@ -48,6 +50,15 @@ namespace MC {
                     labels.push_back( trainLabel );
                 }
             }
+
+            assert( [&]() {
+                const size_t n = featuresVector.front().size();
+                return std::all_of( featuresVector.cbegin(), featuresVector.cend(),
+                                    [=]( const auto &v ) {
+                                        return v.size() == n;
+                                    } );
+            }());
+
             if ( _normalizer )
             {
                 _trainNormalizers( featuresVector );
@@ -168,6 +179,13 @@ namespace MC {
                 }
             }
 
+            assert( [&]() {
+                for (size_t i = 0; i < ncol; ++i)
+                    if ( _colMin[i] == _colMax[i] )
+                        return false;
+                return true;
+            }());
+
             for (auto &m : _colMagnitude)
                 m = std::sqrt( m );
 
@@ -201,7 +219,9 @@ namespace MC {
         {
             assert( features.size() == _colMin.size() && _colMin.size() == _colMax.size());
             for (size_t col = 0; col < features.size(); ++col)
+            {
                 features[col] = (features[col] - _colMin[col]) / (_colMax[col] - _colMin[col]);
+            }
             return features;
         }
 

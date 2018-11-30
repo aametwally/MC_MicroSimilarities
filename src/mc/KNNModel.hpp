@@ -18,6 +18,8 @@ public:
     explicit KNNModel( size_t k = 3 ) : _k( k )
     {}
 
+    virtual ~KNNModel() = default;
+
     void setK( size_t k )
     {
         _k = k;

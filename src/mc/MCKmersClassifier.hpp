@@ -24,6 +24,8 @@ namespace MC {
         {
         }
 
+        virtual ~MCKmersClassifier() = default;
+
 
     protected:
         bool _validTraining() const override
