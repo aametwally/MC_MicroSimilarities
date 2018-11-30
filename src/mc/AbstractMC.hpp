@@ -6,7 +6,7 @@
 #define MARKOVIAN_FEATURES_MARKOVCHAINS_HPP
 
 #include "common.hpp"
-#include "aminoacids_grouping.hpp"
+#include "AAGrouping.hpp"
 #include "Histogram.hpp"
 #include "MCDefs.h"
 #include "Selection.hpp"

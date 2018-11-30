@@ -8,6 +8,10 @@ set( SEGMENTATION_INCLUDES
 set( SEGMENTATION_LIB segmentation_lib )
 
 add_library( ${SEGMENTATION_LIB} STATIC ${SEGMENTATION_INCLUDES} ${SEGMENTATION_SOURCES} )
-target_include_directories( ${SEGMENTATION_LIB} PUBLIC ../include  )
+add_dependencies(${SEGMENTATION_LIB}  fmt )
+
+target_include_directories( ${SEGMENTATION_LIB} PUBLIC .
+        ${CMAKE_SOURCE_DIR}/src/include
+        ${EXTERNAL_INSTALL_LOCATION}/include )
 target_link_libraries( ${SEGMENTATION_LIB} PUBLIC fmt-header-only stdc++fs )
 target_compile_features( ${SEGMENTATION_LIB} PUBLIC cxx_std_17)

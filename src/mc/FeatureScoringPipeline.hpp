@@ -22,7 +22,6 @@ namespace MC {
     public:
 
     private:
-        using Ops = MCOps<Grouping>;
         using MCModel = AbstractMC<Grouping>;
         using Histogram = typename MCModel::Histogram;
         using MCF = MCFeatures<Grouping>;

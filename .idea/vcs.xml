@@ -2,5 +2,10 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/dlib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/fmt" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/lapack" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/openblas" vcs="Git" />
   </component>
 </project>

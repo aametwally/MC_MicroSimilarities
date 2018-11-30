@@ -1,0 +1,31 @@
+//
+// Created by asem on 30/11/18.
+//
+
+#ifndef MARKOVIAN_FEATURES_AAINDEX1DATA_H
+#define MARKOVIAN_FEATURES_AAINDEX1DATA_H
+
+#include <string_view>
+
+/**
+ * @brief https://www.genome.jp/aaindex/aaindex_help.html
+ */
+namespace aaindex
+{
+
+constexpr std::string_view ACESSION_NUMBER_FLAG = "H";
+constexpr std::string_view DATA_DESCRIPTION_FLAG = "D";
+constexpr std::string_view PMID_FLAG = "R";
+constexpr std::string_view AUTHORS_FLAG = "A";
+constexpr std::string_view ARTICLE_TITLE_FLAG = "T";
+constexpr std::string_view JOURNAL_REFERENCE_FLAG = "J";
+constexpr std::string_view COMMENTS_FLAG = "*";
+constexpr std::string_view AMINOACID_INDEX_FLAG = "I";
+constexpr std::string_view CORRELATED_ACESSION_NUMBERS_FLAG = "C";
+constexpr std::string_view INDEX_DELIMETER = "//";
+constexpr std::string_view AAINDEX1_DATA = "@AAINDEX1_DATA@";
+
+}
+
+
+#endif //MARKOVIAN_FEATURES_AAINDEX1DATA_H

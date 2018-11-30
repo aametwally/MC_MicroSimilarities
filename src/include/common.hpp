@@ -30,7 +30,8 @@
 #include <memory>
 #include <chrono>
 
-#include <fmt/format.h>
+#define FMT_HEADER_ONLY
+#include "fmt/format.h"
 
 
 template < size_t Base >

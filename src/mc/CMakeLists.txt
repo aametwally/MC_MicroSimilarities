@@ -56,16 +56,18 @@ set( MC_INCLUDES
 
 
 add_library( ${MC_LIB} STATIC ${MC_SOURCES} ${MC_DETAILS_TEMPLATE_FILES} ${MC_INCLUDES}  )
+add_dependencies(${MC_LIB}  dlib fmt )
+
 target_include_directories( ${MC_LIB} PUBLIC
-        ../include
-        ${dlib_INCLUDE_DIRS}
+        ${EXTERNAL_INSTALL_LOCATION}/include
+        ${CMAKE_SOURCE_DIR}/src/include
         ../report
         ../features
         ../data
         ../segmentation
         )
 
-target_link_libraries( ${MC_LIB} PUBLIC fmt-header-only stdc++fs dlib::dlib
+target_link_libraries( ${MC_LIB} stdc++fs dlib::dlib
         ${SEGMENTATION_LIB}
         ${REPORT_LIB}
         ${FEATURES_LIB}

@@ -6,7 +6,8 @@
 #define MARKOVIAN_FEATURES_SEQUENCEENTRY_HPP
 
 #include <experimental/filesystem>
-#include "aminoacids_grouping.hpp"
+#include "AAGrouping.hpp"
+#include "AAIndexDBGET.hpp"
 #include "common.hpp"
 
 
