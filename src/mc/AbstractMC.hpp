@@ -146,12 +146,6 @@ namespace MC {
             _normalize();
         }
 
-
-        virtual double incrementalPropensity( std::string_view contex ) const
-        {
-
-        }
-
         inline std::vector<double> compensatedPropensityVector( std::string_view query ) const
         {
             std::vector<double> pVector;

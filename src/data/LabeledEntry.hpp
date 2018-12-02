@@ -31,6 +31,8 @@ const std::map<std::string, DBFormatProcessor> FormatLabels = {
 class LabeledEntry : public SequenceEntry<LabeledEntry>
 {
 public:
+    virtual ~LabeledEntry() = default;
+
     size_t sequenceLength() const override
     {
         return _sequence.length();

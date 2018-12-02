@@ -19,11 +19,11 @@ constexpr std::string_view PMID_FLAG = "R";
 constexpr std::string_view AUTHORS_FLAG = "A";
 constexpr std::string_view ARTICLE_TITLE_FLAG = "T";
 constexpr std::string_view JOURNAL_REFERENCE_FLAG = "J";
-constexpr std::string_view COMMENTS_FLAG = "*";
 constexpr std::string_view AMINOACID_INDEX_FLAG = "I";
 constexpr std::string_view CORRELATED_ACESSION_NUMBERS_FLAG = "C";
-constexpr std::string_view INDEX_DELIMETER = "//";
-constexpr std::string_view AAINDEX1_DATA = "@AAINDEX1_DATA@";
+constexpr std::string_view BLOCK_DELIMETER = "//";
+constexpr std::string_view MISSING_VALUE = "NA";
+const std::string AAINDEX1_DATA = "@AAINDEX1_DATA@";
 
 }
 

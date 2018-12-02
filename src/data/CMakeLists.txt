@@ -3,7 +3,7 @@
 file(STRINGS "aaindex1" __AAINDEX1_DATA )
 string(REPLACE "\"" "\\\"" _AAINDEX1_DATA "${__AAINDEX1_DATA}")
 foreach(line IN LISTS _AAINDEX1_DATA)
-    string(APPEND AAINDEX1_DATA "${line}\\\n")
+    string(APPEND AAINDEX1_DATA "${line}\\n\\\n")
 endforeach()
 
 

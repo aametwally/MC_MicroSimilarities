@@ -9301,7 +9301,7 @@ D Linker index (Bae et al., 2005)
 R PMID:15746283
 A Bae, K., Mallick, B.K. and Elsik, C.G.
 T Prediction of protein inter-domain linker regions by a hidden Markov model
-J Bioinformatics 21, ??-?? (2005)
+J Bioinformatics 21 (2005)
 C CASG920101    0.919  BASU050102    0.898  WERD780101    0.895
   NISK860101    0.886  ZHOH040103    0.884  NISK800101    0.881
   NADH010104    0.875  ROSG850102    0.868  CORJ870101    0.862

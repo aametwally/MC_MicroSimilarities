@@ -19,6 +19,8 @@ public:
 
     virtual const std::string &getSequence() const = 0;
 
+    virtual ~SequenceEntry() = default;
+
     static std::map<std::string, std::vector<std::string> >
     groupSequencesByLabels( std::vector<T> &&entries )
     {

@@ -31,6 +31,7 @@
 #include <chrono>
 
 #define FMT_HEADER_ONLY
+
 #include "fmt/format.h"
 
 
@@ -181,7 +182,7 @@ subsetRandomSeparation( const ContainerIn &items , size_t select )
 
     size_t subsetSize = 0;
     auto sampler = randomIndexSampler( std::begin( items ) , std::end( items ));
-    while ( subsetSize  < select )
+    while ( subsetSize < select )
     {
         auto p = subsetIndices.insert( sampler());
         subsetSize += p.second;
@@ -198,7 +199,7 @@ subsetRandomSeparation( const ContainerIn &items , size_t select )
         } else
             rest.push_back( items.at( i ));
     }
-    return std::make_pair( std::move( subset ), std::move( rest ));
+    return std::make_pair( std::move( subset ) , std::move( rest ));
 }
 
 namespace io
@@ -250,20 +251,20 @@ inline auto split( const std::string &s )
     return tokens;
 }
 
-inline auto split( const std::string &s ,
-                   std::string delim )
+inline auto split( std::string_view s ,
+                   std::string_view delim )
 {
     std::vector<std::string> tokens;
     size_t last = 0;
     size_t next = 0;
     while ((next = s.find( delim , last )) != std::string::npos )
     {
-        tokens.push_back( s.substr( last , next - last ));
+        tokens.push_back( std::string( s.substr( last , next - last )));
         last = next + 1;
     }
     last += delim.length() - 1;
     if ( last < s.length())
-        tokens.push_back( s.substr( last , std::string::npos ));
+        tokens.push_back( std::string( s.substr( last , std::string::npos )));
     return tokens;
 }
 
