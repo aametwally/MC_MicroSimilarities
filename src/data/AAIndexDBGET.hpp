@@ -35,7 +35,18 @@ struct AAIndex
         if ( idx >= 0 )
         {
             return _index.at( idx );
-        } else return nan;
+        } else if( auto it = POLYMORPHIC_AA.find( aa ); it != POLYMORPHIC_AA.cend())
+        {
+            auto aas = it->second;
+            double sum = std::accumulate( aas.cbegin() , aas.cend() , double(0) ,
+                    [this]( double acc , char aa ){
+                return acc + this->operator()( aa );
+            });
+            return sum / aas.length();
+        }else
+        {
+            return nan;
+        }
     }
 
     inline bool hasMissingValues() const

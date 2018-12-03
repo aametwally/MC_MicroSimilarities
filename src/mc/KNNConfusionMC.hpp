@@ -59,12 +59,12 @@ namespace MC {
                                new MicroSimilarityVotingClassifier<Grouping>( backbones, background,
                                                                               trainer, similarity, selection ));
 
-            _ensemble.emplace( ClassificationEnum::KNN,
-                               new KNNMCParameters<Grouping>( backbones, background, training,
-                                                              7, trainer, similarity ));
-
-            _ensemble.emplace( ClassificationEnum::SVM,
-                               new SVMMCParameters<Grouping>( backbones, background, training, trainer, similarity ));
+//            _ensemble.emplace( ClassificationEnum::KNN,
+//                               new KNNMCParameters<Grouping>( backbones, background, training,
+//                                                              7, trainer, similarity ));
+//
+//            _ensemble.emplace( ClassificationEnum::SVM,
+//                               new SVMMCParameters<Grouping>( backbones, background, training, trainer, similarity ));
 
 //            _ensemble.emplace( ClassificationEnum::KMERS,
 //                               new MCKmersClassifier<Grouping>( backbones, background ));

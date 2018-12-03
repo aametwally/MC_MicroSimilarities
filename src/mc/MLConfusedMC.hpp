@@ -42,10 +42,8 @@ namespace MC {
                 for (auto &seq : trainSeqs)
                 {
                     auto features = _extractFeatures( seq );
-
                     assert( std::all_of( features.begin(), features.end(),
                                          []( double v ) { return !std::isnan( v ); } ));
-
                     featuresVector.emplace_back( features );
                     labels.push_back( trainLabel );
                 }

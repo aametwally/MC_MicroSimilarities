@@ -23,16 +23,6 @@ const std::map<std::string , AminoAcidGroupingEnum> GroupingLabels{
 };
 
 template < size_t N >
-constexpr std::array<char , 256> alphabetIds( const std::array<char , N> &alphabet )
-{
-    std::array<char , 256> ids{};
-    int i = 0;
-    for ( char aa : alphabet )
-        ids.at( size_t( aa )) = char( i++ );
-    return ids;
-};
-
-template < size_t N >
 constexpr std::array<char , N>
 reducedAlphabet()
 {
@@ -43,17 +33,20 @@ reducedAlphabet()
 };
 
 template < size_t N >
-constexpr std::array<char , 256>
+constexpr std::array<int16_t , 256>
 reducedAlphabetIds( const std::array<const char * , N> &alphabetGrouping )
 {
-    std::array<char , 256> ids{};
-    int i = 0;
+    std::array<int16_t , 256> ids{};
+    for( size_t i = 0 ; i < 256 ; ++i )
+        ids[i] = -1;
+
+    int16_t i = 0;
     for ( const auto &aaGroup : alphabetGrouping )
     {
         size_t j = 0;
         while ( aaGroup[j] != '\0' )
         {
-            ids.at( size_t( aaGroup[j++] )) = char( i );
+            ids.at( size_t( aaGroup[j++] )) = int16_t( i );
         }
         ++i;
     }
@@ -102,6 +95,7 @@ using SupportedAAGrouping  = AAGroupingList<
 >;
 
 constexpr std::string_view AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY";
+constexpr int8_t POLYMORPHIC_OFFSET = 30;
 const std::map<char , std::string> POLYMORPHIC_AA{
         {'X' , std::string( AMINO_ACIDS )} ,
         {'B' , "ND"} ,
@@ -109,15 +103,29 @@ const std::map<char , std::string> POLYMORPHIC_AA{
         {'J' , "LI"}
 };
 
-constexpr std::array<int8_t , 256> aaOrders_STRICT( int8_t init = -1 )
+const std::map<char , char > POLYMORPHIC_AA_ENCODE{
+        {'X' , 'A' + POLYMORPHIC_OFFSET } ,
+        {'B' , 'A' + POLYMORPHIC_OFFSET + 1 } ,
+        {'Z' , 'A' + POLYMORPHIC_OFFSET + 2 } ,
+        {'J' , 'A' + POLYMORPHIC_OFFSET + 3 }
+};
+
+const std::map<char , char > POLYMORPHIC_AA_DECODE = [](){
+   std::map< char , char > decode;
+   for( auto [a,b] : POLYMORPHIC_AA_ENCODE )
+       decode[b] = a;
+   return decode;
+}();
+
+constexpr std::array<int16_t , 256> aaOrders_STRICT( int8_t init = -1 )
 {
-    std::array<int8_t , 256> ids{};
+    std::array<int16_t , 256> ids{};
     for ( size_t i = 0; i < 256; ++i )
         ids[i] = -1;
-    int8_t i = 0;
+    int16_t i = 0;
     for ( const auto a: AMINO_ACIDS )
     {
-        ids.at( size_t( a )) = int8_t( i );
+        ids.at( size_t( a )) = int16_t( i );
         ++i;
     }
     return ids;
