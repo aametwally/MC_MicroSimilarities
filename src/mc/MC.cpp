@@ -7,7 +7,7 @@
 namespace MC
 {
     template class  MC<AAGrouping_OFER15 >;
-    template class  MC<AAGrouping_NOGROUPING20 >;
+    template class  MC<AAGrouping_NOGROUPING22 >;
 }
 
 

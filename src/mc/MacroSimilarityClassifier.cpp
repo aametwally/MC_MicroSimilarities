@@ -6,7 +6,7 @@
 
 namespace MC
 {
-    template class MacroSimilarityClassifier< AAGrouping_NOGROUPING20 >;
+    template class MacroSimilarityClassifier< AAGrouping_NOGROUPING22 >;
 
     template class MacroSimilarityClassifier< AAGrouping_OFER15 >;
 

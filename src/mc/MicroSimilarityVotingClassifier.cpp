@@ -6,6 +6,6 @@
 
 namespace MC
 {
-template class MicroSimilarityVotingClassifier< AAGrouping_NOGROUPING20 >;
+template class MicroSimilarityVotingClassifier< AAGrouping_NOGROUPING22 >;
 template class MicroSimilarityVotingClassifier< AAGrouping_OFER15 >;
 }

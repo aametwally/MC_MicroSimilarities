@@ -6,6 +6,6 @@
 
 namespace MC
 {
-    template class MCDiscriminativeClassifier< AAGrouping_NOGROUPING20 >;
+    template class MCDiscriminativeClassifier< AAGrouping_NOGROUPING22 >;
     template class MCDiscriminativeClassifier< AAGrouping_OFER15 >;
 }

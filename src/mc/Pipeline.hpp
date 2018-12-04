@@ -380,8 +380,8 @@ namespace MC {
     {
         switch (grouping)
         {
-            case AminoAcidGroupingEnum::NoGrouping20:
-                return getConfiguredPipeline<AAGrouping_NOGROUPING20>( criteria, model, mxOrder );
+            case AminoAcidGroupingEnum::NoGrouping22:
+                return getConfiguredPipeline<AAGrouping_NOGROUPING22>( criteria, model, mxOrder );
 //            case AminoAcidGroupingEnum::DIAMOND11 :
 //                return getConfiguredPipeline<AAGrouping_DIAMOND11>( criteria, model, mnOrder, mxOrder );
 //            case AminoAcidGroupingEnum::OFER8 :

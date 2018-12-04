@@ -10,7 +10,7 @@
 namespace MC
 {
 
-template < typename AAGrouping = AAGrouping_NOGROUPING20 >
+template < typename AAGrouping = AAGrouping_NOGROUPING22 >
 class MC : public AbstractMC<AAGrouping>
 {
 

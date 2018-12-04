@@ -7,5 +7,5 @@
 namespace MC
 {
     template class  Pipeline<AAGrouping_OFER15 >;
-    template class  Pipeline<AAGrouping_NOGROUPING20 >;
+    template class  Pipeline<AAGrouping_NOGROUPING22 >;
 }

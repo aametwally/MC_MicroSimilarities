@@ -20,7 +20,9 @@ constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 
 struct AAIndex
 {
-    static constexpr auto AAOrders = aaOrders_STRICT( -1 );
+    static constexpr int16_t INVALID_AA_INDEX = -1;
+
+    static constexpr auto AAOrders = aaOrders_STRICT( INVALID_AA_INDEX );
 
     explicit AAIndex( const std::map<char , double> &index )
             : _index( asArray( index )) {}
@@ -31,19 +33,20 @@ struct AAIndex
 
     inline double operator()( char aa ) const
     {
-        auto idx = AAOrders[aa];
+        auto idx = AAOrders.at( aa - CHAR_RANGE.first );
         if ( idx >= 0 )
         {
             return _index.at( idx );
-        } else if( auto it = POLYMORPHIC_AA.find( aa ); it != POLYMORPHIC_AA.cend())
+        } else if ( auto it = POLYMORPHIC_AA.find( aa ); it != POLYMORPHIC_AA.cend())
         {
             auto aas = it->second;
-            double sum = std::accumulate( aas.cbegin() , aas.cend() , double(0) ,
-                    [this]( double acc , char aa ){
-                return acc + this->operator()( aa );
-            });
+            double sum = std::accumulate( aas.cbegin() , aas.cend() , double( 0 ) ,
+                                          [this]( double acc , char aa )
+                                          {
+                                              return acc + this->operator()( aa );
+                                          } );
             return sum / aas.length();
-        }else
+        } else
         {
             return nan;
         }
@@ -63,23 +66,27 @@ struct AAIndex
         return series;
     }
 
-    static std::array<double , 20> asArray( const std::map<char , double> &index )
+    static std::array<double , AA_COUNT > asArray( const std::map<char , double> &index )
     {
-        assert( index.size() == 20 );
-        auto arr = std::array<double , 20>();
-        size_t i = 0;
+        assert( index.size() == AA_COUNT );
+        auto arr = std::array<double , AA_COUNT >();
+        std::fill( arr.begin() , arr.end() , 0 );
         for ( auto[aa , value] : index )
-            arr[i++] = value;
+        {
+            assert( aa - CHAR_RANGE.first >= 0 );
+            assert( AAOrders.at( aa - CHAR_RANGE.first ) >= 0 );
+            arr[AAOrders.at( aa )] = value;
+        }
         return arr;
     }
 
 protected:
-    std::array<double , 20> _index;
+    std::array<double , AA_COUNT> _index;
 };
 
 struct NormalizedAAIndex : public AAIndex
 {
-    explicit NormalizedAAIndex(  const std::map<char , double> &index )
+    explicit NormalizedAAIndex( const std::map<char , double> &index )
     {
         std::tie( _mean , _std , _index ) = normalizeIndex( index );
     }
@@ -94,11 +101,11 @@ struct NormalizedAAIndex : public AAIndex
         return _std;
     }
 
-    static std::tuple<double , double , std::array< double , 20 >>
-    normalizeIndex(  const std::map<char , double> &index )
+    static std::tuple<double , double , std::array<double , AA_COUNT >>
+    normalizeIndex( const std::map<char , double> &index )
     {
-        std::array< double , 20 > normalizedIndex = asArray( index );
-        auto n = 20 - std::count( normalizedIndex.cbegin() , normalizedIndex.cend() , nan );
+        std::array<double , AA_COUNT> normalizedIndex = asArray( index );
+        auto n = AA_COUNT - std::count( normalizedIndex.cbegin() , normalizedIndex.cend() , nan );
         double sum = std::accumulate( normalizedIndex.cbegin() , normalizedIndex.cend() , double( 0 ) ,
                                       []( double acc , double v )
                                       {
@@ -145,7 +152,7 @@ public:
                        const std::map<char , double> &index ,
                        CorrelationsType &&correlations )
             : _metaData( std::forward<MetaData>( mData )) ,
-              _index(  index ) ,
+              _index( index ) ,
               _normalizedIndex( index ) ,
               _correlations( std::forward<CorrelationsType>( correlations )) {}
 
@@ -179,12 +186,12 @@ public:
         return _index.hasMissingValues();
     }
 
-    inline std::vector< double > sequence2NormalizedTimeSeries( std::string_view sequence ) const
+    inline std::vector<double> sequence2NormalizedTimeSeries( std::string_view sequence ) const
     {
         return _normalizedIndex.sequence2TimeSeries( sequence );
     }
 
-    inline std::vector< double > sequence2TimeSeries( std::string_view sequence ) const
+    inline std::vector<double> sequence2TimeSeries( std::string_view sequence ) const
     {
         return _index.sequence2TimeSeries( sequence );
     }
@@ -277,6 +284,8 @@ std::map<char , double> extractIndex( std::string block )
 
     }
     assert( index.size() == 20 );
+    index['O'] = nan;
+    index['U'] = nan;
     return index;
 }
 

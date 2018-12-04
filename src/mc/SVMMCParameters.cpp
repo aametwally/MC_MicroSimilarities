@@ -7,5 +7,5 @@
 namespace MC
 {
     template class  SVMMCParameters<AAGrouping_OFER15 >;
-    template class  SVMMCParameters<AAGrouping_NOGROUPING20 >;
+    template class  SVMMCParameters<AAGrouping_NOGROUPING22 >;
 }

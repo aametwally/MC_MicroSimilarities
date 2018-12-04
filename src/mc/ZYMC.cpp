@@ -6,6 +6,6 @@
 
 namespace MC
 {
-    template class ZYMC< AAGrouping_NOGROUPING20  >;
+    template class ZYMC< AAGrouping_NOGROUPING22  >;
     template class ZYMC< AAGrouping_OFER15 >;
 }

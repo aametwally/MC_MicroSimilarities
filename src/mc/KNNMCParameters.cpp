@@ -8,5 +8,5 @@
 namespace MC
 {
     template class  KNNMCParameters<AAGrouping_OFER15 >;
-    template class  KNNMCParameters<AAGrouping_NOGROUPING20 >;
+    template class  KNNMCParameters<AAGrouping_NOGROUPING22 >;
 }

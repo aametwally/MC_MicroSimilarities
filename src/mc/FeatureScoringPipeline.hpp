@@ -590,8 +590,8 @@ namespace MC {
         const AminoAcidGroupingEnum grouping = GroupingLabels.at( groupingLabel );
         switch (grouping)
         {
-            case AminoAcidGroupingEnum::NoGrouping20:
-                return getFeatureScoringPipeline<AAGrouping_NOGROUPING20>( model, mxOrder );
+            case AminoAcidGroupingEnum::NoGrouping22:
+                return getFeatureScoringPipeline<AAGrouping_NOGROUPING22>( model, mxOrder );
             case AminoAcidGroupingEnum::DIAMOND11 :
                 return getFeatureScoringPipeline<AAGrouping_DIAMOND11>( model, mxOrder );
             case AminoAcidGroupingEnum::OFER8 :
