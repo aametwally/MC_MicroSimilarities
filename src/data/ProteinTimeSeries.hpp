@@ -58,11 +58,13 @@ public:
         return generators;
     }
 
-    std::string toString() const
+    std::string toString( bool normalized = false ) const
     {
         std::stringstream ss;
         ss << fmt::format( ">{} {}\n{}\n" , _entry.getMemberId() , _entry.getLabel() , _entry.getSequence());
-        for ( auto &[indexAccessionNo , seriesGenerator] : makeTimeSeriesGenerators())
+        for ( auto &[indexAccessionNo , seriesGenerator] : (normalized) ?
+                                                           makeNormalizedTimeSeriesGenerators() :
+                                                           makeTimeSeriesGenerators())
         {
             auto series = seriesGenerator();
             ss << fmt::format( "{}: {:.2f}\n" , indexAccessionNo ,
@@ -71,17 +73,40 @@ public:
         return ss.str();
     }
 
+    std::string toString( std::optional<std::reference_wrapper<const std::set<std::string>>> indicesSelection ,
+                          bool normalized = false ) const
+    {
+        if ( indicesSelection )
+        {
+            std::stringstream ss;
+            ss << fmt::format( ">{} {}\n{}\n" , _entry.getMemberId() , _entry.getLabel() , _entry.getSequence());
+            auto ts = (normalized) ? makeNormalizedTimeSeriesGenerators() : makeTimeSeriesGenerators();
+
+            for ( auto &indexAccessionNo : indicesSelection->get())
+            {
+                auto series = ts.at( indexAccessionNo )();
+                ss << fmt::format( "{}: {:.2f}\n" , indexAccessionNo ,
+                                   fmt::join( series.cbegin() , series.cend() , " " ));
+            }
+            return ss.str();
+        } else return toString( normalized );
+    }
+
     static void print( const std::vector<ProteinTimeSeries> &proteins ,
+                       std::optional<std::reference_wrapper<const std::set<std::string >>> selection = std::nullopt ,
+                       bool normalized = false ,
                        std::string_view path = "" )
     {
         assert( !proteins.empty());
 
+
         if ( path.empty())
         {
+
             std::for_each( proteins.cbegin() , proteins.cend() ,
-                           []( const ProteinTimeSeries &p )
+                           [=]( const ProteinTimeSeries &p )
                            {
-                               fmt::print( "{}\n" , p.toString());
+                               fmt::print( "{}\n" , p.toString( selection , normalized ));
                            } );
         } else
         {
@@ -90,7 +115,7 @@ public:
             std::for_each( proteins.cbegin() , proteins.cend() ,
                            [&]( const ProteinTimeSeries &p )
                            {
-                               reportFile << p.toString() << "\n";
+                               reportFile << p.toString( selection , normalized ) << "\n";
                            } );
             reportFile.close();
         }

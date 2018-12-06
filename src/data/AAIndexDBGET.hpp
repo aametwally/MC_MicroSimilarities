@@ -18,14 +18,17 @@ namespace aaindex
 {
 constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 
-struct AAIndex
+class AAIndex
 {
+protected:
+    explicit AAIndex( const LUT<char , double> &index )
+            : _index( index ) {}
+
+public:
     static constexpr int16_t INVALID_AA_INDEX = -1;
 
-    static constexpr auto AAOrders = aaOrders_STRICT( INVALID_AA_INDEX );
-
     explicit AAIndex( const std::map<char , double> &index )
-            : _index( asArray( index )) {}
+            : _index( _makeLUT( index )) {}
 
     AAIndex() = default;
 
@@ -33,28 +36,13 @@ struct AAIndex
 
     inline double operator()( char aa ) const
     {
-        auto idx = AAOrders.at( aa - CHAR_RANGE.first );
-        if ( idx >= 0 )
-        {
-            return _index.at( idx );
-        } else if ( auto it = POLYMORPHIC_AA.find( aa ); it != POLYMORPHIC_AA.cend())
-        {
-            auto aas = it->second;
-            double sum = std::accumulate( aas.cbegin() , aas.cend() , double( 0 ) ,
-                                          [this]( double acc , char aa )
-                                          {
-                                              return acc + this->operator()( aa );
-                                          } );
-            return sum / aas.length();
-        } else
-        {
-            return nan;
-        }
+        return _index.at( aa );
     }
 
     inline bool hasMissingValues() const
     {
-        return std::any_of( _index.cbegin() , _index.cend() , []( double v ) { return v == nan; } );
+        return std::any_of( AMINO_ACIDS.cbegin() , AMINO_ACIDS.cend() ,
+                            [this]( char aa ) { return _index.at( aa ) == nan; } );
     }
 
     inline std::vector<double> sequence2TimeSeries( std::string_view sequence ) const
@@ -66,30 +54,47 @@ struct AAIndex
         return series;
     }
 
-    static std::array<double , AA_COUNT > asArray( const std::map<char , double> &index )
+protected:
+    static LUT<char , double> _makeLUT( const std::map<char , double> &index )
     {
         assert( index.size() == AA_COUNT );
-        auto arr = std::array<double , AA_COUNT >();
-        std::fill( arr.begin() , arr.end() , 0 );
-        for ( auto[aa , value] : index )
+
+        auto lutFn = [&]( char aa )
         {
-            assert( aa - CHAR_RANGE.first >= 0 );
-            assert( AAOrders.at( aa - CHAR_RANGE.first ) >= 0 );
-            arr[AAOrders.at( aa )] = value;
-        }
-        return arr;
+            if ( auto it = index.find( aa ); it != index.cend())
+                return it->second;
+            else if ( auto it = POLYMORPHIC_AA.find( aa ); it != POLYMORPHIC_AA.cend())
+            {
+                auto aas = it->second;
+                double sum = std::accumulate( aas.cbegin() , aas.cend() , double( 0 ) ,
+                                              [&]( double acc , char aa )
+                                              {
+                                                  return acc + index.at( aa );
+                                              } );
+                return sum / aas.length();
+            } else return nan;
+        };
+
+        return LUT<char , double>::makeLUT( lutFn );
     }
 
-protected:
-    std::array<double , AA_COUNT> _index;
+private:
+    const LUT<char , double> _index;
 };
 
 struct NormalizedAAIndex : public AAIndex
 {
-    explicit NormalizedAAIndex( const std::map<char , double> &index )
+private:
+    explicit NormalizedAAIndex( std::tuple<double , double , std::map<char , double>> t )
+            : _mean( std::get<0>( t )) ,
+              _std( std::get<1>( t )) ,
+              AAIndex( std::get<2>( t ))
     {
-        std::tie( _mean , _std , _index ) = normalizeIndex( index );
     }
+
+public:
+    explicit NormalizedAAIndex( const std::map<char , double> &index )
+            : NormalizedAAIndex( normalizeIndex( index )) {}
 
     inline double getMean() const
     {
@@ -101,37 +106,41 @@ struct NormalizedAAIndex : public AAIndex
         return _std;
     }
 
-    static std::tuple<double , double , std::array<double , AA_COUNT >>
+    static std::tuple<double , double , std::map<char , double>>
     normalizeIndex( const std::map<char , double> &index )
     {
-        std::array<double , AA_COUNT> normalizedIndex = asArray( index );
-        auto n = AA_COUNT - std::count( normalizedIndex.cbegin() , normalizedIndex.cend() , nan );
-        double sum = std::accumulate( normalizedIndex.cbegin() , normalizedIndex.cend() , double( 0 ) ,
-                                      []( double acc , double v )
+        assert( index.size() == AA_COUNT );
+        std::map<char , double> nIndex = index;
+        auto n = AA_COUNT - std::count_if( index.cbegin() , index.cend() ,
+                                           []( const auto &p ) { return p.second == nan; } );
+
+        double sum = std::accumulate( index.cbegin() , index.cend() , double( 0 ) ,
+                                      []( double acc , const auto &p )
                                       {
-                                          if ( std::isnan( v ))
+                                          if ( std::isnan( p.second ))
                                               return acc;
-                                          else return acc + v;
+                                          else return acc + p.second;
                                       } );
 
         double mean = sum / n;
-        double var = std::accumulate( normalizedIndex.cbegin() , normalizedIndex.cend() , double( 0 ) ,
-                                      [=]( double acc , double v )
+        double var = std::accumulate( index.cbegin() , index.cend() , double( 0 ) ,
+                                      [mean]( double acc , const auto &p )
                                       {
-                                          if ( std::isnan( v ))
+                                          if ( std::isnan( p.second ))
                                               return acc;
-                                          else return acc + (v - mean) * (v - mean);
+                                          else return acc + (p.second - mean) * (p.second - mean);
                                       } ) / n;
         double sigma = std::sqrt( var );
-        for ( auto &v : normalizedIndex )
+
+        for ( auto &[aa , v] : nIndex )
             v = (v - mean) / sigma;
 
-        return std::make_tuple( mean , sigma , normalizedIndex );
+        return std::make_tuple( mean , sigma , nIndex );
     }
 
 protected:
-    double _mean;
-    double _std;
+    const double _mean;
+    const double _std;
 };
 
 

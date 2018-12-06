@@ -130,22 +130,6 @@ public:
         _normalize();
     }
 
-    inline std::vector<double> compensatedPropensityVector( std::string_view query ) const
-    {
-        std::vector<double> pVector;
-        pVector.reserve( query.size());
-
-        pVector.push_back( probability( query.front()));
-        for ( int i = 1; i < query.size(); ++i )
-        {
-            double p = probability( query.substr( 0 , i ) , query[i] );
-            pVector.push_back( std::log( p ) / std::min( i , int( _order )));
-        }
-
-        assert( pVector.size() == query.size());
-        return pVector;
-    }
-
     inline Order getOrder() const
     {
         return _order;

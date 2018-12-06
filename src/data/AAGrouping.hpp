@@ -6,6 +6,7 @@
 #define MARKOVIAN_FEATURES_AMINOACIDS_GROUPING_HPP
 
 #include "common.hpp"
+#include "LUT.hpp"
 
 enum class AminoAcidGroupingEnum
 {
@@ -53,11 +54,7 @@ reducedAlphabetIds( const std::array<const char * , N> &alphabetGrouping )
     return ids;
 };
 
-
 constexpr int16_t AA_COUNT = 22;
-constexpr auto CHAR_RANGE = std::make_pair( std::numeric_limits<char>::lowest() ,
-                                            std::numeric_limits<char>::max());
-constexpr size_t CHAR_CAPACITY = CHAR_RANGE.second - CHAR_RANGE.first + 1;
 
 constexpr std::array<const char * , AA_COUNT> AAGrouping_NOGROUPING_Array = {
         "A" , "C" , "D" , "E" , "F" , "G" , "H" , "I" ,
@@ -122,19 +119,14 @@ const std::map<char , char> POLYMORPHIC_AA_DECODE = []()
     return decode;
 }();
 
-constexpr std::array<int16_t , CHAR_CAPACITY > aaOrders_STRICT( int16_t init )
+auto AA_ORDER_INDEX( int16_t defaultValue )
 {
-    std::array<int16_t , CHAR_CAPACITY> ids{};
-    for ( auto i = 0 ; i < CHAR_CAPACITY ; ++i )
-        ids[i] = init;
-
-    int16_t i = 0;
-    for ( const auto a: AMINO_ACIDS )
-    {
-        ids.at( size_t( a )) = int16_t( i );
-        ++i;
-    }
-    return ids;
+    return LUT<char , int16_t>::makeLUT( [defaultValue]( char a )->int16_t {
+        auto it = std::find( AMINO_ACIDS.cbegin() , AMINO_ACIDS.cend() , a );
+        if( it == AMINO_ACIDS.cend())
+            return defaultValue;
+        return static_cast<int16_t>(std::distance( AMINO_ACIDS.cbegin() , it ));
+    } );
 };
 
 /**

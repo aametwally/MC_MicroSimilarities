@@ -9,7 +9,7 @@
 #include "AAGrouping.hpp"
 #include "AAIndexDBGET.hpp"
 #include "common.hpp"
-
+#include "LUT.hpp"
 
 template < typename T >
 class SequenceEntry
@@ -102,7 +102,10 @@ public:
 
     static inline bool isPolymorphicAA( char aa )
     {
-        return POLYMORPHIC_AA.find( aa ) != POLYMORPHIC_AA.cend();
+        static auto lut = LUT<char,bool>::makeLUT([]( char a ){
+            return POLYMORPHIC_AA.find( a ) != POLYMORPHIC_AA.cend();
+        });
+        return lut.at( aa );
     }
 
 //    static inline bool isPolymorphicSequence( std::string_view sequence )
@@ -112,15 +115,17 @@ public:
 
     static inline bool isPolymorphicReducedAA( char aa )
     {
-        return POLYMORPHIC_AA_DECODE.find( aa ) != POLYMORPHIC_AA_DECODE.cend();
+        static auto lut = LUT<char,bool>::makeLUT([]( char a ){
+            return POLYMORPHIC_AA_DECODE.find( a ) != POLYMORPHIC_AA_DECODE.cend();
+        });
+        return lut.at( aa );
     }
 
     template < typename AAGrouping >
     static inline bool isPolymorphicReducedSequence( std::string_view sequence )
     {
         assert( isReducedSequence<AAGrouping>( sequence ));
-        return isReducedSequence<AAGrouping>( sequence ) &&
-               std::any_of( sequence.cbegin() , sequence.cend() , isPolymorphicReducedAA );
+        return std::any_of( sequence.cbegin() , sequence.cend() , isPolymorphicReducedAA );
     }
 
     template < typename AAGrouping , typename Sequence >
@@ -130,30 +135,36 @@ public:
     }
 
     template < typename AAGrouping >
-    static inline std::string generateReducedAAMutations( char aa )
+    static inline const std::string &generateReducedAAMutations( char aa )
     {
         assert( isPolymorphicReducedAA( aa ));
-        char polymorphicAA = POLYMORPHIC_AA_DECODE.at( aa );
-        const auto &mutations = POLYMORPHIC_AA.at( polymorphicAA );
-        std::string reducedMutations;
-        reducedMutations.reserve( mutations.size());
-        std::transform( mutations.cbegin() , mutations.cend() ,
-                        std::back_inserter( reducedMutations ) , reduceAlphabet < AAGrouping > );
-        return reducedMutations;
+        static const auto lut = LUT<char,std::string>::makeLUT([]( char a )->std::string{
+            if( auto polymorphicAAIt = POLYMORPHIC_AA_DECODE.find( a ); polymorphicAAIt != POLYMORPHIC_AA_DECODE.cend())
+            {
+                char polymorphicAA = polymorphicAAIt->second;
+                const auto &mutations = POLYMORPHIC_AA.at( polymorphicAA );
+                std::string reducedMutations;
+                reducedMutations.reserve( mutations.size());
+                std::transform( mutations.cbegin() , mutations.cend() ,
+                                std::back_inserter( reducedMutations ) , reduceAlphabet < AAGrouping > );
+                return reducedMutations;
+            } else return "";
+        });
+        return lut.at( aa );
     }
 
     template < typename AAGrouping >
-    static inline std::vector<std::string>
-    mutateFirstReducedPolymorphicAA( std::string_view sequence )
+    static inline std::pair<std::vector<std::string>,size_t>
+    mutateFirstReducedPolymorphicAA( std::string_view sequence, int64_t offset = 0 )
     {
         assert( isPolymorphicReducedSequence<AAGrouping>( sequence ));
-        auto polymorphicIt = std::find_if( sequence.cbegin() , sequence.cend() , isPolymorphicReducedAA );
+        auto polymorphicIt = std::find_if( sequence.cbegin() + offset , sequence.cend() , isPolymorphicReducedAA );
+        offset = std::distance( sequence.cbegin() , polymorphicIt );
         if ( polymorphicIt == sequence.cend())
         {
-            return {};
+            return std::make_pair(std::vector<std::string>{},offset);
         } else
         {
-            auto position = std::distance( sequence.cbegin() , polymorphicIt );
             char polymorphicAA = POLYMORPHIC_AA_DECODE.at( *polymorphicIt );
             const auto &mutations = POLYMORPHIC_AA.at( polymorphicAA );
             std::vector<std::string> mutatedSequences;
@@ -163,9 +174,9 @@ public:
                 char reducedMutation = reduceAlphabet<AAGrouping>( mutation );
                 std::string mutatedSequence = std::string( sequence );
                 mutatedSequences.emplace_back( sequence );
-                mutatedSequences.back()[position] = reducedMutation;
+                mutatedSequences.back()[offset] = reducedMutation;
             }
-            return mutatedSequences;
+            return std::make_pair( std::move(mutatedSequences) , offset );
         }
     }
 
@@ -180,12 +191,13 @@ public:
         {
             std::vector<std::string> nonPolymorphicSequences;
             std::list<std::string> polymorphicSequences = {std::string( sequence )};
-
+            int64_t offset = 0;
             while ( !polymorphicSequences.empty())
             {
                 std::string current( std::move( polymorphicSequences.front()));
                 polymorphicSequences.pop_front();
-                auto mutatedSequences = mutateFirstReducedPolymorphicAA<AAGrouping>( current );
+                auto [mutatedSequences,newOffset] = mutateFirstReducedPolymorphicAA<AAGrouping>( current , offset );
+                offset = newOffset;
                 if ( isPolymorphicReducedSequence<AAGrouping>( mutatedSequences.front()))
                 {
                     polymorphicSequences.insert( polymorphicSequences.end() ,

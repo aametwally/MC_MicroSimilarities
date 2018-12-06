@@ -11,12 +11,19 @@
 
 #include "ProteinTimeSeries.hpp"
 
+std::vector<std::string> splitParameters( std::string params )
+{
+    io::trim( params , "[({})]" );
+    return io::split( params , "," );
+}
+
 int main( int argc , char *argv[] )
 {
     using io::join;
     std::string input , output;
     std::string fastaFormat = keys( FormatLabels ).front();
-
+    std::string selection;
+    bool normalized = false;
     bool showHelp = false;
 
     auto cli
@@ -28,6 +35,12 @@ int main( int argc , char *argv[] )
               | clara::Opt( fastaFormat , join( keys( FormatLabels ) , "|" ))
               ["-f"]["--fformat"]
                       ( fmt::format( "input file processor, default:{}" , fastaFormat ))
+              | clara::Opt( selection , "amino acids indices selection" )
+              ["-s"]["--indices-selection"]
+                      ( "indices" )
+              | clara::Opt( normalized )
+              ["-n"]["--normalized"]
+                      ( "Normalize the indices" )
               | clara::Help( showHelp );
 
 
@@ -43,13 +56,21 @@ int main( int argc , char *argv[] )
     {
 
         fmt::print( "[Args][input:{}]"
-                    "[fformat:{}][output:{}]\n" ,
-                    input , fastaFormat , output );
+                    "[fformat:{}][output:{}][indices:{}]\n" ,
+                    input , fastaFormat , output , selection );
 
         auto proteins = ProteinTimeSeries::createProteinsTimserSeries(
                 LabeledEntry::loadEntries( input , fastaFormat ));
 
-        ProteinTimeSeries::print( proteins , output );
+        if ( selection.empty())
+        {
+            ProteinTimeSeries::print( proteins , std::nullopt , normalized , output );
+        } else
+        {
+            const auto selectionVec = splitParameters( selection );
+            auto selectionSet = std::set<std::string>( selectionVec.cbegin() , selectionVec.cend() );
+            ProteinTimeSeries::print( proteins , std::cref( selectionSet ) , normalized , output );
+        }
     }
     return 0;
 }
