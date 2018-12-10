@@ -128,6 +128,21 @@ public:
         return std::any_of( sequence.cbegin() , sequence.cend() , isPolymorphicReducedAA );
     }
 
+    template < typename AAGrouping >
+    static inline bool isAllPolymorphicReducedSequence( std::string_view sequence )
+    {
+        assert( isReducedSequence<AAGrouping>( sequence ));
+        return std::all_of( sequence.cbegin() , sequence.cend() , isPolymorphicReducedAA );
+    }
+
+    template < typename AAGrouping >
+    static inline bool isMostPolymorphicReducedSequence( std::string_view sequence )
+    {
+        assert( isReducedSequence<AAGrouping>( sequence ));
+        auto polymorphic = std::count_if( sequence.cbegin() , sequence.cend() , isPolymorphicReducedAA );
+        return double(polymorphic)/sequence.length() > 0.5f;
+    }
+
     template < typename AAGrouping , typename Sequence >
     static inline bool isReducedSequences( const std::vector<Sequence> &sequences )
     {
@@ -181,7 +196,7 @@ public:
     }
 
     template < typename AAGrouping >
-    static inline std::vector<std::string>
+    static inline std::list<std::string>
     generateReducedPolymorphicSequenceOutcome( std::string_view sequence )
     {
         assert( isReducedSequence<AAGrouping>( sequence ));
@@ -189,7 +204,7 @@ public:
             return {std::string( sequence )};
         else
         {
-            std::vector<std::string> nonPolymorphicSequences;
+            std::list<std::string> nonPolymorphicSequences;
             std::list<std::string> polymorphicSequences = {std::string( sequence )};
             int64_t offset = 0;
             while ( !polymorphicSequences.empty())
@@ -205,7 +220,6 @@ public:
                                                  std::make_move_iterator( mutatedSequences.end()));
                 } else
                 {
-                    nonPolymorphicSequences.reserve( nonPolymorphicSequences.size() + mutatedSequences.size());
                     nonPolymorphicSequences.insert( nonPolymorphicSequences.end() ,
                                                     std::make_move_iterator( mutatedSequences.begin()) ,
                                                     std::make_move_iterator( mutatedSequences.end()));

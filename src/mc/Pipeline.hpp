@@ -242,12 +242,16 @@ namespace MC {
 
             for (size_t i = 0; i < k; ++i)
             {
+                fmt::print("Fold#{}:\n",i+1);
                 auto trainingClusters = joinFoldsExceptK( sFolds, i );
                 const auto
                 [ids, queries, qLabels] = unzip( folds.at( i ));
+                fmt::print("Training..\n");
                 BackboneProfiles backbones = AbstractModel::train( trainingClusters, _modelTrainer );
                 BackboneProfiles backgrounds = AbstractModel::backgroundProfiles( trainingClusters, _modelTrainer );
+                fmt::print("[DONE] Training..\n");
 
+                fmt::print("Classification..\n");
                 for (auto &classifier : classifiers)
                 {
                     auto classifierEnum = ClassifierEnum.at( classifier );
@@ -270,6 +274,8 @@ namespace MC {
                         ensembleValidation.countInstance( i, classifier, id, prediction );
                     }
                 }
+                fmt::print("[DONE] Classification..\n");
+
             }
 
             for (auto &[classifier, cvalidation] : validation)
