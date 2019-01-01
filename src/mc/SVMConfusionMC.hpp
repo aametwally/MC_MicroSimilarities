@@ -18,16 +18,16 @@
 
 namespace MC {
 
-    template<typename Grouping>
+    template<size_t States>
     class SVMConfusionMC : private SVMModel, public MLConfusedMC
     {
-        using MCModel = AbstractMC<Grouping>;
+        using MCModel = AbstractMC<States>;
         using Histogram = typename MCModel::Histogram;
-        using MCF = MCFeatures<Grouping>;
+        using MCF = MCFeatures<States>;
         using HeteroHistograms = typename MCModel::HeteroHistograms;
         using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
-        using ModelTrainer = ModelGenerator<Grouping>;
+        using ModelTrainer = ModelGenerator<States>;
         using Similarity = MetricFunction<Histogram>;
 
     public:
@@ -50,14 +50,14 @@ namespace MC {
             _backbones = backbones;
             _background = background;
             _ensemble.emplace( ClassificationEnum::Propensity,
-                               new MCPropensityClassifier<Grouping>( backbones, background ));
+                               new MCPropensityClassifier<States>( backbones, background ));
 
             _ensemble.emplace( ClassificationEnum::Accumulative,
-                               new MacroSimilarityClassifier<Grouping>( backbones, background,
+                               new MacroSimilarityClassifier<States>( backbones, background,
                                                                         trainer, similarity , selection ));
 
             _ensemble.emplace( ClassificationEnum::Voting,
-                               new MicroSimilarityVotingClassifier<Grouping>( backbones, background,
+                               new MicroSimilarityVotingClassifier<States>( backbones, background,
                                                                               trainer, similarity, selection ));
 //
 //            _ensemble.emplace( ClassificationEnum::KNN,

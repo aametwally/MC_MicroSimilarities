@@ -7,6 +7,6 @@
 
 namespace MC
 {
-    template class  KNNMCParameters<AAGrouping_OFER15 >;
-    template class  KNNMCParameters<AAGrouping_NOGROUPING22 >;
+    template class  KNNMCParameters<COUNT_OFER15 >;
+    template class  KNNMCParameters<COUNT_NOGROUPING22 >;
 }

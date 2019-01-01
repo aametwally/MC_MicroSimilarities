@@ -22,9 +22,10 @@ namespace MC {
     public:
 
     private:
-        using MCModel = AbstractMC<Grouping>;
+        static constexpr auto States = Grouping::StatesN;
+        using MCModel = AbstractMC<States>;
         using Histogram = typename MCModel::Histogram;
-        using MCF = MCFeatures<Grouping>;
+        using MCF = MCFeatures<States>;
         using HeteroHistograms = typename MCModel::HeteroHistograms;
         using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
         using BackboneProfiles = typename MCModel::BackboneProfiles;

@@ -10,10 +10,10 @@
 
 namespace MC {
 
-    template<typename Grouping>
+    template<size_t States>
     class MCKmersClassifier : public AbstractClassifier
     {
-        using MCModel = AbstractMC<Grouping>;
+        using MCModel = AbstractMC<States>;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
 
     public:

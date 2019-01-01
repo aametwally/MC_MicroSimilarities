@@ -8,10 +8,10 @@
 #include "MacroSimilarityClassifier.hpp"
 
 namespace MC {
-    template<typename Grouping>
-    class MicroSimilarityVotingClassifier : public MacroSimilarityClassifier<Grouping>
+    template<size_t States>
+    class MicroSimilarityVotingClassifier : public MacroSimilarityClassifier<States>
     {
-        using Base = MacroSimilarityClassifier<Grouping>;
+        using Base = MacroSimilarityClassifier<States>;
         using BackboneProfiles = typename Base::BackboneProfiles;
         using ModelTrainer  = typename Base::ModelTrainer;
         using Similarity = typename Base::Similarity;

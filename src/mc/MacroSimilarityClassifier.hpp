@@ -12,18 +12,18 @@
 #include "AbstractClassifier.hpp"
 
 namespace MC {
-    template<typename Grouping>
+    template<size_t States>
     class MacroSimilarityClassifier : public AbstractClassifier
     {
     protected:
-        using MCModel = AbstractMC<Grouping>;
+        using MCModel = AbstractMC<States>;
         using Histogram = typename MCModel::Histogram;
         using Similarity = MetricFunction<Histogram>;
-        using MCF = MCFeatures<Grouping>;
+        using MCF = MCFeatures<States>;
         using HeteroHistograms = typename MCModel::HeteroHistograms;
         using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
-        using ModelTrainer =  ModelGenerator<Grouping>;
+        using ModelTrainer =  ModelGenerator<States>;
 
     public:
 

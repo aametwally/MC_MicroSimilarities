@@ -9,16 +9,16 @@
 
 namespace MC
 {
-template < typename Grouping >
+template < size_t States >
 class MCFeatures
 {
-    using Histogram= typename AbstractMC<Grouping>::Histogram;
-    using BackboneProfiles = typename AbstractMC<Grouping>::BackboneProfiles;
-    using BackboneProfile = typename AbstractMC<Grouping>::BackboneProfile;
+    using Histogram= typename AbstractMC<States>::Histogram;
+    using BackboneProfiles = typename AbstractMC<States>::BackboneProfiles;
+    using BackboneProfile = typename AbstractMC<States>::BackboneProfile;
 
-    using HeteroHistogramsFeatures = typename AbstractMC<Grouping>::HeteroHistogramsFeatures;
-    using HeteroHistograms = typename AbstractMC<Grouping>::HeteroHistograms;
-    using ModelTrainer = ModelGenerator<Grouping>;
+    using HeteroHistogramsFeatures = typename AbstractMC<States>::HeteroHistogramsFeatures;
+    using HeteroHistograms = typename AbstractMC<States>::HeteroHistograms;
+    using ModelTrainer = ModelGenerator<States>;
 public:
 
     static HeteroHistogramsFeatures

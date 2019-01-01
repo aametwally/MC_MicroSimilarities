@@ -6,9 +6,9 @@
 
 namespace MC
 {
-    template class AbstractMC< AAGrouping_OFER15  >;
-    template class AbstractMC< AAGrouping_NOGROUPING22  >;
+    template class AbstractMC< COUNT_OFER15  >;
+    template class AbstractMC< COUNT_NOGROUPING22  >;
 
-    template class ModelGenerator< AAGrouping_OFER15 >;
-    template class ModelGenerator< AAGrouping_NOGROUPING22 >;
+    template class ModelGenerator< COUNT_OFER15 >;
+    template class ModelGenerator< COUNT_NOGROUPING22 >;
 }

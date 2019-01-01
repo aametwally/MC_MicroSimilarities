@@ -6,6 +6,7 @@
 #define MARKOVIAN_FEATURES_ZYMC_HPP
 
 #include "AbstractMC.hpp"
+#include "SequenceEntry.hpp"
 
 namespace MC
 {
@@ -14,11 +15,11 @@ namespace MC
  * Zheng Yuan Approximated Higher-order Markov Chains
  * Paper: https://febs.onlinelibrary.wiley.com/doi/pdf/10.1016/S0014-5793%2899%2900506-2
  */
-template < typename AAGrouping >
-class ZYMC : public AbstractMC<AAGrouping>
+template < size_t States >
+class ZYMC : public AbstractMC<States>
 {
 public:
-    using Base = AbstractMC<AAGrouping>;
+    using Base = AbstractMC<States>;
     using Histogram = typename Base::Histogram;
 
     using IsoHistograms = std::unordered_map<HistogramID , Histogram>;
@@ -47,7 +48,7 @@ public:
     }
 
 
-    static constexpr inline HistogramID lowerOrderID( HistogramID id ) { return id / Base::StatesN; }
+    static constexpr inline HistogramID lowerOrderID( HistogramID id ) { return id / States; }
 
     inline double pairwiseProbability( char context ,
                                        char state ,
@@ -66,54 +67,55 @@ public:
         } else return 0;
     }
 
-    double probability( std::string_view polymorphicContext , char polymorphicState ) const override
+    double probability( std::string_view context , char state ) const override
     {
-        if ( polymorphicContext.size() > this->getOrder())
+        if ( context.size() > this->getOrder())
         {
-            polymorphicContext.remove_prefix( polymorphicContext.size() - this->getOrder());
+            context.remove_prefix( context.size() - this->getOrder());
         }
 
-        return this->_polymorphicSummer(
-                polymorphicContext , polymorphicState ,
-                [this]( std::string_view context , char state )
-                {
-                    double p = 1.0;
-                    for ( auto i = 0; i < context.size(); ++i )
-                    {
-                        auto distance = Order( context.size() - i );
-                        auto c = context[i];
-                        p *= pairwiseProbability( c , state , distance );
-                    }
-                    return p;
-                } );
+        if ( LabeledEntry::isPolymorphicReducedSequence<States>( context ) ||
+             LabeledEntry::isPolymorphicReducedAA( state ))
+        {
+            return 1;
+        } else
+        {
+            double p = 1.0;
+            for ( auto i = 0; i < context.size(); ++i )
+            {
+                auto distance = Order( context.size() - i );
+                auto c = context[i];
+                p *= pairwiseProbability( c , state , distance );
+            }
+            return p;
+        }
     }
 
 protected:
-    void _incrementInstance( std::string_view context ,
-                             char state ,
-                             Order distance )
+    virtual void _incrementInstance( std::string_view context ,
+                                     char state ,
+                                     Order distance )
     {
-        this->_polymorphicApply(
-                context , state ,
-                [this , distance]( std::string_view context ,
-                                   char state )
-                {
-                    assert( context.size() == 1 );
-                    auto c = Base::_char2ID( context.front());
-                    auto s = Base::_char2ID( state );
-                    this->_histograms[distance][c].increment( s );
-                } );
+        assert( context.size() == 1 );
+
+        if ( !LabeledEntry::isPolymorphicReducedSequence<States>( context ) &&
+             !LabeledEntry::isPolymorphicReducedAA( state ))
+        {
+            auto c = Base::_char2ID( context.front());
+            auto s = Base::_char2ID( state );
+            this->_histograms[distance][c].increment( s );
+        }
     }
 
     void _countInstance( std::string_view sequence ) override
     {
         for ( auto a : sequence )
         {
-            this->_polymorphicApply( a , [this]( char state )
+            if ( !LabeledEntry::isPolymorphicReducedAA( a ))
             {
-                auto c = Base::_char2ID( state );
+                auto c = Base::_char2ID( a );
                 this->_histograms[0][0].increment( c );
-            } );
+            }
         }
 
         for ( Order distance = 1; distance <= this->_order; ++distance )

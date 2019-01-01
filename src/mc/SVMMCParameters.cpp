@@ -6,6 +6,6 @@
 
 namespace MC
 {
-    template class  SVMMCParameters<AAGrouping_OFER15 >;
-    template class  SVMMCParameters<AAGrouping_NOGROUPING22 >;
+    template class  SVMMCParameters<COUNT_OFER15 >;
+    template class  SVMMCParameters<COUNT_NOGROUPING22 >;
 }

@@ -9,10 +9,10 @@
 #include "AbstractMC.hpp"
 
 namespace MC {
-    template<typename Grouping>
+    template<size_t States>
     class MCPropensityClassifier : public AbstractClassifier
     {
-        using MCModel = AbstractMC<Grouping>;
+        using MCModel = AbstractMC<States>;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
         using ScoringFunction = std::function<double(std::string_view)>;
 

@@ -6,6 +6,6 @@
 
 namespace MC
 {
-    template class  MCFeatures<AAGrouping_OFER15 >;
-    template class  MCFeatures<AAGrouping_NOGROUPING20 >;
+    template class  MCFeatures<COUNT_OFER15 >;
+    template class  MCFeatures<COUNT_NOGROUPING22 >;
 }

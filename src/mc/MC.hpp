@@ -10,12 +10,12 @@
 namespace MC
 {
 
-template < typename AAGrouping = AAGrouping_NOGROUPING22 >
-class MC : public AbstractMC<AAGrouping>
+template < size_t States >
+class MC : public AbstractMC<States>
 {
 
 public:
-    using Base = AbstractMC<AAGrouping>;
+    using Base = AbstractMC<States>;
     using Histogram = typename Base::Histogram;
     using HeteroHistograms  = typename Base::HeteroHistograms;
 
@@ -71,62 +71,62 @@ public:
         return *this;
     }
 
-    static constexpr inline HistogramID lowerOrderID( HistogramID id ) { return id / Base::StatesN; }
+    static constexpr inline HistogramID lowerOrderID( HistogramID id ) { return id / States; }
 
 
-    double probability( std::string_view polymorphicContext , char polymorphicState ) const override
+    double probability( std::string_view context , char state ) const override
     {
-        if ( polymorphicContext.size() > this->getOrder())
+        if ( context.size() > this->getOrder())
         {
-            polymorphicContext.remove_prefix( polymorphicContext.size() - this->getOrder());
+            context.remove_prefix( context.size() - this->getOrder());
         }
 
-        return this->_polymorphicSummer(
-                polymorphicContext , polymorphicState ,
-                [this]( std::string_view context , char state )
+        if ( LabeledEntry::isPolymorphicReducedSequence<States>( context ) ||
+             LabeledEntry::isPolymorphicReducedAA( state ))
+        {
+            return 1;
+        } else
+        {
+            auto distance = Order( context.length());
+            auto id = Base::_sequence2ID( context );
+            auto stateID = Base::_char2ID( state );
+            if ( auto isoHistogramsIt = this->_histograms.find( distance );
+                    isoHistogramsIt != this->_histograms.cend())
+            {
+                auto &isoHistograms = isoHistogramsIt->second;
+                if ( auto histogramIt = isoHistograms.find( id ); histogramIt !=
+                                                                  isoHistograms.cend())
                 {
-                    auto distance = Order( context.length());
-                    auto id = Base::_sequence2ID( context );
-                    auto stateID = Base::_char2ID( state );
-                    if ( auto isoHistogramsIt = this->_histograms.find( distance );
-                            isoHistogramsIt != this->_histograms.cend())
-                    {
-                        auto &isoHistograms = isoHistogramsIt->second;
-                        if ( auto histogramIt = isoHistograms.find( id ); histogramIt !=
-                                                                          isoHistograms.cend())
-                        {
-                            auto &histogram = histogramIt->second;
-                            return histogram[stateID];
-                        } else return 0.0;
-                    } else return 0.0;
-                } );
+                    auto &histogram = histogramIt->second;
+                    return histogram[stateID];
+                } else return 0.0;
+            } else return 0.0;
+        }
     }
 
 protected:
-    void _incrementInstance( std::string_view context ,
-                             char state )
+    virtual void _incrementInstance( std::string_view context ,
+                                     char state )
     {
-        this->_polymorphicApply(
-                context , state ,
-                [this]( std::string_view context ,
-                        char state )
-                {
-                    auto order = context.size();
-                    auto id = Base::_sequence2ID( context );
-                    auto c = Base::_char2ID( state );
-                    this->_histograms[order][id].increment( c );
-                } );
+        if ( !LabeledEntry::isPolymorphicReducedSequence<States>( context ) &&
+             !LabeledEntry::isPolymorphicReducedAA( state ))
+        {
+            auto order = context.size();
+            auto id = Base::_sequence2ID( context );
+            auto c = Base::_char2ID( state );
+            this->_histograms[order][id].increment( c );
+        }
     }
 
     void _countInstance( std::string_view sequence ) override
     {
         for ( auto a : sequence )
         {
-            this->_polymorphicApply( a , [this]( char state )
+            if ( !LabeledEntry::isPolymorphicReducedAA( a ))
             {
-                auto c = Base::_char2ID( state );
+                auto c = Base::_char2ID( a );
                 this->_histograms[0][0].increment( c );
-            } );
+            }
         }
 
 

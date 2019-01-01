@@ -79,10 +79,15 @@ struct AAGrouping
     static constexpr size_t StatesN = N;
 };
 
-using AAGrouping_NOGROUPING22 = AAGrouping<AA_COUNT , AAGrouping_NOGROUPING_Array>;
-using AAGrouping_OFER15 = AAGrouping<15 , AAGrouping_OFER15_Array>;
-using AAGrouping_OFER8 = AAGrouping<8 , AAGrouping_OFER8_Array>;
-using AAGrouping_DIAMOND11 = AAGrouping<11 , AAGrouping_DIAMOND11_Array>;
+constexpr size_t COUNT_NOGROUPING22 = AA_COUNT;
+constexpr size_t COUNT_OFER15 = 15;
+constexpr size_t COUNT_OFER8 = 8;
+constexpr size_t COUNT_DIAMOND11 = 11;
+
+using AAGrouping_NOGROUPING22 = AAGrouping<COUNT_NOGROUPING22 , AAGrouping_NOGROUPING_Array>;
+using AAGrouping_OFER15 = AAGrouping<COUNT_OFER15 , AAGrouping_OFER15_Array>;
+using AAGrouping_OFER8 = AAGrouping<COUNT_OFER8 , AAGrouping_OFER8_Array>;
+using AAGrouping_DIAMOND11 = AAGrouping<COUNT_DIAMOND11 , AAGrouping_DIAMOND11_Array>;
 
 template < typename... >
 struct AAGroupingList

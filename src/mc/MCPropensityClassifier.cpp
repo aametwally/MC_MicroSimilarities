@@ -6,6 +6,6 @@
 
 namespace MC
 {
-    template class MCPropensityClassifier< AAGrouping_NOGROUPING22 >;
-    template class MCPropensityClassifier< AAGrouping_OFER15 >;
+    template class MCPropensityClassifier< COUNT_NOGROUPING22 >;
+    template class MCPropensityClassifier< COUNT_OFER15 >;
 }

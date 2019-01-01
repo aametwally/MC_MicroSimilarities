@@ -15,12 +15,15 @@ set( MC_SOURCES
         KNNMCParameters.cpp
         KNNModel.cpp
         GappedMC.cpp
+        PolymorphicMC.cpp
         MC.cpp
         Pipeline.cpp
         SVMConfusionMC.cpp
         SVMMCParameters.cpp
         SVMModel.cpp
-        ZYMC.cpp )
+        PolymorphicZYMC.cpp
+        ZYMC.cpp
+        DiscretizedScalesMC.cpp )
 
 
 set( MC_DETAILS_TEMPLATE_FILES
@@ -36,13 +39,16 @@ set( MC_DETAILS_TEMPLATE_FILES
         KNNMCParameters.hpp
         KNNModel.hpp
         GappedMC.hpp
+        PolymorphicMC.hpp
         MC.hpp
         Pipeline.hpp
         SVMConfusionMC.hpp
         SVMMCParameters.hpp
         SVMModel.hpp
+        PolymorphicZYMC.hpp
         ZYMC.hpp
-        MLConfusedMC.hpp )
+        MLConfusedMC.hpp
+        DiscretizedScalesMC.hpp )
 
 set( MC_INCLUDES
         Pipeline.hpp

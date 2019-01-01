@@ -15,15 +15,14 @@
 namespace MC
 {
 
-template < typename AAGrouping >
+template < size_t States >
 class AbstractMC
 {
 public:
-    static constexpr size_t StatesN = AAGrouping::StatesN;
-    static constexpr std::array<char , StatesN> ReducedAlphabet = reducedAlphabet<StatesN>();
-    static constexpr std::array<int16_t , 256> ReducedAlphabetIds = reducedAlphabetIds( AAGrouping::Grouping );
 
-    using Histogram = buffers::Histogram<StatesN>;
+    static constexpr std::array<char , States> ReducedAlphabet = reducedAlphabet<States>();
+
+    using Histogram = buffers::Histogram<States>;
     using Buffer =  typename Histogram::Buffer;
     using BufferIterator =  typename Buffer::iterator;
     using BufferConstIterator =  typename Buffer::const_iterator;
@@ -108,14 +107,14 @@ public:
 
     void train( std::string_view sequence )
     {
-        assert( LabeledEntry::isReducedSequence<AAGrouping>( sequence ));
+        assert( LabeledEntry::isReducedSequence<States>( sequence ));
         _countInstance( sequence );
         _normalize();
     }
 
     void train( const std::vector<std::string> &sequences )
     {
-        assert( LabeledEntry::isReducedSequences<AAGrouping>( sequences ));
+        assert( LabeledEntry::isReducedSequences<States>( sequences ));
         for ( const auto &s : sequences )
             _countInstance( s );
         _normalize();
@@ -124,7 +123,7 @@ public:
 
     void train( const std::vector<std::string_view> &sequences )
     {
-        assert( LabeledEntry::isReducedSequences<AAGrouping>( sequences ));
+        assert( LabeledEntry::isReducedSequences<States>( sequences ));
         for ( const auto &s : sequences )
             _countInstance( s );
         _normalize();
@@ -161,12 +160,16 @@ public:
         } else return acc;
     }
 
-    inline double probability( char a ) const
+    virtual double probability( char a ) const
     {
-        return _polymorphicSummer( a , [this]( char state )
+        if ( LabeledEntry::isPolymorphicReducedAA( a ))
         {
-            return this->_histograms.at( 0 ).at( 0 ).at( _char2ID( state ));
-        } );
+            return 1;
+        }
+        else
+        {
+            return this->_histograms.at( 0 ).at( 0 ).at( _char2ID( a ));
+        }
     }
 
     std::reference_wrapper<const HeteroHistograms> histograms() const
@@ -212,89 +215,6 @@ public:
     }
 
 protected:
-
-    static double _polymorphicSummer( char polymorphicState ,
-                                      std::function<double( char )> fn ,
-                                      double acc = 0 )
-    {
-        if ( LabeledEntry::isPolymorphicReducedAA( polymorphicState ))
-        {
-            auto stateMutations = LabeledEntry::generateReducedAAMutations<AAGrouping>( polymorphicState );
-            return std::accumulate( stateMutations.cbegin() ,
-                                    stateMutations.cend() , acc ,
-                                    [fn]( double acc , char stateMutation )
-                                    {
-                                        return acc + fn( stateMutation );
-                                    } );
-        } else
-        {
-            return acc + fn( polymorphicState );
-        }
-    }
-
-    static double _polymorphicSummer( std::string_view polymorphicContext , char polymorphicState ,
-                                      std::function<double( std::string_view , char )> fn ,
-                                      double acc = 0 )
-    {
-        if ( LabeledEntry::isPolymorphicReducedSequence<AAGrouping>( polymorphicContext ))
-        {
-            auto contextMutations =
-                    LabeledEntry::generateReducedPolymorphicSequenceOutcome<AAGrouping>( polymorphicContext );
-            return std::accumulate( contextMutations.cbegin() , contextMutations.cend() , acc ,
-                                    [=]( double acc , std::string_view contextMutation )
-                                    {
-                                        return acc + _polymorphicSummer( polymorphicState ,
-                                                                         [contextMutation , fn]( char state )
-                                                                         {
-                                                                             return fn( contextMutation , state );
-                                                                         } );
-                                    } );
-        } else
-        {
-            return acc + _polymorphicSummer( polymorphicState , [=]( char state )
-            {
-                return fn( polymorphicContext , state );
-            } );
-        }
-    }
-
-    template < typename AppliedFn >
-    static void _polymorphicApply( char polymorphicState , AppliedFn fn )
-    {
-        if ( LabeledEntry::isPolymorphicReducedAA( polymorphicState ))
-        {
-            auto stateMutations = LabeledEntry::generateReducedAAMutations<AAGrouping>( polymorphicState );
-            std::for_each( stateMutations.cbegin() , stateMutations.cend() , fn );
-        } else
-        {
-            fn( polymorphicState );
-        }
-    }
-
-    template < typename AppliedFn >
-    static void _polymorphicApply( std::string_view polymorphicContext , char polymorphicState , AppliedFn fn )
-    {
-        if ( LabeledEntry::isPolymorphicReducedSequence<AAGrouping>( polymorphicContext ))
-        {
-            auto contextMutations = LabeledEntry::generateReducedPolymorphicSequenceOutcome<AAGrouping>(
-                    polymorphicContext );
-            std::for_each( contextMutations.cbegin() , contextMutations.cend() ,
-                           [=]( std::string_view contextMutation )
-                           {
-                               _polymorphicApply( polymorphicState , [=]( char state )
-                               {
-                                   fn( contextMutation , state );
-                               } );
-                           } );
-        } else
-        {
-            _polymorphicApply( polymorphicState , [=]( char state )
-            {
-                fn( polymorphicContext , state );
-            } );
-        }
-    }
-
     virtual void _countInstance( std::string_view sequence ) = 0;
 
     virtual void _normalize()
@@ -306,7 +226,7 @@ protected:
 
     static constexpr inline HistogramID _char2ID( char a )
     {
-        assert( LabeledEntry::isReducedAA<AAGrouping>( a ));
+        assert( LabeledEntry::isReducedAA<States>( a ));
         return HistogramID( a - ReducedAlphabet.front());
     }
 
@@ -322,14 +242,14 @@ protected:
     {
         HistogramID code = init;
         for ( char c : seq )
-            code = code * StatesN + _char2ID( c );
+            code = code * States + _char2ID( c );
         return code;
     }
 
     static std::string _id2Sequence( HistogramID id , const size_t size , std::string &&acc = "" )
     {
         if ( acc.size() == size ) return acc;
-        else return _id2Sequence( id / StatesN , size , _id2Char( id % StatesN ) + acc );
+        else return _id2Sequence( id / States , size , _id2Char( id % States ) + acc );
     }
 
 
@@ -349,8 +269,8 @@ public:
                 featureSpace( _histograms ) , select ))
         {
             auto &histogram = _histograms.at( order ).at( id );
-            size_t offset = order * id * StatesN;
-            for ( auto i = 0; i < StatesN; ++i )
+            size_t offset = order * id * States;
+            for ( auto i = 0; i < States; ++i )
                 features[offset + i] = histogram[i];
         }
         return features;
@@ -365,7 +285,7 @@ public:
                 std::accumulate( std::cbegin( select ) , std::cend( select ) , size_t( 0 ) ,
                                  [&]( size_t acc , const auto &pair )
                                  {
-                                     return acc + pair.second.size() * StatesN;
+                                     return acc + pair.second.size() * States;
                                  } ));
 
         for ( auto &[order , ids] : select )
@@ -379,13 +299,13 @@ public:
                         features.insert( std::end( features ) , std::cbegin( histogramIt->second ) ,
                                          std::cend( histogramIt->second ));
                     else
-                        features.insert( std::end( features ) , StatesN , missingVals );
+                        features.insert( std::end( features ) , States , missingVals );
 
                 }
             } else
             {
                 for ( auto id : ids )
-                    features.insert( std::end( features ) , StatesN , missingVals );
+                    features.insert( std::end( features ) , States , missingVals );
             }
         }
         return features;
@@ -657,11 +577,11 @@ public:
 };
 
 
-template < typename Grouping >
+template < size_t States >
 class ModelGenerator
 {
 private:
-    using Abstract = AbstractMC<Grouping>;
+    using Abstract = AbstractMC<States>;
     using HeteroHistograms = typename Abstract::HeteroHistograms;
     using ConfiguredModelFunction =std::function<std::unique_ptr<Abstract>( void )>;
     const ConfiguredModelFunction _modelFunction;
@@ -683,7 +603,7 @@ public:
 
 
     template < typename SequenceData >
-    std::unique_ptr<AbstractMC<Grouping>> operator()(
+    std::unique_ptr<AbstractMC<States>> operator()(
             SequenceData &&sequences
                                                     ) const
     {
@@ -693,7 +613,7 @@ public:
     }
 
     template < typename SequenceData >
-    std::unique_ptr<AbstractMC<Grouping>> operator()(
+    std::unique_ptr<AbstractMC<States>> operator()(
             SequenceData &&sequences , std::optional<std::reference_wrapper<const Selection >>
     selection ) const
     {

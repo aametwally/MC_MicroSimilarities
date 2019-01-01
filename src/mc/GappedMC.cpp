@@ -6,7 +6,7 @@
 
 namespace MC
 {
-    template class  GappedMC<AAGrouping_NOGROUPING22 >;
-    template class  GappedMC<AAGrouping_OFER15 >;
+    template class  GappedMC<COUNT_NOGROUPING22 >;
+    template class  GappedMC<COUNT_OFER15 >;
 }
 

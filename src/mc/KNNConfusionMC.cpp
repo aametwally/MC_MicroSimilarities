@@ -6,6 +6,6 @@
 
 namespace MC
 {
-    template class KNNConfusionMC< AAGrouping_NOGROUPING22  >;
-    template class KNNConfusionMC< AAGrouping_OFER15  >;
+    template class KNNConfusionMC< COUNT_NOGROUPING22  >;
+    template class KNNConfusionMC< COUNT_OFER15  >;
 }

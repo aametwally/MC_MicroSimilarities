@@ -6,6 +6,6 @@
 
 namespace MC
 {
-    template class  SVMConfusionMC<AAGrouping_OFER15 >;
-    template class  SVMConfusionMC<AAGrouping_NOGROUPING22 >;
+    template class  SVMConfusionMC<COUNT_OFER15 >;
+    template class  SVMConfusionMC<COUNT_NOGROUPING22 >;
 }
