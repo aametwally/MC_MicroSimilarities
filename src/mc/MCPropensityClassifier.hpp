@@ -57,19 +57,19 @@ namespace MC {
         {
             std::map<std::string_view, double> propensitites;
 
-            for( auto &[l,fn] : _scoringFunctions )
-            {
-                auto &propensity = propensitites[l];
-                for( auto i = 1 ; i <= sequence.length() ; ++i )
-                    propensity += fn( sequence.substr( 0 , i ) );
-            }
-
-//            for (auto&[label, backbone] :_backbones)
+//            for( auto &[l,fn] : _scoringFunctions )
 //            {
-//                auto &bg = _background.at( label );
-//                double logOdd = backbone->propensity( sequence ) - bg->propensity( sequence );
-//                propensitites[label] = logOdd;
+//                auto &propensity = propensitites[l];
+//                for( auto i = 1 ; i <= sequence.length() ; ++i )
+//                    propensity += fn( sequence.substr( 0 , i ) );
 //            }
+
+            for (auto&[label, backbone] :_backbones)
+            {
+                auto &bg = _background.at( label );
+                double logOdd = backbone->propensity( sequence ) - bg->propensity( sequence );
+                propensitites[label] = logOdd;
+            }
 
 
 

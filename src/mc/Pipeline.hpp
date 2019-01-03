@@ -33,7 +33,9 @@
 #include "KNNMCParameters.hpp"
 #include "SVMConfusionMC.hpp"
 #include "KNNConfusionMC.hpp"
+#include "MCDiscretizedScalesClassifier.hpp"
 
+#include "AAIndexClustering.hpp"
 #include "SimilarityMetrics.hpp"
 #include "MCSegmentationClassifier.hpp"
 
@@ -165,6 +167,12 @@ public:
         case ClassificationEnum::KMERS :
         {
             MCKmersClassifier<States> classifier( backbones , background );
+            return classifier.scoredPredictions( queries );
+        }
+        case ClassificationEnum::DiscretizedScales :
+        {
+            MCDiscretizedScalesClassifier<5> classifier( trainingClusters , 5 );
+            classifier.runTraining();
             return classifier.scoredPredictions( queries );
         }
         default:throw std::runtime_error( "Undefined Strategy" );

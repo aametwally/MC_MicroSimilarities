@@ -101,6 +101,7 @@ using SupportedAAGrouping  = AAGroupingList<
 >;
 
 constexpr std::string_view AMINO_ACIDS = "ACDEFGHIKLMNOPQRSTUVWY";
+constexpr std::string_view AMINO_ACIDS20 = "ACDEFGHIKLMNPQRSTVWY";
 constexpr int8_t POLYMORPHIC_OFFSET = 30;
 const std::map<char , std::string> POLYMORPHIC_AA{
         {'X' , std::string( AMINO_ACIDS )} ,

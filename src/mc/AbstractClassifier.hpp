@@ -21,7 +21,8 @@ namespace MC {
         KNN,
         KMERS,
         SVM_Stack,
-        KNN_Stack
+        KNN_Stack,
+        DiscretizedScales
     };
 
     static const std::map<std::string, ClassificationEnum> ClassifierEnum = {
@@ -34,7 +35,8 @@ namespace MC {
             {"knn",            ClassificationEnum::KNN},
             {"svm_stack",      ClassificationEnum::SVM_Stack},
             {"knn_stack",      ClassificationEnum::KNN_Stack},
-            {"kmers",          ClassificationEnum::KMERS}
+            {"kmers",          ClassificationEnum::KMERS},
+            {"discretized",    ClassificationEnum::DiscretizedScales }
     };
 
     static const std::map<ClassificationEnum, std::string_view> ClassifierLabel = [&]() {

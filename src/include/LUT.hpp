@@ -30,6 +30,7 @@ private:
     {
 
     }
+
 public:
     LUT( const LUT & ) = default;
 
@@ -53,6 +54,13 @@ public:
             index.at( i - LOWEST ) = fn( i );
         index.at( CAPACITY - 1 ) = fn( MAX );
         return LUT( [&]() { return index; } );
+    }
+
+    template < typename Fn >
+    void inline forEach( Fn fn ) const
+    {
+        for ( K i = LOWEST; i < MAX; ++i )
+            fn( i , _buffer.at( i - LOWEST ));
     }
 
 private:

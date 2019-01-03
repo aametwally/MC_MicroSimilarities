@@ -165,8 +165,7 @@ public:
         if ( LabeledEntry::isPolymorphicReducedAA( a ))
         {
             return 1;
-        }
-        else
+        } else
         {
             return this->_histograms.at( 0 ).at( 0 ).at( _char2ID( a ));
         }
@@ -604,8 +603,7 @@ public:
 
     template < typename SequenceData >
     std::unique_ptr<AbstractMC<States>> operator()(
-            SequenceData &&sequences
-                                                    ) const
+            SequenceData &&sequences ) const
     {
         auto model = _modelFunction();
         model->train( std::forward<SequenceData>( sequences ));
@@ -614,8 +612,8 @@ public:
 
     template < typename SequenceData >
     std::unique_ptr<AbstractMC<States>> operator()(
-            SequenceData &&sequences , std::optional<std::reference_wrapper<const Selection >>
-    selection ) const
+            SequenceData &&sequences ,
+            std::optional<std::reference_wrapper<const Selection >> selection ) const
     {
         if ( selection )
         {

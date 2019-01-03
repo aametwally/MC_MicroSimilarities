@@ -14,8 +14,48 @@
  *
  */
 
+
+
 namespace aaindex
 {
+
+
+static const std::vector<std::string>
+        ATCHLEY_FACTORS_MAX_CORRELATED_INDICES = {
+        /**
+         * Average non-bonded energy per atom (Oobatake-Ooi, 1977)
+         * Correlation /w Factor 1: 0.98
+         */
+        "OOBM770101" ,
+        /**
+         * Normalized relative frequency of alpha-helix (Isogai et al., 1980)
+         * Correlation /w Factor 2: -0.96
+         */
+        "ISOY800101" ,
+        /**
+         * @brief Slopes proteins, FDPB VFF neutral (Avbelj, 2000)
+         * Correlation /w Factor 3: 0.5
+         */
+        "AVBF000109" ,
+        /**
+         * @brief Beta-sheet propensity derived from designed sequences (Koehl-Levitt, 1999)
+         * Correlation /w Factor 3: -0.6
+         */
+        "KOEP990102" ,
+        /**
+         * @brief AA composition of total proteins (Nakashima et al., 1990)
+         * Correlation /w Factor 4: 0.93
+         */
+        "NAKH900101" ,
+        /**
+         * @brief Helix termination parameter at posision j+1 (Finkelstein et al., 1991)
+         * Correlation /w Factor 5: 0.64
+         */
+        "FINA910104"
+
+};
+
+
 constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 
 class AAIndex
@@ -41,8 +81,8 @@ public:
 
     inline bool hasMissingValues() const
     {
-        return std::any_of( AMINO_ACIDS.cbegin() , AMINO_ACIDS.cend() ,
-                            [this]( char aa ) { return _index.at( aa ) == nan; } );
+        return std::any_of( AMINO_ACIDS20.cbegin() , AMINO_ACIDS20.cend() ,
+                            [this]( char aa ) { return std::isnan( _index.at( aa )); } );
     }
 
     inline std::vector<double> sequence2TimeSeries( std::string_view sequence ) const
@@ -52,6 +92,19 @@ public:
         std::transform( sequence.cbegin() , sequence.cend() , std::back_inserter( series ) ,
                         [this]( char aa ) { return this->operator()( aa ); } );
         return series;
+    }
+
+    inline std::unordered_map<char , double> getMapping() const
+    {
+        std::unordered_map<char , double> m;
+        _index.forEach( [&]( char aa , double value )
+                        {
+                            if ( !std::isnan( value ))
+                            {
+                                m[aa] = value;
+                            }
+                        } );
+        return m;
     }
 
 protected:
@@ -207,12 +260,37 @@ public:
 
     inline auto index() const
     {
-        return [this]( char aa ) { return _index( aa ); };
+        return [this]( char aa )
+        {
+            auto ret = _index( aa );
+            assert( !std::isnan( ret ));
+            return ret;
+        };
     }
 
     inline auto normalizedIndex() const
     {
-        return [this]( char aa ) { return _normalizedIndex( aa ); };
+        return [this]( char aa )
+        {
+            auto ret = _normalizedIndex( aa );
+            assert( !std::isnan( ret ));
+            return ret;
+        };
+    }
+
+    inline auto normalizedIndex( char aa ) const
+    {
+        return _normalizedIndex( aa );
+    }
+
+    inline auto normalizedIndexMap() const
+    {
+        return _normalizedIndex.getMapping();
+    }
+
+    inline auto indexMap() const
+    {
+        return _index.getMapping();
     }
 
     inline const std::map<std::string , double> &getCorrelations() const
@@ -318,25 +396,30 @@ std::map<std::string , double> extractCorrelations( std::string_view block )
     return correlations;
 }
 
-std::map<std::string , AAIndex1> extractAAIndices()
+const std::map<std::string , AAIndex1> &extractAAIndices()
 {
-    auto blocks = io::split( io::trim_copy( AAINDEX1_DATA ) , BLOCK_DELIMETER );
-    std::map<std::string , AAIndex1> indices;
-    for ( auto &block : blocks )
+    static const std::map<std::string , AAIndex1> indices = []()
     {
-        io::trim( block );
-        auto mData = extractMetaData( block );
-        auto index = extractIndex( block );
-        auto correlations = extractCorrelations( block );
-        std::string key = mData.accessionNumber;
-        indices.emplace( std::piecewise_construct ,
-                         std::forward_as_tuple( std::move( key )) ,
-                         std::forward_as_tuple( std::move( mData ) ,
-                                                std::move( index ) ,
-                                                std::move( correlations )));
-    }
+        std::map<std::string , AAIndex1> mIndices;
+        auto blocks = io::split( io::trim_copy( AAINDEX1_DATA ) , BLOCK_DELIMETER );
+        for ( auto &block : blocks )
+        {
+            io::trim( block );
+            auto mData = extractMetaData( block );
+            auto index = extractIndex( block );
+            auto correlations = extractCorrelations( block );
+            std::string key = mData.accessionNumber;
+            mIndices.emplace( std::piecewise_construct ,
+                              std::forward_as_tuple( std::move( key )) ,
+                              std::forward_as_tuple( std::move( mData ) ,
+                                                     std::move( index ) ,
+                                                     std::move( correlations )));
+        }
+        return mIndices;
+    }();
     return indices;
 }
+
 }
 
 #endif //MARKOVIAN_FEATURES_AAINDEXDBGET_H

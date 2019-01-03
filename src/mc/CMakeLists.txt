@@ -11,6 +11,7 @@ set( MC_SOURCES
         MCSegmentationClassifier.cpp
         MacroSimilarityClassifier.cpp
         MicroSimilarityVotingClassifier.cpp
+        MCDiscretizedScalesClassifier.cpp
         KNNConfusionMC.cpp
         KNNMCParameters.cpp
         KNNModel.cpp
@@ -33,6 +34,7 @@ set( MC_DETAILS_TEMPLATE_FILES
         MCPropensityClassifier.hpp
         MCDiscriminativeClassifier.hpp
         MCSegmentationClassifier.hpp
+        MCDiscretizedScalesClassifier.hpp
         MacroSimilarityClassifier.hpp
         MicroSimilarityVotingClassifier.hpp
         KNNConfusionMC.hpp
