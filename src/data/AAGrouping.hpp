@@ -54,9 +54,10 @@ reducedAlphabetIds( const std::array<const char * , N> &alphabetGrouping )
     return ids;
 };
 
-constexpr int16_t AA_COUNT = 22;
+constexpr int16_t AA_COUNT20 = 20;
+constexpr int16_t AA_COUNT22 = 22;
 
-constexpr std::array<const char * , AA_COUNT> AAGrouping_NOGROUPING_Array = {
+constexpr std::array<const char * , AA_COUNT22> AAGrouping_NOGROUPING_Array = {
         "A" , "C" , "D" , "E" , "F" , "G" , "H" , "I" ,
         "K" , "L" , "M" , "N" , "O" , "P" , "Q" , "R" , "S" ,
         "T" , "U" , "V" , "W" , "Y"};
@@ -79,7 +80,7 @@ struct AAGrouping
     static constexpr size_t StatesN = N;
 };
 
-constexpr size_t COUNT_NOGROUPING22 = AA_COUNT;
+constexpr size_t COUNT_NOGROUPING22 = AA_COUNT22;
 constexpr size_t COUNT_OFER15 = 15;
 constexpr size_t COUNT_OFER8 = 8;
 constexpr size_t COUNT_DIAMOND11 = 11;
@@ -104,7 +105,7 @@ constexpr std::string_view AMINO_ACIDS = "ACDEFGHIKLMNOPQRSTUVWY";
 constexpr std::string_view AMINO_ACIDS20 = "ACDEFGHIKLMNPQRSTVWY";
 constexpr int8_t POLYMORPHIC_OFFSET = 30;
 const std::map<char , std::string> POLYMORPHIC_AA{
-        {'X' , std::string( AMINO_ACIDS )} ,
+        {'X' , std::string( AMINO_ACIDS20 )} ,
         {'B' , "ND"} ,
         {'Z' , "EQ"} ,
         {'J' , "LI"}

@@ -7,7 +7,6 @@
 
 #include <experimental/filesystem>
 #include "AAGrouping.hpp"
-#include "AAIndexDBGET.hpp"
 #include "common.hpp"
 #include "LUT.hpp"
 
@@ -187,7 +186,14 @@ public:
         static constexpr auto Grouping = AAGrouping::Grouping;
         static constexpr auto newAlphabet = reducedAlphabet<StatesN>();
         static constexpr auto newAlphabetIds = reducedAlphabetIds( Grouping );
-        return newAlphabet.at( newAlphabetIds.at( aa ));
+
+        if ( isPolymorphicAA( aa ))
+        {
+            return POLYMORPHIC_AA_ENCODE.at( aa );
+        } else
+        {
+            return newAlphabet.at( newAlphabetIds.at( aa ));
+        }
     }
 
     template < typename AAGrouping >
@@ -197,18 +203,20 @@ public:
         std::string reducedPeptide;
         reducedPeptide.reserve( peptide.size());
         for ( auto a : peptide )
-        {
-            if ( isPolymorphicAA( a ))
-            {
-                reducedPeptide.push_back( POLYMORPHIC_AA_ENCODE.at( a ));
-            } else
-            {
-                reducedPeptide.push_back( reduceAlphabet<AAGrouping>( a ));
-            }
-        }
+            reducedPeptide.push_back( reduceAlphabet<AAGrouping>( a ));
 
         assert( isReducedSequence<States>( reducedPeptide ));
         return reducedPeptide;
+    }
+
+    template < typename AAGrouping >
+    static std::vector<std::string>
+    reducedAlphabetEntries( const std::vector<std::string> &entries )
+    {
+        std::vector<std::string> reduced;
+        std::transform( entries.cbegin() , entries.cend() ,
+                        std::back_inserter( reduced ) , reduceAlphabets<AAGrouping> );
+        return reduced;
     }
 
     template < typename AAGrouping , typename Entries >
@@ -222,7 +230,6 @@ public:
         }
         return reducedEntries;
     }
-
 
     template < typename AAGrouping >
     static double polymorphicSummer( char polymorphicState ,

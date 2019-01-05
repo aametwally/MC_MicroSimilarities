@@ -255,10 +255,8 @@ protected:
 protected:
     std::unordered_map<Order , std::unordered_map<HistogramID , Histogram >> _histograms;
     const Order _order;
-    mutable std::pair<std::string_view , double> _cache;
 
 public:
-
     std::unordered_map<size_t , double>
     extractSparsedFlatFeatures( const Selection &select ) const noexcept
     {
@@ -374,7 +372,7 @@ public:
         return joint;
     }
 
-    operator bool() const
+    explicit operator bool() const
     {
         return !_histograms.empty();
     }
@@ -576,7 +574,7 @@ public:
 };
 
 
-template < size_t States >
+template < size_t States>
 class ModelGenerator
 {
 private:
@@ -631,7 +629,6 @@ public:
     {
         auto model = _modelFunction();
         model->train( std::forward<SequenceData>( sequences ));
-
         return model->convertToHistograms();
     }
 };

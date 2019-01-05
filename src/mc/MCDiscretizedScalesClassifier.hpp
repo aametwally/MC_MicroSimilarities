@@ -10,12 +10,23 @@
 #include "AbstractClassifier.hpp"
 #include "AbstractMC.hpp"
 #include "ZYMC.hpp"
+#include "MC.hpp"
 
 namespace MC
 {
 
 const std::map<std::string , aaindex::AAIndex1> &indices = aaindex::extractAAIndices();
-const std::vector<aaindex::AAIndex1> selectedIndices = []()
+
+const std::vector<aaindex::AAIndex1> allIndices = []
+{
+    std::vector<aaindex::AAIndex1> selection;
+    for ( auto &[label , index] : indices )
+        if ( !index.hasMissingValues())
+            selection.push_back( index );
+    return selection;
+}();
+
+const std::vector<aaindex::AAIndex1> selectedIndices = []
 {
     std::vector<aaindex::AAIndex1> selection;
     for ( auto &label : aaindex::ATCHLEY_FACTORS_MAX_CORRELATED_INDICES )
@@ -32,6 +43,7 @@ class MCDiscretizedScalesClassifier : public AbstractClassifier
 {
     using MCModel = AbstractMC<States>;
     using ZMC = ZYMC<States>;
+    using RMC = MC<States>;
     using MG = ModelGenerator<States>;
 
     using BackboneProfiles = typename MCModel::BackboneProfiles;
@@ -47,7 +59,7 @@ public:
             Order mxOrder )
             : _trainingClusters( trainingClusters ) ,
               _discretizedAAScales( selectedIndices , States ) ,
-              _modelTrainer( MG::template create<ZMC>( mxOrder ))
+              _modelTrainer( MG::template create<RMC>( mxOrder ))
     {
 
     }
@@ -58,23 +70,60 @@ public:
         auto transformedSequences = _transformSequences( _trainingClusters , _discretizedAAScales );
         _backbones = MCModel::train( transformedSequences , _modelTrainer );
         _background = MCModel::backgroundProfiles( transformedSequences , _modelTrainer );
-
     }
 
     virtual ~MCDiscretizedScalesClassifier() = default;
 
 protected:
 
+    static inline char nearestNeighborInterpolateAminoAcids_OU( std::string_view sequence , const size_t index )
+    {
+        assert( sequence.at( index ) == 'O' || sequence.at( index ) == 'U' );
+        auto aaItForward = std::find_if( sequence.cbegin() + index , sequence.cend() , [&]( char aa )
+        {
+            return aa != 'O' && aa != 'U';
+        } );
+        if ( aaItForward != sequence.cend())
+        {
+            return *aaItForward;
+        } else
+        {
+            auto aaItBackward = std::find_if( sequence.crbegin() + (sequence.length() - index) , sequence.crend() ,
+                                              [&]( char aa )
+                                              {
+                                                  return aa != 'O' && aa != 'U';
+                                              } );
+            if ( aaItBackward != sequence.crend())
+            {
+                return *aaItBackward;
+            } else
+            {
+                return sequence.at( index );
+            }
+        }
+    }
+
     static std::string _transformSequence( std::string_view sequence ,
                                            const aaindex::AAIndexClustering &discretizedAAScales )
     {
         std::string transformed;
         transformed.reserve( sequence.size());
-        std::transform( sequence.cbegin() , sequence.cend() ,
-                        std::back_inserter( transformed ) , [&]( char aa )
-                        {
-                            return alphabets.at( discretizedAAScales.getCluster( aa ));
-                        } );
+        for ( size_t idx = 0; idx < sequence.length(); ++idx )
+        {
+            auto interpolate = [&]()
+            {
+                return nearestNeighborInterpolateAminoAcids_OU( sequence , idx );
+            };
+            auto cluster = [&]( char aa )
+            {
+                return discretizedAAScales.getCluster( aa );
+            };
+            auto aa = sequence.at( idx );
+            if ( auto clusterOpt = cluster( aa ); clusterOpt )
+                transformed.push_back( alphabets.at( clusterOpt.value()));
+            else transformed.push_back( alphabets.at( cluster( interpolate()).value()));
+        }
+
         return transformed;
     }
 

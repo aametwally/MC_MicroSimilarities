@@ -19,7 +19,6 @@
 namespace aaindex
 {
 
-
 static const std::vector<std::string>
         ATCHLEY_FACTORS_MAX_CORRELATED_INDICES = {
         /**
@@ -51,8 +50,22 @@ static const std::vector<std::string>
          * @brief Helix termination parameter at posision j+1 (Finkelstein et al., 1991)
          * Correlation /w Factor 5: 0.64
          */
-        "FINA910104"
-
+        "FINA910104",
+        /**
+         * @brief Helix termination parameter at posision j-2,j-1,j (Finkelstein et al., 1991)
+         * Correlation /w Factor 5: NA
+         */
+         "FINA910103",
+         /**
+          * @brief Net charge (Klein et al., 1984)
+          * Correlation /w Factor 5: 0.62
+          */
+          "KLEP840101",
+          /**
+           * @brief Isoelectric point (Zimmerman et al., 1968)
+           * Correlation /w Factor 5: 0.59
+           */
+           "ZIMJ680104"
 };
 
 
@@ -60,29 +73,33 @@ constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 
 class AAIndex
 {
-protected:
-    explicit AAIndex( const LUT<char , double> &index )
-            : _index( index ) {}
-
 public:
-    static constexpr int16_t INVALID_AA_INDEX = -1;
-
     explicit AAIndex( const std::map<char , double> &index )
             : _index( _makeLUT( index )) {}
 
-    AAIndex() = default;
-
     virtual ~AAIndex() = default;
 
-    inline double operator()( char aa ) const
+    static inline bool isValidScale( double value )
     {
-        return _index.at( aa );
+        return !std::isnan( value );
+    }
+
+    inline bool hasValidScale( char aa ) const
+    {
+        return isValidScale( _index.at( aa ));
+    }
+
+    inline std::optional<double> operator()( char aa ) const
+    {
+        if ( auto index = _index.at( aa ); isValidScale( index ))
+            return index;
+        else return std::nullopt;
     }
 
     inline bool hasMissingValues() const
     {
         return std::any_of( AMINO_ACIDS20.cbegin() , AMINO_ACIDS20.cend() ,
-                            [this]( char aa ) { return std::isnan( _index.at( aa )); } );
+                            [this]( char aa ) { return !hasValidScale( aa ); } );
     }
 
     inline std::vector<double> sequence2TimeSeries( std::string_view sequence ) const
@@ -90,7 +107,7 @@ public:
         std::vector<double> series;
         series.reserve( sequence.length());
         std::transform( sequence.cbegin() , sequence.cend() , std::back_inserter( series ) ,
-                        [this]( char aa ) { return this->operator()( aa ); } );
+                        [this]( char aa ) { return _index.at( aa ); } );
         return series;
     }
 
@@ -99,7 +116,7 @@ public:
         std::unordered_map<char , double> m;
         _index.forEach( [&]( char aa , double value )
                         {
-                            if ( !std::isnan( value ))
+                            if ( isValidScale( value ))
                             {
                                 m[aa] = value;
                             }
@@ -110,15 +127,16 @@ public:
 protected:
     static LUT<char , double> _makeLUT( const std::map<char , double> &index )
     {
-        assert( index.size() == AA_COUNT );
+        assert( index.size() == AA_COUNT22 );
 
         auto lutFn = [&]( char aa )
         {
             if ( auto it = index.find( aa ); it != index.cend())
-                return it->second;
-            else if ( auto it = POLYMORPHIC_AA.find( aa ); it != POLYMORPHIC_AA.cend())
             {
-                auto aas = it->second;
+                return it->second;
+            } else if ( auto it = POLYMORPHIC_AA.find( aa ); it != POLYMORPHIC_AA.cend())
+            {
+                const auto &aas = it->second;
                 double sum = std::accumulate( aas.cbegin() , aas.cend() , double( 0 ) ,
                                               [&]( double acc , char aa )
                                               {
@@ -162,10 +180,10 @@ public:
     static std::tuple<double , double , std::map<char , double>>
     normalizeIndex( const std::map<char , double> &index )
     {
-        assert( index.size() == AA_COUNT );
+        assert( index.size() == AA_COUNT22 );
         std::map<char , double> nIndex = index;
-        auto n = AA_COUNT - std::count_if( index.cbegin() , index.cend() ,
-                                           []( const auto &p ) { return p.second == nan; } );
+        auto n = AA_COUNT22 - std::count_if( index.cbegin() , index.cend() ,
+                                             []( const auto &p ) { return p.second == nan; } );
 
         double sum = std::accumulate( index.cbegin() , index.cend() , double( 0 ) ,
                                       []( double acc , const auto &p )
@@ -218,34 +236,34 @@ public:
               _normalizedIndex( index ) ,
               _correlations( std::forward<CorrelationsType>( correlations )) {}
 
-    inline const std::string &getAccessionNumber() const
+    inline std::string_view getAccessionNumber() const
     {
         return _metaData.accessionNumber;
     }
 
-    inline const std::string &getDataDescription() const
+    inline std::string_view getDataDescription() const
     {
         return _metaData.dataDescription;
     }
 
-    inline const std::string &getPMID() const
+    inline std::string_view getPMID() const
     {
         return _metaData.PMID;
     }
 
-    inline const std::string &getAuthors() const
+    inline std::string_view getAuthors() const
     {
         return _metaData.authors;
     }
 
-    inline const std::string &getArticleTitle() const
+    inline std::string_view getArticleTitle() const
     {
         return _metaData.articleTitle;
     }
 
     inline bool hasMissingValues() const
     {
-        return _index.hasMissingValues();
+        return _index.hasMissingValues() || _normalizedIndex.hasMissingValues();
     }
 
     inline std::vector<double> sequence2NormalizedTimeSeries( std::string_view sequence ) const
@@ -258,27 +276,12 @@ public:
         return _index.sequence2TimeSeries( sequence );
     }
 
-    inline auto index() const
+    inline std::optional<double> index( char aa ) const
     {
-        return [this]( char aa )
-        {
-            auto ret = _index( aa );
-            assert( !std::isnan( ret ));
-            return ret;
-        };
+        return _index( aa );
     }
 
-    inline auto normalizedIndex() const
-    {
-        return [this]( char aa )
-        {
-            auto ret = _normalizedIndex( aa );
-            assert( !std::isnan( ret ));
-            return ret;
-        };
-    }
-
-    inline auto normalizedIndex( char aa ) const
+    inline std::optional<double> normalizedIndex( char aa ) const
     {
         return _normalizedIndex( aa );
     }
@@ -336,7 +339,7 @@ AAIndex1::MetaData extractMetaData( std::string_view block )
     return mData;
 }
 
-std::map<char , double> extractIndex( std::string block )
+std::map<char , double> extractIndex( std::string_view block )
 {
     auto indexBlock = extractContent( block , AMINOACID_INDEX_FLAG );
     auto lines = io::split( indexBlock , "\n" );
@@ -347,7 +350,7 @@ std::map<char , double> extractIndex( std::string block )
     std::string aaRow2( 10 , 0 );
     for ( auto it = tokens.cbegin(); it != tokens.cend(); ++it )
     {
-        auto order = std::distance( tokens.cbegin() , it );
+        auto order = size_t( std::distance( tokens.cbegin() , it ));
         auto aas = io::split( *it , '/' );
         aaRow1.at( order ) = aas.front().front();
         aaRow2.at( order ) = aas.at( 1 ).front();
@@ -356,23 +359,23 @@ std::map<char , double> extractIndex( std::string block )
     std::stringstream indexStream2( lines.at( 2 ));
 
     std::map<char , double> index;
-    for ( auto i = 0; i < 10; ++i )
+    for ( size_t i = 0; i < 10; ++i )
     {
         std::string valueStr;
         indexStream1 >> valueStr;
         if ( valueStr == MISSING_VALUE )
-            index[aaRow1.at( i )] = nan;
-        else index[aaRow1.at( i )] = std::stod( valueStr );
+            index[ aaRow1.at( i )] = nan;
+        else index[ aaRow1.at( i )] = std::stod( valueStr );
 
         indexStream2 >> valueStr;
         if ( valueStr == MISSING_VALUE )
-            index[aaRow2.at( i )] = nan;
-        else index[aaRow2.at( i )] = std::stod( valueStr );
+            index[ aaRow2.at( i )] = nan;
+        else index[ aaRow2.at( i )] = std::stod( valueStr );
 
     }
     assert( index.size() == 20 );
-    index['O'] = nan;
-    index['U'] = nan;
+    index[ 'O' ] = nan;
+    index[ 'U' ] = nan;
     return index;
 }
 
@@ -409,11 +412,9 @@ const std::map<std::string , AAIndex1> &extractAAIndices()
             auto index = extractIndex( block );
             auto correlations = extractCorrelations( block );
             std::string key = mData.accessionNumber;
-            mIndices.emplace( std::piecewise_construct ,
-                              std::forward_as_tuple( std::move( key )) ,
-                              std::forward_as_tuple( std::move( mData ) ,
-                                                     std::move( index ) ,
-                                                     std::move( correlations )));
+            mIndices.insert( std::make_pair( std::move( key ) , AAIndex1( std::move( mData ) ,
+                                                                          std::move( index ) ,
+                                                                          std::move( correlations ))));
         }
         return mIndices;
     }();

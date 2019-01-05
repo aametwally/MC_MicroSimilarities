@@ -94,12 +94,21 @@ public:
 
 public:
 
-    template < typename Entries >
-    static std::vector<LabeledEntry>
-    reducedAlphabetEntries( Entries &&entries )
+    static std::vector<std::string>
+    reducedAlphabetEntries( const std::vector<std::string> &entries )
     {
-        return LabeledEntry::reducedAlphabetEntries<Grouping>( std::forward<Entries>( entries ));
+        return LabeledEntry::reducedAlphabetEntries<Grouping>( entries );
     }
+
+    static std::map<std::string_view , std::vector<std::string >>
+    reducedAlphabetEntries( const std::map<std::string_view , std::vector<std::string >> &entries )
+    {
+        std::map<std::string_view , std::vector<std::string >> newEntries;
+        for ( auto &[label , sequences] : entries )
+            newEntries.emplace( label , reducedAlphabetEntries( sequences ));
+        return newEntries;
+    }
+
 
     std::vector<ScoredLabels>
     scoredPredictions( const std::vector<std::string> &queries ,
@@ -115,63 +124,66 @@ public:
         {
             auto model = MacroSimilarityClassifier<States>(
                     backbones , background , _modelTrainer , _similarity , selection );
-            return model.scoredPredictions( queries );
+            return model.scoredPredictions( reducedAlphabetEntries( queries ));
         }
         case ClassificationEnum::Voting :
         {
             auto model = MicroSimilarityVotingClassifier<States>(
                     backbones , background , _modelTrainer , _similarity , selection );
-            return model.scoredPredictions( queries );
+            return model.scoredPredictions( reducedAlphabetEntries( queries ));
         }
         case ClassificationEnum::Propensity :
         {
             MCPropensityClassifier<States> classifier( backbones , background );
-            return classifier.scoredPredictions( queries );
+            return classifier.scoredPredictions( reducedAlphabetEntries( queries ));
         }
         case ClassificationEnum::DiscriminativePropensity :
         {
             MCDiscriminativeClassifier<States> classifier( backbones , background );
-            return classifier.scoredPredictions( queries );
+            return classifier.scoredPredictions( reducedAlphabetEntries( queries ));
         }
         case ClassificationEnum::Segmentation :
         {
-            MCSegmentationClassifier<States> classifier( backbones , background , trainingClusters ,
+            MCSegmentationClassifier<States> classifier( backbones , background ,
+                                                         reducedAlphabetEntries( trainingClusters ) ,
                                                          _modelTrainer );
-            return classifier.scoredPredictions( queries );
+            return classifier.scoredPredictions( reducedAlphabetEntries( queries ));
         }
         case ClassificationEnum::SVM :
         {
             SVMMCParameters<States> svm( _modelTrainer , _similarity );
-            svm.fit( backbones , background , trainingClusters );
-            return svm.scoredPredictions( queries );
+            svm.fit( backbones , background , reducedAlphabetEntries( trainingClusters ));
+            return svm.scoredPredictions( reducedAlphabetEntries( queries ) );
         }
         case ClassificationEnum::KNN :
         {
             KNNMCParameters<States> knn( 7 , _modelTrainer , _similarity );
-            knn.fit( backbones , background , trainingClusters );
-            return knn.scoredPredictions( queries );
+            knn.fit( backbones , background , reducedAlphabetEntries( trainingClusters ));
+            return knn.scoredPredictions( reducedAlphabetEntries( queries ) );
 
         }
         case ClassificationEnum::SVM_Stack :
         {
             SVMConfusionMC<States> svm( _modelTrainer );
-            svm.fit( backbones , background , trainingClusters , _modelTrainer , _similarity , selection );
-            return svm.scoredPredictions( queries );
+            svm.fit( backbones , background , reducedAlphabetEntries( trainingClusters ),
+                    _modelTrainer , _similarity , selection );
+            return svm.scoredPredictions( reducedAlphabetEntries( queries ) );
         }
         case ClassificationEnum::KNN_Stack :
         {
             KNNConfusionMC<States> knn( 7 );
-            knn.fit( backbones , background , trainingClusters , _modelTrainer , _similarity , selection );
-            return knn.scoredPredictions( queries );
+            knn.fit( backbones , background , reducedAlphabetEntries( trainingClusters ),
+                    _modelTrainer , _similarity , selection );
+            return knn.scoredPredictions( reducedAlphabetEntries( queries ) );
         }
         case ClassificationEnum::KMERS :
         {
             MCKmersClassifier<States> classifier( backbones , background );
-            return classifier.scoredPredictions( queries );
+            return classifier.scoredPredictions( reducedAlphabetEntries( queries ) );
         }
         case ClassificationEnum::DiscretizedScales :
         {
-            MCDiscretizedScalesClassifier<5> classifier( trainingClusters , 5 );
+            MCDiscretizedScalesClassifier<15> classifier( trainingClusters , 2 );
             classifier.runTraining();
             return classifier.scoredPredictions( queries );
         }
@@ -220,8 +232,7 @@ public:
         fmt::print( "[All Sequences:{} (unique:{})]\n" , entries.size() , uniqueIds.size());
 
 
-        auto groupedEntries = LabeledEntry::groupEntriesByLabels( reducedAlphabetEntries( std::move( entries )));
-
+        auto groupedEntries = LabeledEntry::groupEntriesByLabels( std::move( entries ));
 
         auto labelsInfo = keys( groupedEntries );
         for ( auto &l : labelsInfo ) l = fmt::format( "{}({})" , l , groupedEntries.at( l ).size());
@@ -256,12 +267,13 @@ public:
         for ( size_t i = 0; i < k; ++i )
         {
             fmt::print( "Fold#{}:\n" , i + 1 );
-            auto trainingClusters = joinFoldsExceptK( sFolds , i );
+            const auto trainingClusters = joinFoldsExceptK( sFolds , i );
             const auto
             [ids , queries , qLabels] = unzip( folds.at( i ));
             fmt::print( "Training..\n" );
-            BackboneProfiles backbones = AbstractModel::train( trainingClusters , _modelTrainer );
-            BackboneProfiles backgrounds = AbstractModel::backgroundProfiles( trainingClusters , _modelTrainer );
+            auto reducedTrainingData = reducedAlphabetEntries( trainingClusters );
+            BackboneProfiles backbones = AbstractModel::train( reducedTrainingData , _modelTrainer );
+            BackboneProfiles backgrounds = AbstractModel::backgroundProfiles( reducedTrainingData , _modelTrainer );
             fmt::print( "[DONE] Training..\n" );
 
             fmt::print( "Classification..\n" );

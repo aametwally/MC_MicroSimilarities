@@ -21,6 +21,7 @@ class AAIndexClustering
 {
     using SampleType = dlib::matrix<double , 0 , 0>;
 
+
     static constexpr auto euclidean = Criteria<Euclidean>::template function<SampleType>;
 
 public:
@@ -47,31 +48,35 @@ public:
         _clusters.emplace( LUT<char , long>::makeLUT(
                 [this]( char aa ) -> long
                 {
-                    auto point = getPoint( aa );
-                    return _closestIdx( _centroids.value() , point );
+                    if ( auto point = getPoint( aa ); point )
+                        return _closestIdx( _centroids.value() , point.value());
+                    else return -1;
                 } ));
-
     }
 
-    SampleType getPoint( char aa ) const
+    std::optional<SampleType> getPoint( char aa ) const
     {
         std::vector<double> point;
         for ( auto &index : _index )
         {
-            point.push_back( index.normalizedIndex()( aa ));
+            if ( auto component = index.normalizedIndex( aa ); component )
+                point.push_back( component.value());
+            else return std::nullopt;
         }
         return vector_to_cmatrix( point );
     }
 
-    auto getCluster( char aa ) const
+    std::optional<size_t> getCluster( char aa ) const
     {
         assert( _centroids.has_value() && _clusters.has_value());
-        return _clusters->at( aa );
+        if ( auto cluster = _clusters->at( aa ); cluster >= 0 )
+            return size_t( cluster );
+        else return std::nullopt;
     }
 
 protected:
 
-    long _closestIdx( const std::vector<SampleType> &centroids , SampleType point )
+    long _closestIdx( const std::vector<SampleType> &centroids , const SampleType &point )
     {
         auto minIt = std::min_element(
                 centroids.cbegin() , centroids.cend() ,
@@ -79,7 +84,6 @@ protected:
                 {
                     return euclidean( x , point ) < euclidean( y , point );
                 } );
-        assert( minIt != centroids.cend());
         return std::distance( centroids.cbegin() , minIt );
     }
 
@@ -87,7 +91,11 @@ protected:
     {
         std::vector<SampleType> samples;
         for ( auto aa : AMINO_ACIDS20 )
-            samples.emplace_back(  getPoint( aa ));
+        {
+            auto point = getPoint( aa );
+            assert( point.has_value());
+            samples.emplace_back( getPoint( aa ).value());
+        }
         return samples;
     }
 

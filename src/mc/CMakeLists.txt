@@ -18,6 +18,7 @@ set( MC_SOURCES
         GappedMC.cpp
         PolymorphicMC.cpp
         MC.cpp
+        RegularizedMC.cpp
         Pipeline.cpp
         SVMConfusionMC.cpp
         SVMMCParameters.cpp
@@ -43,6 +44,7 @@ set( MC_DETAILS_TEMPLATE_FILES
         GappedMC.hpp
         PolymorphicMC.hpp
         MC.hpp
+        RegularizedMC.hpp
         Pipeline.hpp
         SVMConfusionMC.hpp
         SVMMCParameters.hpp
