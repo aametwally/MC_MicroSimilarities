@@ -17,7 +17,7 @@ class MC : public AbstractMC<States>
 public:
     using Base = AbstractMC<States>;
     using Histogram = typename Base::Histogram;
-    using HeteroHistograms  = typename Base::HeteroHistograms;
+    using TransitionMatrices2D  = typename Base::TransitionMatrices2D;
 
 public:
     explicit MC( Order order ) : Base( order )
@@ -67,7 +67,7 @@ public:
     {
         if ( this->getOrder() != mE.getOrder())
             throw std::runtime_error( "Orders mismatch!" );
-        this->_histograms = std::move( mE._histograms );
+        this->_histograms.swap( mE._histograms );
         return *this;
     }
 
@@ -90,16 +90,9 @@ public:
             auto distance = Order( context.length());
             auto id = Base::_sequence2ID( context );
             auto stateID = Base::_char2ID( state );
-            if ( auto isoHistogramsIt = this->_histograms.find( distance );
-                    isoHistogramsIt != this->_histograms.cend())
+            if ( auto value = this->_histograms( distance , id , stateID ); value )
             {
-                auto &isoHistograms = isoHistogramsIt->second;
-                if ( auto histogramIt = isoHistograms.find( id ); histogramIt !=
-                                                                  isoHistograms.cend())
-                {
-                    auto &histogram = histogramIt->second;
-                    return histogram[stateID];
-                } else return 0.0;
+                return value.value();
             } else return 0.0;
         }
     }
@@ -114,7 +107,7 @@ protected:
             auto order = context.size();
             auto id = Base::_sequence2ID( context );
             auto c = Base::_char2ID( state );
-            this->_histograms[order][id].increment( c );
+            this->_histograms.increment( order , id , Base::PseudoCounts )( c );
         }
     }
 
@@ -125,7 +118,7 @@ protected:
             if ( !LabeledEntry::isPolymorphicReducedAA( a ))
             {
                 auto c = Base::_char2ID( a );
-                this->_histograms[0][0].increment( c );
+                this->_histograms.increment( 0 , 0 , Base::PseudoCounts )( c );
             }
         }
 

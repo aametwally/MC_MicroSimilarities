@@ -54,17 +54,10 @@ public:
                                        char state ,
                                        Order distance ) const
     {
-        if ( auto dIt = this->_histograms.find( distance ); dIt != this->_histograms.cend())
-        {
-            auto &pairs = dIt->second;
-            auto c = Base::_char2ID( context );
-            if ( auto contextIt = pairs.find( c ); contextIt != pairs.cend())
-            {
-                auto &p = contextIt->second;
-                auto s = Base::_char2ID( state );
-                return p.at( s );
-            } else return 0;
-        } else return 0;
+        auto c = Base::_char2ID( context );
+        auto s = Base::_char2ID( state );
+        auto value = this->_histograms( distance , c , s );
+        return value.value_or( 0.0 );
     }
 
     double probability( std::string_view context , char state ) const override
@@ -103,7 +96,7 @@ protected:
         {
             auto c = Base::_char2ID( context.front());
             auto s = Base::_char2ID( state );
-            this->_histograms[distance][c].increment( s );
+            this->_histograms.increment( distance , c , Base::PseudoCounts )( s );
         }
     }
 
@@ -114,7 +107,7 @@ protected:
             if ( !LabeledEntry::isPolymorphicReducedAA( a ))
             {
                 auto c = Base::_char2ID( a );
-                this->_histograms[0][0].increment( c );
+                this->_histograms.increment( 0 , 0 , Base::PseudoCounts )( c );
             }
         }
 

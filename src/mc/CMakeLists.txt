@@ -2,6 +2,7 @@ find_package( dlib )
 set( MC_LIB mc_lib )
 
 set( MC_SOURCES
+        SparseTransitionMatrix.cpp
         Selection.cpp
         AbstractMC.cpp
         AbstractClassifier.cpp
@@ -29,6 +30,7 @@ set( MC_SOURCES
 
 
 set( MC_DETAILS_TEMPLATE_FILES
+        SparseTransitionMatrix.hpp
         AbstractMC.hpp
         MCKmersClassifier.hpp
         AbstractClassifier.hpp

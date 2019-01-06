@@ -9,6 +9,7 @@
 #include "AAGrouping.hpp"
 #include "Histogram.hpp"
 #include "MCDefs.h"
+#include "SparseTransitionMatrix.hpp"
 #include "Selection.hpp"
 #include "LabeledEntry.hpp"
 
@@ -28,9 +29,10 @@ public:
     using BufferConstIterator =  typename Buffer::const_iterator;
 
 public:
-    using IsoHistograms = std::unordered_map<HistogramID , Histogram>;
-    using HeteroHistograms =  std::unordered_map<Order , IsoHistograms>;
-    using HeteroHistogramsFeatures = std::unordered_map<Order , std::unordered_map<HistogramID , double>>;
+    static constexpr double PseudoCounts = double( 0.1 ) / (States + eps);
+    using TransitionMatrices2D = SparseTransitionMatrix2D<States , Histogram , Order , HistogramID>;
+    using TransitionMatrices1D = SparseTransitionMatrix1D<States , Histogram , HistogramID>;
+
     using BackboneProfile = std::unique_ptr<AbstractMC>;
     using BackboneProfiles = std::map<std::string_view , std::unique_ptr<AbstractMC >>;
 public:
@@ -40,7 +42,6 @@ public:
     template < typename Histograms >
     AbstractMC( Histograms &&histograms , Order order )
             : _histograms( std::forward<Histograms>( histograms )) , _order( order ) {}
-
 
     AbstractMC( Order order ) : _order( order ) {}
 
@@ -79,17 +80,12 @@ public:
 
     bool contains( Order order ) const
     {
-        auto isoHistogramsIt = _histograms.find( order );
-        return isoHistogramsIt != _histograms.cend();
+        return _histograms( order ).has_value();
     }
 
     bool contains( Order order , HistogramID id ) const
     {
-        if ( auto isoHistogramsIt = _histograms.find( order ); isoHistogramsIt != _histograms.cend())
-        {
-            auto histogramIt = isoHistogramsIt->second.find( id );
-            return histogramIt != isoHistogramsIt->second.cend();
-        } else return false;
+        return _histograms( order , id ).has_value();
     }
 
     Selection featureSpace() const noexcept
@@ -167,44 +163,36 @@ public:
             return 1;
         } else
         {
-            return this->_histograms.at( 0 ).at( 0 ).at( _char2ID( a ));
+            if ( auto value = this->_histograms( 0 , 0 , _char2ID( a )); value )
+            {
+                return value.value();
+            } else return 0;
         }
     }
 
-    std::reference_wrapper<const HeteroHistograms> histograms() const
+    std::reference_wrapper<const SparseTransitionMatrix2D<States>> histograms() const
     {
         return _histograms;
     }
 
-    HeteroHistograms convertToHistograms()
+    SparseTransitionMatrix2D<States> stealHistograms()
     {
         return std::move( _histograms );
     }
 
-    void setHistograms( HeteroHistograms &&histograms )
+    void setHistograms( SparseTransitionMatrix2D<States> &&histograms )
     {
         _histograms = std::move( histograms );
     }
 
-    std::optional<std::reference_wrapper<const IsoHistograms>> histograms( Order distance ) const
+    auto histograms( Order distance ) const
     {
-        if ( auto histogramsIt = _histograms.find( distance ); histogramsIt != _histograms.cend())
-            return std::cref( histogramsIt->second );
-        return std::nullopt;
+        return _histograms( distance );
     }
 
     std::optional<std::reference_wrapper<const Histogram>> histogram( Order distance , HistogramID id ) const
     {
-        if ( auto histogramsOpt = histograms( distance ); histogramsOpt )
-            if ( auto histogramIt = histogramsOpt.value().get().find( id ); histogramIt !=
-                                                                            histogramsOpt.value().get().cend())
-                return std::cref( histogramIt->second );
-        return std::nullopt;
-    }
-
-    void clear()
-    {
-        _histograms.clear();
+        return _histograms( distance , id );
     }
 
     template < typename Histograms >
@@ -253,51 +241,31 @@ protected:
 
 
 protected:
-    std::unordered_map<Order , std::unordered_map<HistogramID , Histogram >> _histograms;
+    TransitionMatrices2D _histograms;
     const Order _order;
 
 public:
-    std::unordered_map<size_t , double>
-    extractSparsedFlatFeatures( const Selection &select ) const noexcept
-    {
-        std::unordered_map<size_t , double> features;
-
-        for ( auto[order , id] : LazySelectionsIntersection::intersection(
-                featureSpace( _histograms ) , select ))
-        {
-            auto &histogram = _histograms.at( order ).at( id );
-            size_t offset = order * id * States;
-            for ( auto i = 0; i < States; ++i )
-                features[offset + i] = histogram[i];
-        }
-        return features;
-    }
-
     std::vector<double> extractFlatFeatureVector(
             const Selection &select , double missingVals = 0 ) const noexcept
     {
         std::vector<double> features;
-
-        features.reserve(
-                std::accumulate( std::cbegin( select ) , std::cend( select ) , size_t( 0 ) ,
-                                 [&]( size_t acc , const auto &pair )
-                                 {
-                                     return acc + pair.second.size() * States;
-                                 } ));
+        features.reserve( size( select ) * States );
 
         for ( auto &[order , ids] : select )
         {
-            if ( auto isoHistogramsIt = _histograms.find( order ); isoHistogramsIt != _histograms.cend())
+            if ( auto isoHistogramsOpt = _histograms( order ); isoHistogramsOpt )
             {
-                auto &isoHistograms = isoHistogramsIt->second;
+                auto &isoHistograms = isoHistogramsOpt.value();
                 for ( auto id : ids )
                 {
-                    if ( auto histogramIt = isoHistograms.find( id ); histogramIt != isoHistograms.cend())
-                        features.insert( std::end( features ) , std::cbegin( histogramIt->second ) ,
-                                         std::cend( histogramIt->second ));
-                    else
+                    if ( auto histogramOpt = isoHistograms( id ); histogramOpt )
+                    {
+                        features.insert( std::end( features ) , std::cbegin( histogramOpt->get()) ,
+                                         std::cend( histogramOpt->get()));
+                    } else
+                    {
                         features.insert( std::end( features ) , States , missingVals );
-
+                    }
                 }
             } else
             {
@@ -308,14 +276,43 @@ public:
         return features;
     }
 
+    std::vector<double> extractFlatFeatureVector(
+            const AbstractMC &reference , double missingVals = 0 ) const noexcept
+    {
+        std::vector<double> features;
+        features.reserve( reference.histogramsCount() * States );
 
-    static Selection featureSpace( const HeteroHistograms &profile )
+        for ( auto &[order , ids] : reference._histograms )
+        {
+            if ( auto isoHistogramsOpt = _histograms( order ); isoHistogramsOpt )
+            {
+                auto &isoHistograms = isoHistogramsOpt.value();
+                for ( auto &[id , hist] : ids )
+                {
+                    if ( auto histogramOpt = isoHistograms( id ); histogramOpt )
+                    {
+                        features.insert( std::end( features ) , std::cbegin( histogramOpt->get()) ,
+                                         std::cend( histogramOpt->get()));
+                    } else
+                    {
+                        features.insert( std::end( features ) , States , missingVals );
+                    }
+                }
+            } else
+            {
+                for ( auto &[id , hist] : ids )
+                    features.insert( std::end( features ) , States , missingVals );
+            }
+        }
+        return features;
+    }
+
+    static Selection featureSpace( const TransitionMatrices2D &sparseTransitionMatrices )
     {
         Selection allFeatureSpace;
-        for ( const auto &[order , isoHistograms] : profile )
+        for ( const auto &[order , isoHistograms] : sparseTransitionMatrices )
             for ( const auto &[id , histogram] : isoHistograms )
                 allFeatureSpace[order].insert( id );
-
         return allFeatureSpace;
     }
 
@@ -381,11 +378,11 @@ public:
     {
         using LazyIntersection = LazySelectionsIntersection;
 
-        HeteroHistograms selectedHistograms;
+        TransitionMatrices2D selectedHistograms;
         for ( auto[order , id] : LazyIntersection::intersection( select , featureSpace( _histograms )))
-            selectedHistograms[order][id] = std::move( _histograms.at( order ).at( id ));
+            selectedHistograms.swap( order , id )( _histograms( order , id )->get());
 
-        _histograms = std::move( selectedHistograms );
+        _histograms.swap( selectedHistograms );
     }
 
 
@@ -483,26 +480,6 @@ public:
     }
 
     template < typename ModelGenerator >
-    static std::map<std::string , std::vector<HeteroHistograms> >
-    trainIndividuals( const std::map<std::string_view , std::vector<std::string >> &training ,
-                      ModelGenerator trainer ,
-                      std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt )
-    {
-        std::map<std::string_view , std::vector<HeteroHistograms  >> trainedHistograms;
-        for ( const auto &[label , sequences] : training )
-        {
-            auto &_trainedHistograms = trainedHistograms[label];
-            for ( const auto &seq : sequences )
-            {
-                auto model = trainer( seq , selection );
-                if ( *model ) _trainedHistograms.emplace_back( std::move( model->convertToHistograms()));
-            }
-        }
-        return trainedHistograms;
-    }
-
-
-    template < typename ModelGenerator >
     static std::pair<Selection , BackboneProfiles>
     filterJointKernels( const std::map<std::string_view , std::vector<std::string >> &trainingClusters ,
                         ModelGenerator trainer ,
@@ -574,12 +551,12 @@ public:
 };
 
 
-template < size_t States>
+template < size_t States >
 class ModelGenerator
 {
 private:
     using Abstract = AbstractMC<States>;
-    using HeteroHistograms = typename Abstract::HeteroHistograms;
+    using TransitionMatrices2D = typename Abstract::TransitionMatrices2D;
     using ConfiguredModelFunction =std::function<std::unique_ptr<Abstract>( void )>;
     const ConfiguredModelFunction _modelFunction;
 
@@ -624,12 +601,12 @@ public:
     }
 
     template < typename SequenceData >
-    HeteroHistograms histograms(
+    TransitionMatrices2D histograms(
             SequenceData &&sequences ) const
     {
         auto model = _modelFunction();
         model->train( std::forward<SequenceData>( sequences ));
-        return model->convertToHistograms();
+        return model->stealHistograms();
     }
 };
 }

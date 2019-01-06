@@ -16,7 +16,7 @@ namespace MC {
         using ModelTrainer  = typename Base::ModelTrainer;
         using Similarity = typename Base::Similarity;
         using MCF = typename Base::MCF;
-        using HeteroHistogramsFeatures  = typename Base::HeteroHistogramsFeatures;
+
     public:
         explicit MicroSimilarityVotingClassifier(
                 const BackboneProfiles &backbones,

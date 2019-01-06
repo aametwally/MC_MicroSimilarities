@@ -14,16 +14,16 @@ class Histogram
 {
     static constexpr double eps = std::numeric_limits<double>::epsilon();
 public:
-    static constexpr double PseudoCounts = double( 0.1 ) / (Size + eps);
-
     using Buffer = std::vector<double>;
     using BufferIterator = typename Buffer::iterator;
     using BufferConstIterator = typename Buffer::const_iterator;
+    static constexpr size_t HistogramSize = Size;
 
+    using ValueType = double;
 public:
     template < size_t N = Size ,
             typename std::enable_if<N != 0 , int>::type = 0 >
-    explicit Histogram( double pseudoCount = PseudoCounts )
+    explicit Histogram( double pseudoCount  )
     {
         static_assert( N > 0 , "N must not be zero!" );
         _buffer = std::vector<double>( N , pseudoCount );
@@ -31,7 +31,7 @@ public:
 
     template < size_t N = Size ,
             typename std::enable_if<N == 0 , int>::type = 0 >
-    explicit Histogram( size_t size , double pseudoCount = PseudoCounts )
+    explicit Histogram( size_t size , double pseudoCount )
     {
         assert( size > 0 );
         _buffer = std::vector<double>( size , pseudoCount );
@@ -129,7 +129,7 @@ public:
     Histogram operator-( const Histogram &other ) const
     {
         assert( size() == other.size());
-        Histogram diff;
+        Histogram diff(0);
         for ( auto i = 0; i < _buffer.size(); ++i )
             diff._buffer[i] = _buffer[i] - other._buffer[i];
         return diff;
@@ -160,6 +160,16 @@ public:
     double operator*( const Histogram &other ) const
     {
         return dot( *this , other );
+    }
+
+    void swap( Histogram &other )
+    {
+        _buffer.swap( other._buffer );
+    }
+
+    void clear()
+    {
+        _buffer.clear();
     }
 
 protected:
@@ -252,6 +262,16 @@ public:
                                 {
                                     return accumulate( std::move( hist ) , bHist );
                                 } );
+    }
+
+    void swap( BooleanHistogram &other )
+    {
+        _buffer.swap( other._buffer );
+    }
+
+    void clear()
+    {
+        _buffer.clear();
     }
 
 protected:

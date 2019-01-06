@@ -56,7 +56,7 @@ public:
 protected:
     void _countInstance( std::string_view sequence )
     {
-        
+
     }
 
 private:

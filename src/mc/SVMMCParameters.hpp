@@ -21,8 +21,7 @@ namespace MC {
         using MCModel = AbstractMC<States>;
         using Histogram = typename MCModel::Histogram;
         using MCF = MCFeatures<States>;
-        using HeteroHistograms = typename MCModel::HeteroHistograms;
-        using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
+        using HeteroHistograms = typename MCModel::TransitionMatrices2D;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
         using BackboneProfile = typename MCModel::BackboneProfile;
         using ModelTrainer = ModelGenerator<States>;
@@ -79,7 +78,6 @@ namespace MC {
                 auto sample = _modelTrainer( sequence );
                 std::map<std::string_view, std::vector<double >> similarities;
                 std::map<std::string_view, std::vector<double >> backgroundSimilarities;
-                static const auto noMeasurement = std::vector<double>( _backbones->get().size(), 0.0 );
                 for (auto &[label, profile] : _backbones->get())
                 {
                     auto &classSimilarities = similarities[label];
@@ -138,12 +136,10 @@ namespace MC {
 
     protected:
         BackboneProfile _centroid;
-
         const ModelTrainer _modelTrainer;
         const SimilarityFunction _similarity;
         std::optional<std::reference_wrapper<const BackboneProfiles >> _backbones;
         std::optional<std::reference_wrapper<const BackboneProfiles >> _background;
-
     };
 
 }

@@ -45,7 +45,7 @@ public:
     {
         return LabeledEntry::polymorphicSummer<AAGrouping>( a , [this]( char state )
         {
-            return this->_histograms.at( 0 ).at( 0 ).at( this->_char2ID( state ));
+            return this->_histograms( 0 , 0 , this->_char2ID( state )).value_or( 0 );
         } );
     }
 
@@ -62,7 +62,7 @@ protected:
                     assert( context.size() == 1 );
                     auto c = Base::_char2ID( context.front());
                     auto s = Base::_char2ID( state );
-                    this->_histograms[distance][c].increment( s );
+                    this->_histograms.increment( distance , c , Base::PseudoCounts )( s );
                 } );
     }
 

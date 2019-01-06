@@ -71,8 +71,7 @@ private:
 
     using Histogram = typename AbstractModel::Histogram;
 
-    using HeteroHistograms = typename AbstractModel::HeteroHistograms;
-    using HeteroHistogramsFeatures = typename AbstractModel::HeteroHistogramsFeatures;
+    using HeteroHistograms = typename AbstractModel::TransitionMatrices2D;
 
     using Similarity = MetricFunction<Histogram>;
 

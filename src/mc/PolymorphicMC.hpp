@@ -10,7 +10,7 @@
 namespace MC
 {
 
-template< typename AAGrouping >
+template < typename AAGrouping >
 class PolymorphicMC : public MC<AAGrouping::StatesN>
 {
     static constexpr auto States = AAGrouping::StatesN;
@@ -33,16 +33,9 @@ public:
                     auto distance = Order( context.length());
                     auto id = Base::_sequence2ID( context );
                     auto stateID = Base::_char2ID( state );
-                    if ( auto isoHistogramsIt = this->_histograms.find( distance );
-                            isoHistogramsIt != this->_histograms.cend())
+                    if ( auto value = this->_histograms( distance , id , stateID ); value )
                     {
-                        auto &isoHistograms = isoHistogramsIt->second;
-                        if ( auto histogramIt = isoHistograms.find( id ); histogramIt !=
-                                                                          isoHistograms.cend())
-                        {
-                            auto &histogram = histogramIt->second;
-                            return histogram[stateID];
-                        } else return 0.0;
+                        return value.value();
                     } else return 0.0;
                 } );
     }
@@ -58,7 +51,7 @@ protected:
                     auto order = context.size();
                     auto id = Base::_sequence2ID( context );
                     auto c = Base::_char2ID( state );
-                    this->_histograms[order][id].increment( c );
+                    this->_histograms.increment( order , id , Base::PseudoCounts )( c );
                 } );
     }
 
@@ -69,7 +62,7 @@ protected:
             LabeledEntry::polymorphicApply<AAGrouping>( a , [this]( char state )
             {
                 auto c = Base::_char2ID( state );
-                this->_histograms[0][0].increment( c );
+                this->_histograms.increment( 0 , 0 , Base::PseudoCounts )( c );
             } );
         }
 

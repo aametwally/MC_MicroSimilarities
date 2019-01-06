@@ -24,8 +24,7 @@ namespace MC {
         using MCModel = AbstractMC<States>;
         using Histogram = typename MCModel::Histogram;
         using MCF = MCFeatures<States>;
-        using HeteroHistograms = typename MCModel::HeteroHistograms;
-        using HeteroHistogramsFeatures = typename MCModel::HeteroHistogramsFeatures;
+        using TransitionMatrices2D = typename MCModel::TransitionMatrices2D;
         using BackboneProfiles = typename MCModel::BackboneProfiles;
         using ModelTrainer = ModelGenerator<States>;
         using Similarity = MetricFunction<Histogram>;
