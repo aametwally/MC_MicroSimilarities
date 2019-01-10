@@ -54,20 +54,15 @@ class MCDiscretizedScalesClassifier : public AbstractClassifier
 
 public:
 
-    explicit MCDiscretizedScalesClassifier(
-            const std::map<std::string_view , std::vector<std::string >> &trainingClusters ,
-            Order mxOrder )
-            : _trainingClusters( trainingClusters ) ,
-              _discretizedAAScales( selectedIndices , States ) ,
+    explicit MCDiscretizedScalesClassifier( Order mxOrder )
+            : _discretizedAAScales( selectedIndices , States ) ,
               _modelTrainer( MG::template create<RMC>( mxOrder ))
-    {
+    {}
 
-    }
-
-    void runTraining()
+    void runTraining( const std::map<std::string_view , std::vector<std::string >> &trainingClusters )
     {
         _discretizedAAScales.runClustering();
-        auto transformedSequences = _transformSequences( _trainingClusters , _discretizedAAScales );
+        auto transformedSequences = _transformSequences( trainingClusters , _discretizedAAScales );
         _backbones = MCModel::train( transformedSequences , _modelTrainer );
         _background = MCModel::backgroundProfiles( transformedSequences , _modelTrainer );
     }
@@ -179,7 +174,6 @@ protected:
     ModelGenerator <States> _modelTrainer;
     BackboneProfiles _backbones;
     BackboneProfiles _background;
-    const std::map<std::string_view , std::vector<std::string >> &_trainingClusters;
     aaindex::AAIndexClustering _discretizedAAScales;
 };
 

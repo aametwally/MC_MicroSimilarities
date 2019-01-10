@@ -18,6 +18,7 @@
 #include "Histogram.hpp"
 
 #include "AbstractMC.hpp"
+#include "RegularizedMC.hpp"
 #include "MC.hpp"
 #include "ZYMC.hpp"
 #include "GappedMC.hpp"
@@ -34,11 +35,11 @@
 #include "SVMConfusionMC.hpp"
 #include "KNNConfusionMC.hpp"
 #include "MCDiscretizedScalesClassifier.hpp"
+#include "MCRegularizedClassifier.hpp"
 
 #include "AAIndexClustering.hpp"
 #include "SimilarityMetrics.hpp"
 #include "MCSegmentationClassifier.hpp"
-
 
 namespace MC
 {
@@ -51,7 +52,7 @@ enum class MCModelsEnum
 };
 
 const std::map<std::string , MCModelsEnum> MCModelLabels{
-        {"rmc" , MCModelsEnum::RegularMC} ,
+        {"mc" , MCModelsEnum::RegularMC} ,
         {"zymc" , MCModelsEnum::ZhengYuanMC} ,
         {"gmc" , MCModelsEnum::GappedMC}
 };
@@ -84,9 +85,10 @@ private:
     using LeaderBoard = ClassificationCandidates<Score>;
 
 public:
-    Pipeline( ModelGenerator<States> modelTrainer , Similarity similarity )
+    Pipeline( ModelGenerator<States> modelTrainer , Similarity similarity , Order order )
             : _modelTrainer( modelTrainer ) ,
-              _similarity( similarity )
+              _similarity( similarity ) ,
+              _order( order )
     {
 
     }
@@ -152,39 +154,45 @@ public:
         {
             SVMMCParameters<States> svm( _modelTrainer , _similarity );
             svm.fit( backbones , background , reducedAlphabetEntries( trainingClusters ));
-            return svm.scoredPredictions( reducedAlphabetEntries( queries ) );
+            return svm.scoredPredictions( reducedAlphabetEntries( queries ));
         }
         case ClassificationEnum::KNN :
         {
             KNNMCParameters<States> knn( 7 , _modelTrainer , _similarity );
             knn.fit( backbones , background , reducedAlphabetEntries( trainingClusters ));
-            return knn.scoredPredictions( reducedAlphabetEntries( queries ) );
+            return knn.scoredPredictions( reducedAlphabetEntries( queries ));
 
         }
         case ClassificationEnum::SVM_Stack :
         {
             SVMConfusionMC<States> svm( _modelTrainer );
-            svm.fit( backbones , background , reducedAlphabetEntries( trainingClusters ),
-                    _modelTrainer , _similarity , selection );
-            return svm.scoredPredictions( reducedAlphabetEntries( queries ) );
+            svm.fit( backbones , background , reducedAlphabetEntries( trainingClusters ) ,
+                     _modelTrainer , _similarity , selection );
+            return svm.scoredPredictions( reducedAlphabetEntries( queries ));
         }
         case ClassificationEnum::KNN_Stack :
         {
             KNNConfusionMC<States> knn( 7 );
-            knn.fit( backbones , background , reducedAlphabetEntries( trainingClusters ),
-                    _modelTrainer , _similarity , selection );
-            return knn.scoredPredictions( reducedAlphabetEntries( queries ) );
+            knn.fit( backbones , background , reducedAlphabetEntries( trainingClusters ) ,
+                     _modelTrainer , _similarity , selection );
+            return knn.scoredPredictions( reducedAlphabetEntries( queries ));
         }
         case ClassificationEnum::KMERS :
         {
             MCKmersClassifier<States> classifier( backbones , background );
-            return classifier.scoredPredictions( reducedAlphabetEntries( queries ) );
+            return classifier.scoredPredictions( reducedAlphabetEntries( queries ));
         }
         case ClassificationEnum::DiscretizedScales :
         {
-            MCDiscretizedScalesClassifier<15> classifier( trainingClusters , 2 );
-            classifier.runTraining();
+            MCDiscretizedScalesClassifier<15> classifier( _order );
+            classifier.runTraining( trainingClusters );
             return classifier.scoredPredictions( queries );
+        }
+        case ClassificationEnum::Regularized:
+        {
+            MCRegularizedClassifier<States> classifier( _order );
+            classifier.runTraining( reducedAlphabetEntries( trainingClusters ));
+            return classifier.scoredPredictions( reducedAlphabetEntries( queries ));
         }
         default:throw std::runtime_error( "Undefined Strategy" );
         }
@@ -329,6 +337,7 @@ public:
 private:
     const ModelGenerator<States> _modelTrainer;
     const Similarity _similarity;
+    const Order _order;
 };
 
 using PipelineVariant = MakeVariantType<Pipeline , SupportedAAGrouping>;
@@ -344,9 +353,15 @@ PipelineVariant getConfiguredPipeline( MCModelsEnum model , Order mxOrder , Simi
 
     switch ( model )
     {
-    case MCModelsEnum::RegularMC :return Pipeline<AAGrouping>( MG::template create<RMC>( mxOrder ) , similarity );
-    case MCModelsEnum::ZhengYuanMC :return Pipeline<AAGrouping>( MG::template create<ZMC>( mxOrder ) , similarity );
-    case MCModelsEnum::GappedMC :return Pipeline<AAGrouping>( MG::template create<GMC>( mxOrder ) , similarity );
+    case MCModelsEnum::RegularMC :
+        return Pipeline<AAGrouping>(
+                MG::template create<RMC>( mxOrder ) , similarity , mxOrder );
+    case MCModelsEnum::ZhengYuanMC :
+        return Pipeline<AAGrouping>(
+                MG::template create<ZMC>( mxOrder ) , similarity , mxOrder );
+    case MCModelsEnum::GappedMC :
+        return Pipeline<AAGrouping>(
+                MG::template create<GMC>( mxOrder ) , similarity , mxOrder );
     default:throw std::runtime_error( "Undefined Strategy" );
     }
 };

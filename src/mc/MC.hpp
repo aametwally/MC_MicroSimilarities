@@ -73,7 +73,7 @@ public:
 
     static constexpr inline HistogramID lowerOrderID( HistogramID id ) { return id / States; }
 
-
+    using Base::probability;
     double probability( std::string_view context , char state ) const override
     {
         if ( context.size() > this->getOrder())

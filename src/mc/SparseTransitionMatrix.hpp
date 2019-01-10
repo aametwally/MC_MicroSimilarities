@@ -50,13 +50,19 @@ public:
         };
     }
 
-    auto swap( Dim index , ValueType init = ValueType() )
+    auto swap( Dim index , ValueType init = ValueType())
     {
         auto it = _tm.try_emplace( index , init ).first;
         return [it]( HistogramType &other )
         {
             it->second.swap( other );
         };
+    }
+
+    template < typename InputHistogram >
+    void set( Dim index , InputHistogram &&histogram )
+    {
+        _tm.insert_or_assign( index , std::forward<InputHistogram>( histogram ));
     }
 
     inline Iterator begin()
@@ -151,7 +157,21 @@ public:
         return it1->second.increment( index2 , init );
     }
 
-    auto swap( Dim1 index1 , Dim2 index2, ValueType init = ValueType() )
+    void forEach( std::function<void(Dim1,Dim2,const HistogramType&)> fn ) const
+    {
+        for ( const auto &[index1 , isoHistograms ] : _tm )
+            for ( const auto &[index2 , histogram] : isoHistograms )
+                fn( index1, index2 , histogram);
+    }
+
+    void forEach( std::function<void(Dim1,Dim2,HistogramType&)> fn )
+    {
+        for ( auto &[index1 , isoHistograms ] : _tm )
+            for ( auto &[index2 , histogram] : isoHistograms )
+                fn( index1, index2 , histogram);
+    }
+
+    auto swap( Dim1 index1 , Dim2 index2 , ValueType init = ValueType())
     {
         auto it1 = _tm.try_emplace( index1 ).first;
         return it1->second.swap( index2 , init );
@@ -188,6 +208,13 @@ public:
         if ( auto it = _tm.find( index1 ); it != _tm.cend())
             return it->second( index2 );
         else return std::nullopt;
+    }
+
+    template < typename InputHistogram >
+    void set( Dim1 index1 , Dim2 index2 , InputHistogram &&histogram )
+    {
+        auto it1 = _tm.try_emplace( index1 ).first;
+        it1->second.set( index2 , std::forward<InputHistogram>( histogram ));
     }
 
     std::optional<typename HistogramType::ValueType> operator()( Dim1 index1 , Dim2 index2 , size_t state ) const

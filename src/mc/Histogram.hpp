@@ -23,7 +23,7 @@ public:
 public:
     template < size_t N = Size ,
             typename std::enable_if<N != 0 , int>::type = 0 >
-    explicit Histogram( double pseudoCount  )
+    explicit Histogram( double pseudoCount )
     {
         static_assert( N > 0 , "N must not be zero!" );
         _buffer = std::vector<double>( N , pseudoCount );
@@ -35,6 +35,16 @@ public:
     {
         assert( size > 0 );
         _buffer = std::vector<double>( size , pseudoCount );
+    }
+
+    inline BufferIterator begin()
+    {
+        return _buffer.begin();
+    }
+
+    inline BufferIterator end()
+    {
+        return _buffer.end();
     }
 
     inline BufferConstIterator begin() const
@@ -129,7 +139,7 @@ public:
     Histogram operator-( const Histogram &other ) const
     {
         assert( size() == other.size());
-        Histogram diff(0);
+        Histogram diff( 0 );
         for ( auto i = 0; i < _buffer.size(); ++i )
             diff._buffer[i] = _buffer[i] - other._buffer[i];
         return diff;
@@ -199,6 +209,12 @@ public:
         assert( size > 0 );
     }
 
+    explicit BooleanHistogram( Buffer data )
+            : _buffer( std::move( data ))
+    {
+        assert( _buffer.size() > 0 );
+    }
+
     inline size_t size() const
     {
         return _buffer.size();
@@ -246,22 +262,42 @@ public:
     }
 
     template < typename HistogramT >
-    static Histogram<Size> accumulate( HistogramT &&histogram , const BooleanHistogram &bHistogram )
+    static Histogram<Size> accumulate( HistogramT &&histogram , const BooleanHistogram<Size> &bHistogram )
     {
-        auto hist = std::forward<HistogramT>( histogram );
+        using T = typename HistogramT::ValueType;
+        Histogram<Size> hist = std::forward<HistogramT>( histogram );
         assert( hist.size() == bHistogram.size());
-        std::transform( hist.begin() , hist.end() , bHistogram.begin() , hist.begin() , std::plus<>());
+        std::transform( hist.begin() , hist.end() , bHistogram.cbegin() , hist.begin() ,
+                        []( T a , bool b )
+                        {
+                            return a + b;
+                        } );
         return hist;
     }
 
-    static Histogram<Size> accumulate( const std::vector<BooleanHistogram> &bHistograms )
+    static Histogram<Size> accumulate( const std::vector<BooleanHistogram<Size>> &bHistograms )
     {
         return std::accumulate( bHistograms.cbegin() , bHistograms.cend() ,
                                 Histogram<Size>( bHistograms.front().size()) ,
-                                []( Histogram<Size> &&hist , const BooleanHistogram<Size> &bHist )
+                                []( Histogram<Size> hist , const BooleanHistogram<Size> &bHist )
                                 {
                                     return accumulate( std::move( hist ) , bHist );
                                 } );
+    }
+
+    template < typename HistogramT >
+    static BooleanHistogram<Size>
+    binarizeHistogram( HistogramT &&histogram , typename HistogramT::ValueType threshold = 0 )
+    {
+        auto hist = std::forward<HistogramT>( histogram );
+        Buffer bBuffer;
+        std::transform( std::begin( hist ) , std::end( hist ) ,
+                        std::back_inserter( bBuffer ) , [=]( typename HistogramT::ValueType value ) -> bool
+                        {
+                            return value > threshold;
+                        } );
+        assert( bBuffer.size() == hist.size());
+        return BooleanHistogram<Size>( bBuffer );
     }
 
     void swap( BooleanHistogram &other )

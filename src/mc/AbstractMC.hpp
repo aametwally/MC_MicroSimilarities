@@ -146,7 +146,7 @@ public:
      * @param acc
      * @return
      */
-    inline double propensity( std::string_view query , double acc = 0 ) const
+    double propensity( std::string_view query , double acc = 0 ) const
     {
         if ( !query.empty())
         {
@@ -180,11 +180,6 @@ public:
         return std::move( _histograms );
     }
 
-    void setHistograms( SparseTransitionMatrix2D<States> &&histograms )
-    {
-        _histograms = std::move( histograms );
-    }
-
     auto histograms( Order distance ) const
     {
         return _histograms( distance );
@@ -196,7 +191,7 @@ public:
     }
 
     template < typename Histograms >
-    void set( Histograms &&histograms )
+    void setHistograms( Histograms &&histograms )
     {
         _histograms = std::forward<Histograms>( histograms );
     }
@@ -206,9 +201,10 @@ protected:
 
     virtual void _normalize()
     {
-        for ( auto &[order , isoHistograms] : _histograms )
-            for ( auto &[contextId , histogram] : isoHistograms )
-                histogram.normalize();
+        _histograms.forEach( []( Order , HistogramID , Histogram &histogram )
+                             {
+                                 histogram.normalize();
+                             } );
     }
 
     static constexpr inline HistogramID _char2ID( char a )
