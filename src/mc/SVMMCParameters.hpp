@@ -11,7 +11,6 @@
 #include "MLConfusedMC.hpp"
 #include "SimilarityMetrics.hpp"
 
-
 namespace MC {
 
     template<size_t States>
@@ -57,7 +56,7 @@ namespace MC {
         {
             _backbones = backbones;
             _background = background;
-            _centroid = MCModel::backgroundProfile( training, _modelTrainer, std::nullopt );
+            _selection.emplace( std::move( AbstractMC<States>::populationFeatureSpace( _backbones->get())));
             MLConfusedMC::enableLDA( );
             MLConfusedMC::fit( training );
         }
@@ -67,8 +66,8 @@ namespace MC {
 
         bool _validTraining() const override
         {
-            return _backbones && _background && _centroid
-                   && _backbones->get().size() == _background->get().size();
+            return _backbones && _background && _selection &&
+                   _backbones->get().size() == _background->get().size();
         }
 
         FeatureVector _extractFeatures( std::string_view sequence ) const override
@@ -76,49 +75,49 @@ namespace MC {
             if ( _validTraining())
             {
                 auto sample = _modelTrainer( sequence );
-                std::map<std::string_view, std::vector<double >> similarities;
-                std::map<std::string_view, std::vector<double >> backgroundSimilarities;
-                for (auto &[label, profile] : _backbones->get())
+                std::map<std::string_view , std::vector<double >> similarities;
+                for ( auto &[label , profile] : _backbones->get())
                 {
                     auto &classSimilarities = similarities[label];
-                    auto &bgSimilarities = backgroundSimilarities[label];
-                    auto &bgHistograms = _background->get().at( label );
-                    for (auto &[order, isoClassHistograms] : profile->histograms().get())
+                    const auto &bbHistograms = profile->histograms().get();
+                    const auto &bgHistograms = _background->get().at( label )->histograms().get();
+                    const auto &sampleHistograms = sample->histograms().get();
+                    for ( auto &[order , isoIDs] : _selection.value())
                     {
-                        for (auto &[id, classHistogram] : isoClassHistograms)
+                        auto bbIsoHistograms = bbHistograms( order );
+                        auto bgIsoHistograms = bgHistograms( order );
+                        auto sampleIsoHistograms = sampleHistograms( order );
+                        if ( bbIsoHistograms && bgIsoHistograms && sampleIsoHistograms )
                         {
-                            auto bgHistogramOpt = bgHistograms->histogram( order, id );
-                            auto sampleHistogramOpt = sample->histogram( order, id );
-                            auto centroidHistogramOpt = _centroid->histogram( order, id );
-                            if ( sampleHistogramOpt && bgHistogramOpt && centroidHistogramOpt )
+                            for ( auto id : isoIDs )
                             {
-                                auto &histogram = sampleHistogramOpt->get();
-                                auto &bgHistogram = bgHistogramOpt->get();
-                                auto &centroidHistogram = centroidHistogramOpt->get();
+                                auto bgHistogram = bgIsoHistograms.value()( id );
+                                auto bbHistogram = bbIsoHistograms.value()( id );
+                                auto sampleHistogram = sampleIsoHistograms.value()( id );
 
-                                classSimilarities.push_back(
-                                        _similarity( histogram - centroidHistogram,
-                                                     classHistogram - centroidHistogram ));
-                                bgSimilarities.push_back(
-                                        _similarity( histogram - centroidHistogram,
-                                                     bgHistogram - centroidHistogram ));
-                            } else
-                            {
-                                classSimilarities.push_back( 0 );
-                                bgSimilarities.push_back( 0 );
+                                if ( sampleHistogram && bbHistogram && bgHistogram )
+                                {
+                                    auto diff1 = sampleHistogram->get() - bgHistogram->get();
+                                    auto diff2 = bbHistogram->get() - bgHistogram->get();
+                                    double similarity = _similarity( diff1 , diff2 );
+                                    assert( !std::isnan( similarity ));
+                                    classSimilarities.push_back( similarity );
+                                } else
+                                {
+                                    classSimilarities.push_back( 0 );
+                                }
                             }
                         }
                     }
                 }
 
                 std::vector<double> flatFeatures;
-                for (auto &[label, sim] :  similarities)
+                flatFeatures.reserve( similarities.size() * similarities.begin()->second.size());
+                for ( auto &[label , sim] :  similarities )
                 {
-                    auto &bgSim = backgroundSimilarities.at( label );
-                    for (size_t i = 0; i < sim.size(); ++i)
-                    {
-                        flatFeatures.push_back( sim[i] - bgSim[i] );
-                    }
+                    flatFeatures.insert( flatFeatures.end() ,
+                                         std::make_move_iterator( sim.begin()) ,
+                                         std::make_move_iterator( sim.end()));
                 }
                 return flatFeatures;
             } else throw std::runtime_error( "Bad training!" );
@@ -135,12 +134,12 @@ namespace MC {
         }
 
     protected:
-        BackboneProfile _centroid;
         const ModelTrainer _modelTrainer;
         const SimilarityFunction _similarity;
         std::optional<std::reference_wrapper<const BackboneProfiles >> _backbones;
         std::optional<std::reference_wrapper<const BackboneProfiles >> _background;
+        std::optional<Selection> _selection;
     };
-
 }
+
 #endif //MARKOVIAN_FEATURES_SVMMARKOVIANMODEL_HPP

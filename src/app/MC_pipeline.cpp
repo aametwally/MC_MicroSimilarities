@@ -64,12 +64,8 @@ int main( int argc, char *argv[] )
         cli.writeToStream( std::cout );
     } else if ( !testFile.empty())
     {
-
-
         fmt::print( "[Args][input:{}][testFile:{}][model:{}][order:{}][kfold:{}]\n",
                     input, testFile, model, order, k );
-
-
     } else
     {
         fmt::print( "[Args][input:{}]"
@@ -82,7 +78,6 @@ int main( int argc, char *argv[] )
                     "[strategy:{}]\n",
                     input, fastaFormat, model, order,
                     k, criteria, grouping, strategy );
-
 
         for (auto &c : splitParameters( criteria ))
         {

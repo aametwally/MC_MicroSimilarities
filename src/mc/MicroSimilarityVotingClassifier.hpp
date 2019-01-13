@@ -58,7 +58,7 @@ namespace MC {
                         }
 
                         pq.forTopK( 5, [&]( const auto &candidate, size_t index ) {
-                            std::string_view label = candidate.getLabel();
+                            std::string_view label = candidate.label();
                             double val = (1) / (index + 1);
                             voter[label] += val;
                         } );

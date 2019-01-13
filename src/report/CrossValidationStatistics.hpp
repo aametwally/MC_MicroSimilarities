@@ -8,22 +8,22 @@
 #include "ConfusionMatrix.hpp"
 #include <fcntl.h>
 
-template<typename Label = std::string_view>
+template < typename Label = std::string_view >
 class CrossValidationStatistics
 {
 public:
-    CrossValidationStatistics( size_t k, const std::set<Label> &labels )
+    CrossValidationStatistics( size_t k , const std::set<Label> &labels )
             : _k( k )
     {
-        for (auto i = 0; i < k; ++i)
+        for ( auto i = 0; i < k; ++i )
             _statistics.emplace_back( labels );
     }
 
     CrossValidationStatistics() = default;
 
-    void countInstance( size_t k, const Label &prediction, const Label &actual )
+    void countInstance( size_t k , const Label &prediction , const Label &actual )
     {
-        _statistics.at( k ).countInstance( prediction, actual );
+        _statistics.at( k ).countInstance( prediction , actual );
     }
 
     double averageAccuracy( size_t k ) const
@@ -47,7 +47,7 @@ public:
     }
 
 
-    double microFScore( size_t k, double beta = 1 ) const
+    double microFScore( size_t k , double beta = 1 ) const
     {
         return _statistics.at( k ).microFScore( beta );
     }
@@ -62,7 +62,7 @@ public:
         return _statistics.at( k ).macroRecall();
     }
 
-    double macroFScore( size_t k, double beta = 1 ) const
+    double macroFScore( size_t k , double beta = 1 ) const
     {
         return _statistics.at( k ).macroFScore( beta );
     }
@@ -72,252 +72,270 @@ public:
         return _statistics.at( k ).mcc();
     }
 
-    std::map<Label, std::map<Label, size_t >>
+    std::map<Label , std::map<Label , size_t >>
     misclassifications( size_t k ) const
     {
         return _statistics.at( k ).misclassifications();
     }
 
-    template<typename Function>
-    std::pair<double, double> averagingFunction( const Function &fn ) const
+    template < typename Function >
+    std::pair<double , double> averagingFunction( const Function &fn ) const
     {
         std::vector<double> vals;
-        for (auto i = 0; i < _k; ++i)
+        for ( auto i = 0; i < _k; ++i )
             vals.push_back( fn( i ));
 
-        double sum = std::accumulate( vals.cbegin(), vals.cend(), double( std::numeric_limits<double>::epsilon()));
+        double sum = std::accumulate( vals.cbegin() , vals.cend() , double( std::numeric_limits<double>::epsilon()));
         double mean = sum / _k;
-        double sDev = std::accumulate( vals.cbegin(), vals.cend(), double( 0 ),
-                                       [mean]( double acc, double val ) {
+        double sDev = std::accumulate( vals.cbegin() , vals.cend() , double( 0 ) ,
+                                       [mean]( double acc , double val )
+                                       {
                                            return acc + (val - mean) * (val - mean);
                                        } );
-        return {mean, sDev};
+        return {mean , sDev};
     }
 
-    double accuracy( size_t k, const Label &label ) const
+    double accuracy( size_t k , const Label &label ) const
     {
         return _statistics.at( k ).accuracy( label );
     }
 
-    double precision( size_t k, const Label &label ) const
+    double precision( size_t k , const Label &label ) const
     {
         return _statistics.at( k ).precision( label );
     }
 
-    double recall( size_t k, const Label &label ) const
+    double recall( size_t k , const Label &label ) const
     {
         return _statistics.at( k ).recall( label );
     }
 
-    double fScore( size_t k, const Label &label, double beta = 1 ) const
+    double fScore( size_t k , const Label &label , double beta = 1 ) const
     {
         return _statistics.at( k ).fScore( label );
     }
 
-    double mcc( size_t k, const Label &label ) const
+    double mcc( size_t k , const Label &label ) const
     {
         return _statistics.at( k ).mcc( label );
     }
 
-    std::pair<double, double> accuracy( const Label &label ) const
+    std::pair<double , double> accuracy( const Label &label ) const
     {
-        return averagingFunction( [&, this]( size_t k ) {
-            return accuracy( k, label );
-        } );
+        return averagingFunction( [& , this]( size_t k )
+                                  {
+                                      return accuracy( k , label );
+                                  } );
     }
 
-    std::pair<double, double> precision( const Label &label ) const
+    std::pair<double , double> precision( const Label &label ) const
     {
-        return averagingFunction( [&, this]( size_t k ) {
-            return precision( k, label );
-        } );
+        return averagingFunction( [& , this]( size_t k )
+                                  {
+                                      return precision( k , label );
+                                  } );
     }
 
-    std::pair<double, double> recall( const Label &label ) const
+    std::pair<double , double> recall( const Label &label ) const
     {
-        return averagingFunction( [&, this]( size_t k ) {
-            return recall( k, label );
-        } );
+        return averagingFunction( [& , this]( size_t k )
+                                  {
+                                      return recall( k , label );
+                                  } );
     }
 
-    std::pair<double, double> fScore( const Label &label, double beta = 1 ) const
+    std::pair<double , double> fScore( const Label &label , double beta = 1 ) const
     {
-        return averagingFunction( [&, this]( size_t k ) {
-            return fScore( k, label, beta );
-        } );
+        return averagingFunction( [& , this]( size_t k )
+                                  {
+                                      return fScore( k , label , beta );
+                                  } );
     }
 
-    std::pair<double, double> mcc( const Label &label ) const
+    std::pair<double , double> mcc( const Label &label ) const
     {
-        return averagingFunction( [&, this]( size_t k ) {
-            return mcc( k, label );
-        } );
+        return averagingFunction( [& , this]( size_t k )
+                                  {
+                                      return mcc( k , label );
+                                  } );
     }
 
-    std::pair<double, double> averageAccuracy() const
+    std::pair<double , double> averageAccuracy() const
     {
-        return averagingFunction( [this]( size_t k ) {
-            return averageAccuracy( k );
-        } );
+        return averagingFunction( [this]( size_t k )
+                                  {
+                                      return averageAccuracy( k );
+                                  } );
     }
 
-    std::pair<double, double> overallAccuracy() const
+    std::pair<double , double> overallAccuracy() const
     {
-        return averagingFunction( [this]( size_t k ) {
-            return overallAccuracy( k );
-        } );
+        return averagingFunction( [this]( size_t k )
+                                  {
+                                      return overallAccuracy( k );
+                                  } );
     }
 
-    std::pair<double, double> microPrecision() const
+    std::pair<double , double> microPrecision() const
     {
-        return averagingFunction( [this]( size_t k ) {
-            return microPrecision( k );
-        } );
+        return averagingFunction( [this]( size_t k )
+                                  {
+                                      return microPrecision( k );
+                                  } );
     }
 
-    std::pair<double, double> microRecall() const
+    std::pair<double , double> microRecall() const
     {
-        return averagingFunction( [this]( size_t k ) {
-            return microRecall( k );
-        } );
+        return averagingFunction( [this]( size_t k )
+                                  {
+                                      return microRecall( k );
+                                  } );
     }
 
 
-    std::pair<double, double> microFScore( double beta = 1 ) const
+    std::pair<double , double> microFScore( double beta = 1 ) const
     {
-        return averagingFunction( [this]( size_t k ) {
-            return microFScore( k );
-        } );
+        return averagingFunction( [this]( size_t k )
+                                  {
+                                      return microFScore( k );
+                                  } );
     }
 
-    std::pair<double, double> macroPrecision() const
+    std::pair<double , double> macroPrecision() const
     {
-        return averagingFunction( [this]( size_t k ) {
-            return macroPrecision( k );
-        } );
+        return averagingFunction( [this]( size_t k )
+                                  {
+                                      return macroPrecision( k );
+                                  } );
     }
 
-    std::pair<double, double> macroRecall() const
+    std::pair<double , double> macroRecall() const
     {
-        return averagingFunction( [this]( size_t k ) {
-            return macroRecall( k );
-        } );
+        return averagingFunction( [this]( size_t k )
+                                  {
+                                      return macroRecall( k );
+                                  } );
     }
 
-    std::pair<double, double> macroFScore( double beta = 1 ) const
+    std::pair<double , double> macroFScore( double beta = 1 ) const
     {
-        return averagingFunction( [this]( size_t k ) {
-            return macroFScore( k );
-        } );
+        return averagingFunction( [this]( size_t k )
+                                  {
+                                      return macroFScore( k );
+                                  } );
     }
 
-    std::pair<double, double> mcc() const
+    std::pair<double , double> mcc() const
     {
-        return averagingFunction( [this]( size_t k ) {
-            return mcc( k );
-        } );
+        return averagingFunction( [this]( size_t k )
+                                  {
+                                      return mcc( k );
+                                  } );
     }
 
-    std::map<Label, size_t> getLabelsWithCounts() const
+    std::map<Label , size_t> getLabelsWithCounts() const
     {
-        std::map<Label, size_t> labelsWCounts;
-        for (auto &fold : _statistics)
-            for (auto &[l, count] : fold.getLabelsWithCounts())
+        std::map<Label , size_t> labelsWCounts;
+        for ( auto &fold : _statistics )
+            for ( auto &[l , count] : fold.getLabelsWithCounts())
                 labelsWCounts[l] += count;
 
         return labelsWCounts;
     }
 
-    std::map<Label, std::vector<std::pair<Label, size_t >>>
+    std::map<Label , std::vector<std::pair<Label , size_t >>>
     misclassifications() const
     {
-        std::map<Label, std::map<Label, size_t>> misclassifiedAcc;
-        for (size_t i = 0; i < _k; ++i)
+        std::map<Label , std::map<Label , size_t>> misclassifiedAcc;
+        for ( size_t i = 0; i < _k; ++i )
         {
-            for (auto &[label, missed] : misclassifications( i ))
+            for ( auto &[label , missed] : misclassifications( i ))
             {
-                for (auto &[missedLabel, hits] : missed)
+                for ( auto &[missedLabel , hits] : missed )
                     misclassifiedAcc[label][missedLabel] += hits;
             }
         }
 
-        std::map<Label, std::vector<std::pair<Label, size_t >>> misclassified;
-        for (auto&[label, missed] : misclassifiedAcc)
+        std::map<Label , std::vector<std::pair<Label , size_t >>> misclassified;
+        for ( auto&[label , missed] : misclassifiedAcc )
         {
             auto &_misclassified = misclassified[label];
-            for (auto &[missedLabel, hits] : missed)
-                _misclassified.emplace_back( missedLabel, hits );
-            std::sort( _misclassified.begin(), _misclassified.end(),
-                       []( auto &p1, auto &p2 ) { return p1.second > p2.second; } );
+            for ( auto &[missedLabel , hits] : missed )
+                _misclassified.emplace_back( missedLabel , hits );
+            std::sort( _misclassified.begin() , _misclassified.end() ,
+                       []( auto &p1 , auto &p2 ) { return p1.second > p2.second; } );
         }
 
         return misclassified;
     }
 
 
-    void printReport( size_t indentation = 0, std::string_view tag = std::string_view()) const
+    void printReport( size_t indentation = 0 , std::string_view tag = std::string_view()) const
     {
-        fmt::print( "{:<{}}General Statistics [{}]:\n", "", indentation, tag );
+        fmt::print( "{:<{}}General Statistics [{}]:\n" , "" , indentation , tag );
 
         auto printRow = _printRowFunction( indentation + 2 );
 
-        printRow( "Overall Accuracy", overallAccuracy());
-        printRow( "Average Accuracy", averageAccuracy());
-        printRow( "Macro Precision, Positive Predictive Value (PPV)", macroPrecision());
-        printRow( "Micro Precision, Positive Predictive Value (PPV)", microPrecision());
-        printRow( "Macro TPR, Recall, Sensitivity", macroRecall());
-        printRow( "Micro TPR, Recall, Sensitivity", microRecall());
-        printRow( "Macro F1-Score", macroFScore());
-        printRow( "Micro F1-Score", microFScore());
-        printRow( "MCC (multiclass)", mcc());
+        printRow( "Overall Accuracy" , overallAccuracy());
+        printRow( "Average Accuracy" , averageAccuracy());
+        printRow( "Macro Precision, Positive Predictive Value (PPV)" , macroPrecision());
+        printRow( "Micro Precision, Positive Predictive Value (PPV)" , microPrecision());
+        printRow( "Macro TPR, Recall, Sensitivity" , macroRecall());
+        printRow( "Micro TPR, Recall, Sensitivity" , microRecall());
+        printRow( "Macro F1-Score" , macroFScore());
+        printRow( "Micro F1-Score" , microFScore());
+        printRow( "MCC (multiclass)" , mcc());
 
-        fmt::print( "{:<{}}Misclassification:\n", "", indentation + 2 );
+        auto labels = getLabelsWithCounts();
+
+        fmt::print( "{:<{}}Misclassification:\n" , "" , indentation + 2 );
         auto printRow2 = _printRowFunction( indentation + 4 );
-        for (auto &[label, missclassified] : misclassifications())
+        for ( auto &[label , missclassified] : misclassifications())
         {
             std::vector<std::string> pairs;
-            for (auto &[missedLabel, hits] : missclassified)
-                pairs.push_back( fmt::format( "[{}:{}]", missedLabel, hits ));
+            for ( auto &[missedLabel , hits] : missclassified )
+                pairs.push_back( fmt::format( "[{}:{}]" , missedLabel , hits ));
 
-            auto row = fmt::format( "Class:{} -> {}", label, io::join( pairs, "" ));
+            auto row = fmt::format( "Class ({}):{} -> {}" , labels[label] , label , io::join( pairs , "" ));
 
-            fmt::print( "{:<{}}{}\n", "", indentation + 4, row );
+            fmt::print( "{:<{}}{}\n" , "" , indentation + 4 , row );
         }
     }
 
-    void printPerClassReport( size_t indentation = 0, std::string_view tag = std::string_view()) const
+    void printPerClassReport( size_t indentation = 0 , std::string_view tag = std::string_view()) const
     {
-        fmt::print( "{:<{}}Per-class Statistics [{}]:\n", "", indentation, tag );
+        fmt::print( "{:<{}}Per-class Statistics [{}]:\n" , "" , indentation , tag );
 
 
         const auto labels = getLabelsWithCounts();
-        auto scoresVector = [&, this]( std::function<std::pair<double, double>( const Label & )> &&fn ) {
-            std::vector<std::pair<double, double>> scores;
-            for (auto &[l, count] : labels)
+        auto scoresVector = [& , this]( std::function<std::pair<double , double>( const Label & )> &&fn )
+        {
+            std::vector<std::pair<double , double>> scores;
+            for ( auto &[l , count] : labels )
                 scores.emplace_back( fn( l ));
             return scores;
         };
 
         std::vector<std::string> labelsWCounts;
         size_t maxWidth = 0;
-        for (auto &[l, count] : labels)
+        for ( auto &[l , count] : labels )
         {
-            labelsWCounts.push_back( fmt::format( "{}({})", l, count ));
+            labelsWCounts.push_back( fmt::format( "{}({})" , l , count ));
             maxWidth = std::max( maxWidth , labelsWCounts.back().size());
         }
 
         auto printHeader = _printHeaderColumnsFunction<decltype( labelsWCounts )>( indentation + 2 , maxWidth + 1 );
-        printHeader( "Criteria", labelsWCounts );
+        printHeader( "Criteria" , labelsWCounts );
 
-        auto printRow = _printColumnsFunction( indentation + 2 ,  maxWidth + 1 );
-        printRow( "Accuracy", scoresVector( [this]( const auto &l ) { return accuracy( l ); } ));
-        printRow( "Precision", scoresVector( [this]( const auto &l ) { return precision( l ); } ));
-        printRow( "Recall", scoresVector( [this]( const auto &l ) { return recall( l ); } ));
-        printRow( "F1-Score", scoresVector( [this]( const auto &l ) { return fScore( l, 1.0 ); } ));
-        printRow( "MCC", scoresVector( [this]( const auto &l ) { return mcc( l ); } ));
+        auto printRow = _printColumnsFunction( indentation + 2 , maxWidth + 1 );
+        printRow( "Accuracy" , scoresVector( [this]( const auto &l ) { return accuracy( l ); } ));
+        printRow( "Precision" , scoresVector( [this]( const auto &l ) { return precision( l ); } ));
+        printRow( "Recall" , scoresVector( [this]( const auto &l ) { return recall( l ); } ));
+        printRow( "F1-Score" , scoresVector( [this]( const auto &l ) { return fScore( l , 1.0 ); } ));
+        printRow( "MCC" , scoresVector( [this]( const auto &l ) { return mcc( l ); } ));
     }
 
-    template<size_t indentation = 0>
+    template < size_t indentation = 0 >
     void printReport( size_t k ) const
     {
         _statistics.at( k ).template printReport<indentation>();
@@ -325,35 +343,38 @@ public:
 
 private:
 
-    static auto _printRowFunction( size_t indentation, size_t col1Width = 50 )
+    static auto _printRowFunction( size_t indentation , size_t col1Width = 50 )
     {
-        return [=]( const char *col1, std::pair<double, double> &&col2 ) {
+        return [=]( const char *col1 , std::pair<double , double> &&col2 )
+        {
             constexpr const char *fmtSpec = "{:<{}}:{:.4f}  (±{:.3f})";
-            fmt::print( "{:<{}}{}\n", "", indentation,
-                        fmt::format( fmtSpec, col1, col1Width, col2.first, col2.second ));
+            fmt::print( "{:<{}}{}\n" , "" , indentation ,
+                        fmt::format( fmtSpec , col1 , col1Width , col2.first , col2.second ));
         };
     }
 
-    template<typename SequenceContainer>
-    static auto _printHeaderColumnsFunction( size_t indentation, size_t colWidth )
+    template < typename SequenceContainer >
+    static auto _printHeaderColumnsFunction( size_t indentation , size_t colWidth )
     {
-        return [=]( const char *col1, const SequenceContainer &columns ) {
+        return [=]( const char *col1 , const SequenceContainer &columns )
+        {
             constexpr const char *colfmt = "{:<{}}";
-            fmt::print( "{:<{}}{:<{}}", "", indentation, col1, colWidth );
-            for (auto &col : columns)
-                fmt::print( colfmt, col, colWidth );
+            fmt::print( "{:<{}}{:<{}}" , "" , indentation , col1 , colWidth );
+            for ( auto &col : columns )
+                fmt::print( colfmt , col , colWidth );
             fmt::print( "\n" );
         };
     }
 
-    static auto _printColumnsFunction( size_t indentation, size_t colWidth = 20 )
+    static auto _printColumnsFunction( size_t indentation , size_t colWidth = 20 )
     {
-        return [=]( const char *col1, const std::vector<std::pair<double, double>> &columns ) {
+        return [=]( const char *col1 , const std::vector<std::pair<double , double>> &columns )
+        {
             constexpr const char *colfmt = "{:<{}}";
             constexpr const char *cellfmt = "{:.4f}  (±{:.3f})";
-            fmt::print( "{:<{}}{:<{}}", "", indentation, col1, colWidth );
-            for (auto &col : columns)
-                fmt::print( colfmt, fmt::format( cellfmt, col.first, col.second ), colWidth );
+            fmt::print( "{:<{}}{:<{}}" , "" , indentation , col1 , colWidth );
+            for ( auto &col : columns )
+                fmt::print( colfmt , fmt::format( cellfmt , col.first , col.second ) , colWidth );
             fmt::print( "\n" );
         };
     }

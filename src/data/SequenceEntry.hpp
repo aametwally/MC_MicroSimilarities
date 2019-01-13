@@ -14,9 +14,9 @@ template < typename T >
 class SequenceEntry
 {
 public:
-    virtual size_t sequenceLength() const = 0;
+    virtual size_t length() const = 0;
 
-    virtual const std::string &getSequence() const = 0;
+    virtual std::string_view sequence() const = 0;
 
     virtual ~SequenceEntry() = default;
 
@@ -37,10 +37,28 @@ public:
         std::map<std::string , std::vector<T >> clusters;
 
         for ( auto &&entry : entries )
-            clusters[entry.getLabel()].emplace_back( std::move( entry ));
+            clusters[std::string(entry.label())].emplace_back( std::move( entry ));
 
         return clusters;
     }
+
+    static std::map<std::string , double>
+    groupAveragedValue( const std::map<std::string , std::vector<T> > &groups ,
+                        std::function<double( std::string_view, const T & )> measuringFunction )
+    {
+        std::map< std::string , double > values;
+        for( const auto &[l,data] : groups )
+        {
+            auto &groupValue = values[l];
+            for( const auto &item : data )
+            {
+                groupValue += measuringFunction( l , item );
+            }
+            groupValue /= data.size();
+        }
+        return values;
+    }
+
 
     static inline bool isPolymorphicAA( char aa )
     {

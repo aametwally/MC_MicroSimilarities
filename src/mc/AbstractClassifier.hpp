@@ -90,7 +90,7 @@ protected:
         auto predictions = _predict( sequence );
         if ( auto top = predictions.top(); top )
         {
-            return top->get().getLabel();
+            return top->get().label();
         } else return unclassified;
     }
 

@@ -20,30 +20,10 @@ public:
     using TransitionMatrices2D  = typename Base::TransitionMatrices2D;
 
 public:
-    explicit MC( Order order ) : Base( order )
+    explicit MC( Order order , double epsilon = Base::TransitionMatrixEpsilon )
+            : Base( order , epsilon )
     {
         assert( order >= 1 );
-    }
-
-    template < typename HistogramsCollection >
-    explicit MC( Order order , HistogramsCollection &&histograms )
-            :  Base( std::forward<HistogramsCollection>( histograms ) , order )
-    {
-        assert( order >= 1 );
-    }
-
-    explicit MC( const std::vector<std::string> &sequences ,
-                 Order order ) : Base( order )
-    {
-        assert( order >= 1 );
-        this->train( sequences );
-    }
-
-    explicit MC( const std::vector<std::string_view> &sequences ,
-                 Order order ) : Base( order )
-    {
-        assert( order >= 1 );
-        this->train( sequences );
     }
 
     MC() = delete;
@@ -53,11 +33,11 @@ public:
     MC( const MC &mE ) = default;
 
     MC( MC &&mE ) noexcept
-            : Base( std::move( mE._histograms ) , mE._order ) {}
+            : Base( std::move( mE )) {}
 
     MC &operator=( const MC &mE )
     {
-        if ( this->getOrder() != mE.getOrder())
+        if ( this->getOrder() != mE.getOrder() || this->_epsilon != mE._epsilon )
             throw std::runtime_error( "Orders mismatch!" );
         this->_histograms = mE._histograms;
         return *this;
@@ -65,7 +45,7 @@ public:
 
     MC &operator=( MC &&mE )
     {
-        if ( this->getOrder() != mE.getOrder())
+        if ( this->getOrder() != mE.getOrder() || this->_epsilon != mE._epsilon )
             throw std::runtime_error( "Orders mismatch!" );
         this->_histograms.swap( mE._histograms );
         return *this;
@@ -74,6 +54,7 @@ public:
     static constexpr inline HistogramID lowerOrderID( HistogramID id ) { return id / States; }
 
     using Base::probability;
+
     double probability( std::string_view context , char state ) const override
     {
         if ( context.size() > this->getOrder())
@@ -107,7 +88,7 @@ protected:
             auto order = context.size();
             auto id = Base::_sequence2ID( context );
             auto c = Base::_char2ID( state );
-            this->_histograms.increment( order , id , Base::PseudoCounts )( c );
+            this->_histograms.increment( order , id , this->_epsilon )( c );
         }
     }
 
@@ -118,7 +99,7 @@ protected:
             if ( !LabeledEntry::isPolymorphicReducedAA( a ))
             {
                 auto c = Base::_char2ID( a );
-                this->_histograms.increment( 0 , 0 , Base::PseudoCounts )( c );
+                this->_histograms.increment( 0 , 0 , this->_epsilon )( c );
             }
         }
 

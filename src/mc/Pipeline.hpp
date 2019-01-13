@@ -43,7 +43,6 @@
 
 namespace MC
 {
-
 enum class MCModelsEnum
 {
     RegularMC ,
@@ -60,7 +59,6 @@ const std::map<std::string , MCModelsEnum> MCModelLabels{
 template < typename Grouping >
 class Pipeline
 {
-
 private:
     static constexpr auto States = Grouping::StatesN;
     using MCF = MCFeatures<States>;
@@ -89,9 +87,7 @@ public:
             : _modelTrainer( modelTrainer ) ,
               _similarity( similarity ) ,
               _order( order )
-    {
-
-    }
+    {}
 
 public:
 
@@ -109,7 +105,6 @@ public:
             newEntries.emplace( label , reducedAlphabetEntries( sequences ));
         return newEntries;
     }
-
 
     std::vector<ScoredLabels>
     scoredPredictions( const std::vector<std::string> &queries ,
@@ -161,7 +156,6 @@ public:
             KNNMCParameters<States> knn( 7 , _modelTrainer , _similarity );
             knn.fit( backbones , background , reducedAlphabetEntries( trainingClusters ));
             return knn.scoredPredictions( reducedAlphabetEntries( queries ));
-
         }
         case ClassificationEnum::SVM_Stack :
         {
@@ -190,7 +184,11 @@ public:
         }
         case ClassificationEnum::Regularized:
         {
-            MCRegularizedClassifier<States> classifier( _order );
+            using RMC = MC<States>;
+            using ZMC = ZYMC<States>;
+            using GMC = GappedMC<States>;
+
+            MCRegularizedClassifier<RMC , States> classifier( _order , _similarity );
             classifier.runTraining( reducedAlphabetEntries( trainingClusters ));
             return classifier.scoredPredictions( reducedAlphabetEntries( queries ));
         }
@@ -207,7 +205,7 @@ public:
 
         std::set<std::string> labels;
         for ( const auto &entry : entries )
-            labels.insert( entry.getLabel());
+            labels.emplace( entry.label());
         auto viewLabels = std::set<std::string_view>( labels.cbegin() , labels.cend());
 
         using Fold = std::vector<std::pair<std::string , LabeledEntry >>;
@@ -225,7 +223,7 @@ public:
                                 std::transform( f.cbegin() , f.cend() , std::back_inserter( foldSequences ) ,
                                                 []( const auto &p )
                                                 {
-                                                    return std::make_pair( p.first , p.second.getSequence());
+                                                    return std::make_pair( p.first , std::string( p.second.sequence()));
                                                 } );
                                 return foldSequences;
                             } );
@@ -234,15 +232,32 @@ public:
 
         std::set<std::string_view> uniqueIds;
         for ( auto &e : entries )
-            uniqueIds.insert( e.getMemberId());
+            uniqueIds.insert( e.memberId());
 
         fmt::print( "[All Sequences:{} (unique:{})]\n" , entries.size() , uniqueIds.size());
 
-
         auto groupedEntries = LabeledEntry::groupEntriesByLabels( std::move( entries ));
+        auto averageLength = LabeledEntry::groupAveragedValue(
+                groupedEntries ,
+                []( std::string_view , const auto &sequence ) -> double
+                {
+                    return sequence.length();
+                } );
+
+        auto varianceLength = LabeledEntry::groupAveragedValue(
+                groupedEntries ,
+                [&]( std::string_view label , const auto &sequence ) -> double
+                {
+                    double deviation = sequence.length() - averageLength.at( std::string( label ));
+                    return deviation * deviation;
+                } );
 
         auto labelsInfo = keys( groupedEntries );
-        for ( auto &l : labelsInfo ) l = fmt::format( "{}({})" , l , groupedEntries.at( l ).size());
+        for ( auto &l : labelsInfo )
+            l = fmt::format( "{}({}|{})" , l ,
+                             groupedEntries.at( l ).size() ,
+                             averageLength.at( l ));
+
         fmt::print( "[Clusters:{}][{}]\n" ,
                     groupedEntries.size() ,
                     io::join( labelsInfo , "|" ));
@@ -258,8 +273,8 @@ public:
             for ( const auto &item : items )
             {
                 ls.push_back( item.first );
-                sequences.push_back( item.second.getSequence());
-                ids.push_back( item.second.getMemberId());
+                sequences.emplace_back( item.second.sequence());
+                ids.push_back( item.second.memberId());
             }
             return std::make_tuple( ids , sequences , ls );
         };
@@ -269,7 +284,6 @@ public:
 
         for ( auto &classifier : classifiers )
             validation[classifier] = CrossValidationStatistics( k , viewLabels );
-
 
         for ( size_t i = 0; i < k; ++i )
         {
@@ -298,16 +312,15 @@ public:
                 {
                     const auto &fold = folds.at( i );
 
-                    const auto &id = fold.at( proteinIdx ).second.getMemberId();
+                    const auto &id = fold.at( proteinIdx ).second.memberId();
                     const auto &label = fold.at( proteinIdx ).first;
                     const auto &prediction = predictions.at( proteinIdx );
 
-                    cValidation.countInstance( i , prediction.top()->get().getLabel() , label );
+                    cValidation.countInstance( i , prediction.top()->get().label() , label );
                     ensembleValidation.countInstance( i , classifier , id , prediction );
                 }
             }
             fmt::print( "[DONE] Classification..\n" );
-
         }
 
         for ( auto &[classifier , cvalidation] : validation )

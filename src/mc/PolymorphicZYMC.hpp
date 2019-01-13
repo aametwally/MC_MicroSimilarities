@@ -62,7 +62,7 @@ protected:
                     assert( context.size() == 1 );
                     auto c = Base::_char2ID( context.front());
                     auto s = Base::_char2ID( state );
-                    this->_histograms.increment( distance , c , Base::PseudoCounts )( s );
+                    this->_histograms.increment( distance , c , this->_epsilon )( s );
                 } );
     }
 

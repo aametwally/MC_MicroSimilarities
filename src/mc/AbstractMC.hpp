@@ -20,7 +20,7 @@ template < size_t States >
 class AbstractMC
 {
 public:
-
+    static constexpr size_t t_States = States;
     static constexpr std::array<char , States> ReducedAlphabet = reducedAlphabet<States>();
 
     using Histogram = buffers::Histogram<States>;
@@ -29,7 +29,7 @@ public:
     using BufferConstIterator =  typename Buffer::const_iterator;
 
 public:
-    static constexpr double PseudoCounts = double( 0.1 ) / (States + eps);
+    static constexpr double TransitionMatrixEpsilon = double( 0.1 ) / (States + eps);
     using TransitionMatrices2D = SparseTransitionMatrix2D<States , Histogram , Order , HistogramID>;
     using TransitionMatrices1D = SparseTransitionMatrix1D<States , Histogram , HistogramID>;
 
@@ -38,15 +38,14 @@ public:
 public:
 
 public:
-
-    template < typename Histograms >
-    AbstractMC( Histograms &&histograms , Order order )
-            : _histograms( std::forward<Histograms>( histograms )) , _order( order ) {}
-
-    AbstractMC( Order order ) : _order( order ) {}
+    AbstractMC( Order order , double epsilon = TransitionMatrixEpsilon )
+            : _order( order ) ,
+              _epsilon( epsilon ) {}
 
     AbstractMC( AbstractMC &&mE ) noexcept
-            : _histograms( std::move( mE._histograms )) , _order( mE.getOrder()) {}
+            : _histograms( std::move( mE._histograms )) ,
+              _order( mE.getOrder()) ,
+              _epsilon( mE._epsilon ) {}
 
     AbstractMC( const AbstractMC &mE ) = default;
 
@@ -54,18 +53,18 @@ public:
 
     AbstractMC &operator=( const AbstractMC &mE )
     {
-        assert( _order == mE._order );
-        if ( _order != mE._order )
-            throw std::runtime_error( "Orders mismatch!" );
+        assert( _order == mE._order && _epsilon == mE._epsilon );
+        if ( _order != mE._order || _epsilon != mE._epsilon )
+            throw std::runtime_error( "Orders/epsilon mismatch!" );
         this->_histograms = mE._histograms;
         return *this;
     }
 
     AbstractMC &operator=( AbstractMC &&mE )
     {
-        assert( _order == mE._order );
-        if ( _order != mE._order )
-            throw std::runtime_error( "Orders mismatch!" );
+        assert( _order == mE._order && _epsilon == mE._epsilon );
+        if ( _order != mE._order || _epsilon != mE._epsilon )
+            throw std::runtime_error( "Orders/epsilon mismatch!" );
         this->_histograms = std::move( mE._histograms );
         return *this;
     }
@@ -78,12 +77,17 @@ public:
         return sum;
     }
 
-    bool contains( Order order ) const
+    inline double getEpsilon() const
+    {
+        return _epsilon;
+    }
+
+    inline bool contains( Order order ) const
     {
         return _histograms( order ).has_value();
     }
 
-    bool contains( Order order , HistogramID id ) const
+    inline bool contains( Order order , HistogramID id ) const
     {
         return _histograms( order , id ).has_value();
     }
@@ -239,6 +243,7 @@ protected:
 protected:
     TransitionMatrices2D _histograms;
     const Order _order;
+    const double _epsilon;
 
 public:
     std::vector<double> extractFlatFeatureVector(
@@ -312,14 +317,14 @@ public:
         return allFeatureSpace;
     }
 
-    static Selection populationFeatureSpace( const BackboneProfiles &profiles )
+    template < typename Profiles >
+    static Selection populationFeatureSpace( const Profiles &profiles )
     {
-        std::unordered_map<Order , std::set<HistogramID >> allFeatureSpace;
+        Selection allFeatureSpace;
         for ( const auto &[cluster , profile] : profiles )
-            if ( *profile )
-                for ( const auto &[order , isoHistograms] : profile->histograms().get())
-                    for ( const auto &[id , histogram] : isoHistograms )
-                        allFeatureSpace[order].insert( id );
+            for ( const auto &[order , isoHistograms] : profile->histograms().get())
+                for ( const auto &[id , histogram] : isoHistograms )
+                    allFeatureSpace[order].insert( id );
         return allFeatureSpace;
     }
 
@@ -547,13 +552,13 @@ public:
 };
 
 
-template < size_t States >
+template < size_t States , typename CoreModel = AbstractMC<States >>
 class ModelGenerator
 {
+    static_assert( States == CoreModel::t_States , "States mismatch!" );
 private:
-    using Abstract = AbstractMC<States>;
-    using TransitionMatrices2D = typename Abstract::TransitionMatrices2D;
-    using ConfiguredModelFunction =std::function<std::unique_ptr<Abstract>( void )>;
+    using TransitionMatrices2D = typename CoreModel::TransitionMatrices2D;
+    using ConfiguredModelFunction =std::function<std::unique_ptr<CoreModel>( void )>;
     const ConfiguredModelFunction _modelFunction;
 
     explicit ModelGenerator( const ConfiguredModelFunction modelFunction )
@@ -567,13 +572,13 @@ public:
         return ModelGenerator(
                 [=]()
                 {
-                    return std::unique_ptr<Abstract>( new Model( args... ));
+                    return std::unique_ptr<CoreModel>( new Model( args... ));
                 } );
     }
 
 
     template < typename SequenceData >
-    std::unique_ptr<AbstractMC<States>> operator()(
+    std::unique_ptr<CoreModel> operator()(
             SequenceData &&sequences ) const
     {
         auto model = _modelFunction();
@@ -582,7 +587,7 @@ public:
     }
 
     template < typename SequenceData >
-    std::unique_ptr<AbstractMC<States>> operator()(
+    std::unique_ptr<CoreModel> operator()(
             SequenceData &&sequences ,
             std::optional<std::reference_wrapper<const Selection >> selection ) const
     {

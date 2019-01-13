@@ -10,13 +10,19 @@
 namespace MC
 {
 
-template < size_t States >
+template < typename CoreMCModel , size_t States >
 class RegularizedMC
 {
+    static_assert(CoreMCModel::t_States == States , "States mismatch!");
+public:
+    static constexpr size_t t_States = States;
     using Histogram = buffers::Histogram<States>;
-    using TransitionMatrices =
+    using TransitionMatrices2D =
     SparseTransitionMatrix2D<States , Histogram , Order , HistogramID>;
+    using BackboneProfile = std::unique_ptr<RegularizedMC>;
+    using BackboneProfiles = std::map<std::string_view , std::unique_ptr<RegularizedMC>>;
 
+private:
     struct StackedBooleanTransitionMatrices
     {
         using IsoHistograms = std::unordered_map<HistogramID , std::vector<buffers::BooleanHistogram<States>>>;
@@ -25,11 +31,9 @@ class RegularizedMC
     };
 
 public:
-    explicit RegularizedMC( Order order )
-            : _sensitiveMC( order )
-    {
-
-    }
+    explicit RegularizedMC( Order order , double epsilon = AbstractMC<States>::TransitionMatrixEpsilon )
+            : _sensitiveMC( order , epsilon)
+    {}
 
     void addSequence( std::string_view sequence )
     {
@@ -45,7 +49,7 @@ public:
 
     void regularize()
     {
-        TransitionMatrices regularizedHistograms;
+        TransitionMatrices2D regularizedHistograms;
         for ( auto &[order , isoHistograms] : _stackedMatrices.data )
         {
             for ( auto &[id , histogramsVector] : isoHistograms )
@@ -62,19 +66,21 @@ public:
         _sensitiveMC.setHistograms( std::move( regularizedHistograms ));
     }
 
+    void train( const std::vector<std::string> &sequences )
+    {
+        addSequences( sequences );
+        regularize();
+    }
+
+    void train( std::string_view sequence )
+    {
+        addSequence( sequence );
+        regularize();
+    }
+
     Order getOrder() const
     {
         return _sensitiveMC.getOrder();
-    }
-
-    inline double probability( std::string_view context , char current ) const
-    {
-        return _sensitiveMC.probability( context , current );
-    }
-
-    inline double transitionalPropensity( std::string_view context , char current ) const
-    {
-        return _sensitiveMC.transitionalPropensity( context , current );
     }
 
     inline double propensity( std::string_view query , double acc = 0 ) const
@@ -82,16 +88,26 @@ public:
         return _sensitiveMC.propensity( query , acc );
     }
 
-    inline double probability( char a ) const
+    inline double transitionalPropensity( std::string_view context , char state ) const
     {
-        return _sensitiveMC.probability( a );
+        return _sensitiveMC.transitionalPropensity( context , state );
+    }
+
+    inline auto histograms() const
+    {
+        return _sensitiveMC.histograms();
+    }
+
+    inline auto histogram( Order order , HistogramID id ) const
+    {
+        return _sensitiveMC.histogram( order , id );
     }
 
 protected:
 
     void _countInstance( std::string_view sequence )
     {
-        MC<States> model( getOrder());
+        CoreMCModel model( getOrder());
         model.train( sequence );
         auto histograms = std::move( model.stealHistograms());
         for ( auto &[order , isoHistograms] : histograms )
@@ -99,14 +115,16 @@ protected:
             auto &stacked = _stackedMatrices.data[order];
             for ( auto &[id , histogram] : isoHistograms )
             {
-                auto bHist = BooleanHistogram<States>::binarizeHistogram( std::move( histogram ));
+                auto bHist = BooleanHistogram<States>::binarizeHistogram(
+                        std::move( histogram ) , model.getEpsilon() );
+
                 stacked[id].emplace_back( std::move( bHist ));
             }
         }
     }
 
 private:
-    MC<States> _sensitiveMC;
+    CoreMCModel _sensitiveMC;
     StackedBooleanTransitionMatrices _stackedMatrices;
 };
 

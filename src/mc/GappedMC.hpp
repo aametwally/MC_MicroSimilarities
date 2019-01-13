@@ -20,16 +20,16 @@ public:
     using IsoHistograms = std::unordered_map<HistogramID , Histogram>;
     using HeteroHistograms = std::unordered_map<Order , IsoHistograms>;
 
-    explicit GappedMC( Order order ) : Base( order ) {}
+    explicit GappedMC( Order order ,
+                       double epsilon = Base::TransitionMatrixEpsilon )
+            : Base( order , epsilon ) {}
 
     virtual ~GappedMC() = default;
 
     template < typename HistogramsCollection >
-    explicit GappedMC( Order order , HistogramsCollection &&histograms ) :
-            Base( order , std::forward<HistogramsCollection>( histograms )) {}
-
-    explicit GappedMC( const std::vector<std::string> &sequences ,
-                       Order order ) : Base( sequences , order ) {}
+    explicit GappedMC( Order order , HistogramsCollection &&histograms ,
+                       double epsilon = Base::TransitionMatrixEpsilon )
+            : Base( order , std::forward<HistogramsCollection>( histograms ) , epsilon ) {}
 
     double probability( std::string_view context , char currentState ) const override
     {

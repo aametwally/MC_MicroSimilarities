@@ -26,27 +26,12 @@ public:
     using HeteroHistograms = std::unordered_map<Order , IsoHistograms>;
 
 public:
-    explicit ZYMC( Order order ) : Base( order )
+    explicit ZYMC( Order order , double epsilon = Base::TransitionMatrixEpsilon ) : Base( order , epsilon )
     {
         assert( order >= 1 );
     }
 
     virtual ~ZYMC() = default;
-
-    template < typename HistogramsCollection >
-    explicit ZYMC( Order order , HistogramsCollection &&histograms )
-            :  Base( std::forward<HistogramsCollection>( histograms ) , order )
-    {
-        assert( order >= 1 );
-    }
-
-    explicit ZYMC( const std::vector<std::string> &sequences ,
-                   Order order ) : Base( order )
-    {
-        assert( order >= 1 );
-        this->train( sequences );
-    }
-
 
     static constexpr inline HistogramID lowerOrderID( HistogramID id ) { return id / States; }
 
@@ -96,7 +81,7 @@ protected:
         {
             auto c = Base::_char2ID( context.front());
             auto s = Base::_char2ID( state );
-            this->_histograms.increment( distance , c , Base::PseudoCounts )( s );
+            this->_histograms.increment( distance , c , this->_epsilon )( s );
         }
     }
 
@@ -107,7 +92,7 @@ protected:
             if ( !LabeledEntry::isPolymorphicReducedAA( a ))
             {
                 auto c = Base::_char2ID( a );
-                this->_histograms.increment( 0 , 0 , Base::PseudoCounts )( c );
+                this->_histograms.increment( 0 , 0 , this->_epsilon )( c );
             }
         }
 

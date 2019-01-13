@@ -68,9 +68,10 @@ namespace MC {
                         scores.at( i ) = std::make_pair( label , score );
                     }
                 }
-                if( scores.at( i ).second < 0 )
-                    std::cout << "neg\n";
-                else propensitites[ scores.at( i ).first ] += scores.at( i ).second ;
+                if( scores.at( i ).second > 0 )
+                {
+                    propensitites[ scores.at( i ).first ] += scores.at( i ).second ;
+                }
             }
 
             propensitites = minmaxNormalize( std::move( propensitites ));

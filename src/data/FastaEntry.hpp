@@ -16,7 +16,7 @@ public:
             : _id( std::move( id )), _sequence( std::move( seq ))
     {}
 
-    size_t sequenceLength() const override
+    size_t length() const override
     {
         return _sequence.length();
     }
@@ -31,7 +31,7 @@ public:
         _id = id;
     }
 
-    const std::string &getSequence() const override
+    std::string_view sequence() const override
     {
         return _sequence;
     }
@@ -131,7 +131,7 @@ public:
         std::ofstream ostream( filePath );
         for (auto &item : fItems)
             ostream << '>' << item.getId() << '\n'
-                    << item.getSequence() << '\n';
+                    << item.sequence() << '\n';
     }
 
 private:

@@ -140,6 +140,7 @@ public:
     {
         assert( size() == other.size());
         Histogram diff( 0 );
+        assert( diff.size() == size());
         for ( auto i = 0; i < _buffer.size(); ++i )
             diff._buffer[i] = _buffer[i] - other._buffer[i];
         return diff;

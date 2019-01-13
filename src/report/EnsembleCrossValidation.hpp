@@ -120,7 +120,7 @@ private:
         std::vector<std::pair<ItemID, ClassLabel  >> v;
         for (auto &fold : folds)
             for (auto &[label, entry] : fold)
-                v.emplace_back( entry.getMemberId(), label );
+                v.emplace_back( entry.memberId(), label );
 
 
         for (auto &[id, label] : v)
@@ -136,7 +136,7 @@ private:
         std::map<ItemID, std::map< std::string , double>> m;
         for (auto &fold : folds)
             for (auto &[label, entry] : fold)
-                m[ entry.getMemberId() ][ "length" ] = entry.getSequence().length();
+                m[ entry.memberId() ][ "length" ] = entry.length();
 
         return m;
     }
@@ -171,7 +171,7 @@ private:
         for (auto &voter : voters)
             for (auto&[id, prediction] : predictions.at( voter ))
                 if( auto top = prediction.top() ; top )
-                    ++votes[id][ top->get().getLabel()];
+                    ++votes[id][ top->get().label()];
 
         std::vector<std::pair<ItemID, PredictionLabel>> majorityPredictions;
         for (auto &[id, _votes] : votes)
@@ -197,7 +197,7 @@ private:
         for (auto &voter : voters)
             for (auto&[id, prediction] : predictions.at( voter ))
                 if( auto top = prediction.top() ; top )
-                    votes[id][ top->get().getLabel()] += top->get().getValue();
+                    votes[id][ top->get().label()] += top->get().value();
 
         std::vector<std::pair<ItemID, PredictionLabel>> majorityPredictions;
         for (auto &[id, _votes] : votes)

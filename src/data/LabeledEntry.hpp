@@ -33,7 +33,7 @@ class LabeledEntry : public SequenceEntry<LabeledEntry>
 public:
     virtual ~LabeledEntry() = default;
 
-    size_t sequenceLength() const override
+    size_t length() const override
     {
         return _sequence.length();
     }
@@ -51,7 +51,7 @@ public:
                                             []( const std::string &s ) {
                                                 return s.find( '=' ) != std::string::npos;
                                             } ), " " );
-        uniref._sequence = fEntry.getSequence();
+        uniref._sequence = fEntry.sequence();
         return uniref;
     }
 
@@ -64,7 +64,7 @@ public:
         auto tokens = split( fEntry.getId());
         entry._memberId = split( tokens.front(), "|" ).front();
         entry._label = std::string( tokens.at( 1 ).cbegin() + 1, tokens.at( 1 ).cend() - 1 );
-        entry._sequence = fEntry.getSequence();
+        entry._sequence = fEntry.sequence();
         return entry;
     }
 
@@ -77,7 +77,7 @@ public:
         auto tokens = split( fEntry.getId());
         entry._memberId = split( tokens.front(), ";" ).front();
         entry._label = clusterName;
-        entry._sequence = fEntry.getSequence();
+        entry._sequence = fEntry.sequence();
         return entry;
     }
 
@@ -90,7 +90,7 @@ public:
         auto tokens = split( fEntry.getId());
         entry._memberId = split( tokens.front(), "|" ).at( 1 );
         entry._label = clusterName;
-        entry._sequence = fEntry.getSequence();
+        entry._sequence = fEntry.sequence();
         return entry;
     }
 
@@ -103,7 +103,7 @@ public:
         auto tokens = split( fEntry.getId());
         entry._memberId = tokens.front();
         entry._label = split( tokens.at( 1 ), "-" ).front();
-        entry._sequence = fEntry.getSequence();
+        entry._sequence = fEntry.sequence();
         return entry;
     }
 
@@ -116,11 +116,11 @@ public:
         auto tokens = split( fEntry.getId());
         entry._memberId = tokens.front();
         entry._label = split( tokens.at( 1 ), "-" ).back();
-        entry._sequence = fEntry.getSequence();
+        entry._sequence = fEntry.sequence();
         return entry;
     }
 
-    const std::string &getMemberId() const
+    std::string_view memberId() const
     {
         return _memberId;
     }
@@ -130,7 +130,7 @@ public:
         _memberId = memberId;
     }
 
-    const std::string &getLabel() const
+    std::string_view label() const
     {
         return _label;
     }
@@ -140,7 +140,7 @@ public:
         _label = clusterName;
     }
 
-    const std::string &getSequence() const override
+    std::string_view sequence() const override
     {
         return _sequence;
     }

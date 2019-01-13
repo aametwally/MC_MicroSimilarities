@@ -51,7 +51,7 @@ protected:
                     auto order = context.size();
                     auto id = Base::_sequence2ID( context );
                     auto c = Base::_char2ID( state );
-                    this->_histograms.increment( order , id , Base::PseudoCounts )( c );
+                    this->_histograms.increment( order , id , this->_epsilon )( c );
                 } );
     }
 
@@ -62,7 +62,7 @@ protected:
             LabeledEntry::polymorphicApply<AAGrouping>( a , [this]( char state )
             {
                 auto c = Base::_char2ID( state );
-                this->_histograms.increment( 0 , 0 , Base::PseudoCounts )( c );
+                this->_histograms.increment( 0 , 0 , this->_epsilon )( c );
             } );
         }
 

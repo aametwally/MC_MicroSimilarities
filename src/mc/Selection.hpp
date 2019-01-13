@@ -301,8 +301,6 @@ namespace MC
     Selection intersection( const MC::Selection &s1, const MC::Selection &s2 ) noexcept;
 
     Selection intersection( const std::vector<MC::Selection> sets, std::optional<double> minCoverage );
-
 }
-
 
 #endif //MARKOVIAN_FEATURES_SELECTION_HPP

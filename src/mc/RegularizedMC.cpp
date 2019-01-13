@@ -6,6 +6,6 @@
 
 namespace MC
 {
-template class  RegularizedMC<COUNT_OFER15 >;
-template class  RegularizedMC<COUNT_NOGROUPING22 >;
+//template class  RegularizedMC<COUNT_OFER15 >;
+//template class  RegularizedMC<COUNT_NOGROUPING22 >;
 }
