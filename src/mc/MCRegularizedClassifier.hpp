@@ -20,6 +20,7 @@ class MCRegularizedClassifier : public AbstractClassifier
 
     using Model = RegularizedMC<CoreMCModel , States>;
     using Histogram = typename Model::Histogram;
+    using TransitionMatrices2D = typename Model::TransitionMatrices2D;
     using BackboneProfile = typename Model::BackboneProfile;
     using BackboneProfiles = typename Model::BackboneProfiles;
     using Similarity = MetricFunction<Histogram>;
@@ -31,7 +32,93 @@ class MCRegularizedClassifier : public AbstractClassifier
         using FeatureVector = typename Base::FeatureVector;
     public:
         using Base::Base;
+
+        FeatureVector _extractFeatures1( std::string_view sequence ) const
+        {
+            if ( _validTraining())
+            {
+                auto sample = this->_modelTrainer( sequence );
+                std::vector<double> flatFeatures;
+                flatFeatures.reserve( selectionSize( this->_selection.value()));
+
+                TransitionMatrices2D sampleHistograms = std::move( sample->stealHistograms());
+                for ( auto &[order , isoIDs] : this->_selection.value())
+                {
+                    auto sampleIsoHistograms = sampleHistograms( order );
+                    if ( sampleIsoHistograms )
+                    {
+                        for ( auto id : isoIDs )
+                        {
+                            auto sampleHistogram = sampleIsoHistograms.value()( id );
+                            static const Histogram zeroHistogram( 0 );
+                            if ( sampleHistogram )
+                            {
+                                flatFeatures.insert( flatFeatures.end() ,
+                                                     std::make_move_iterator( sampleHistogram->get().begin()) ,
+                                                     std::make_move_iterator( sampleHistogram->get().end()));
+                            } else
+                            {
+                                flatFeatures.insert( flatFeatures.end() ,
+                                                     zeroHistogram.cbegin() ,
+                                                     zeroHistogram.cend());
+                            }
+                        }
+                    } else throw std::runtime_error( "Insufficient model fitting!" );
+                }
+                return flatFeatures;
+            } else throw std::runtime_error( "Bad training!" );
+        }
+
+        FeatureVector _extractFeatures2( std::string_view sequence ) const
+        {
+            if ( _validTraining())
+            {
+                auto sample = this->_modelTrainer( sequence );
+                const TransitionMatrices2D &centroidHistograms = _centroid->histograms().get();
+                const TransitionMatrices2D &sampleHistograms = sample->histograms().get();
+                std::vector<double> features;
+                features.reserve( centroidHistograms.size());
+                centroidHistograms.forEach(
+                        [&]( Order order , HistogramID id , const Histogram &histogram )
+                        {
+                            if( auto sampleHistogram = sampleHistograms( order , id ); sampleHistogram )
+                            {
+                                double similarity = this->_similarity( histogram , sampleHistogram->get());
+                                assert( !std::isnan( similarity ));
+                                features.push_back( similarity );
+                            } else features.push_back( 0.0 );
+                        } );
+             return features;
+            } else throw std::runtime_error( "Bad training!" );
+        }
+
+        FeatureVector _extractFeatures( std::string_view sequence ) const override
+        {
+            return _extractFeatures1( sequence );
+        }
+
+        void fit( const BackboneProfiles &backbones ,
+                  const BackboneProfiles &background ,
+                  const std::map<std::string_view , std::vector<std::string >> &training ,
+                  bool ldaLayer = true ) override
+        {
+            this->_backbones = backbones;
+            this->_background = background;
+            this->_selection.emplace(
+                    std::move( AbstractMC<States>::populationFeatureSpace( this->_backbones->get())));
+            Order order = this->_backbones->get().cbegin()->second->getOrder();
+            this->_centroid = std::make_unique<Model>( order );
+            for ( auto &[l , sequences] : training )
+                _centroid->addSequences( sequences );
+            _centroid->regularize();
+
+            if ( ldaLayer )
+                MLConfusedMC::enableLDA();
+            MLConfusedMC::fit( training );
+        }
+
     protected:
+        BackboneProfile _centroid;
     };
 
     using MG = ModelGenerator<States , Model>;
@@ -39,7 +126,7 @@ class MCRegularizedClassifier : public AbstractClassifier
 public:
     explicit MCRegularizedClassifier( Order order , const Similarity similarity )
             : _order( order ) , _similarity( similarity ) ,
-              _knn( Order( 3 ) , MG::template create<Model>( order ) , _similarity ) {}
+              _knn( 7 , MG::template create<Model>( order ) , _similarity ) {}
 
     virtual ~MCRegularizedClassifier() = default;
 
@@ -65,7 +152,7 @@ public:
             background->regularize();
         }
         _logOddsFunction = _extractScoringFunctions( _regularizedBackbones , _regularizedBackgrounds );
-        _knn.fit( _regularizedBackbones , _regularizedBackgrounds , trainingClusters );
+        _knn.fit( _regularizedBackbones , _regularizedBackgrounds , trainingClusters , true );
     }
 
 protected:
@@ -207,7 +294,6 @@ protected:
         }
         return scoringFunctions;
     }
-
 
 protected:
     const Order _order;

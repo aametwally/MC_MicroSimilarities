@@ -103,6 +103,11 @@ public:
         return _sensitiveMC.histogram( order , id );
     }
 
+    inline auto stealHistograms()
+    {
+        return _sensitiveMC.stealHistograms();
+    }
+
 protected:
 
     void _countInstance( std::string_view sequence )

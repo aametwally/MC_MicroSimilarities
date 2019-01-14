@@ -157,18 +157,18 @@ public:
         return it1->second.increment( index2 , init );
     }
 
-    void forEach( std::function<void(Dim1,Dim2,const HistogramType&)> fn ) const
+    void forEach( std::function<void( Dim1 , Dim2 , const HistogramType & )> fn ) const
     {
-        for ( const auto &[index1 , isoHistograms ] : _tm )
+        for ( const auto &[index1 , isoHistograms] : _tm )
             for ( const auto &[index2 , histogram] : isoHistograms )
-                fn( index1, index2 , histogram);
+                fn( index1 , index2 , histogram );
     }
 
-    void forEach( std::function<void(Dim1,Dim2,HistogramType&)> fn )
+    void forEach( std::function<void( Dim1 , Dim2 , HistogramType & )> fn )
     {
-        for ( auto &[index1 , isoHistograms ] : _tm )
+        for ( auto &[index1 , isoHistograms] : _tm )
             for ( auto &[index2 , histogram] : isoHistograms )
-                fn( index1, index2 , histogram);
+                fn( index1 , index2 , histogram );
     }
 
     auto swap( Dim1 index1 , Dim2 index2 , ValueType init = ValueType())
@@ -233,6 +233,16 @@ public:
     inline bool empty() const
     {
         return _tm.empty();
+    }
+
+    inline size_t size() const
+    {
+        return std::accumulate( _tm.cbegin() , _tm.cend() ,
+                                size_t( 0 ) , []( size_t acc , const auto &inner )
+                                {
+                                    const InnerSparseTransitionMatrices &item = inner.second;
+                                    return acc + item.size();
+                                } );
     }
 
 private:

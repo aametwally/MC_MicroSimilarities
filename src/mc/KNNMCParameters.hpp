@@ -33,14 +33,16 @@ public:
 
     virtual ~KNNMCParameters() = default;
 
-    void fit( const BackboneProfiles &backbones ,
-              const BackboneProfiles &background ,
-              const std::map<std::string_view , std::vector<std::string >> &training )
+    virtual void fit( const BackboneProfiles &backbones ,
+                      const BackboneProfiles &background ,
+                      const std::map<std::string_view , std::vector<std::string >> &training ,
+                      bool ldaLayer = true )
     {
         _backbones = backbones;
         _background = background;
         _selection.emplace( std::move( AbstractMC<States>::populationFeatureSpace( _backbones->get())));
-        MLConfusedMC::enableLDA();
+        if ( ldaLayer )
+            MLConfusedMC::enableLDA();
         MLConfusedMC::fit( training );
     }
 
