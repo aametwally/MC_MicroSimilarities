@@ -1,4 +1,3 @@
-find_package( dlib )
 set( MC_LIB mc_lib )
 
 set( MC_SOURCES
@@ -67,10 +66,16 @@ set( MC_INCLUDES
         MCDefs.h
         Selection.hpp )
 
+ExternalProject_Get_Property( dlib source_dir )
+ExternalProject_Get_Property( dlib binary_dir )
+message( ${source_dir})
+message( ${binary_dir})
 
 
+include( ${source_dir} )
 add_library( ${MC_LIB} STATIC ${MC_SOURCES} ${MC_DETAILS_TEMPLATE_FILES} ${MC_INCLUDES}  )
 add_dependencies(${MC_LIB}  dlib fmt )
+
 
 target_include_directories( ${MC_LIB} PUBLIC
         ${EXTERNAL_INSTALL_LOCATION}/include

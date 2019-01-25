@@ -1,7 +1,7 @@
 ## Dependencies
 find_package( dlib )
 
-set( INCLUDES ../report ../mc ../features ../data ../segmentation ${dlib_INCLUDE_DIRS})
+set( INCLUDES ../report ../mc ../features ../data ../segmentation)
 
 set( LIBS ${MC_LIB}  )
 

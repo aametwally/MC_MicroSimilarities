@@ -58,17 +58,18 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
 
 ExternalProject_Add(fmt
-        GIT_REPOSITORY https://github.com/fmtlib/fmt
+        GIT_REPOSITORY file:///home/asem/GP/fmt
+      #  GIT_REPOSITORY https://github.com/fmtlib/fmt
         SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/fmt
         PREFIX ${EXTERNAL_INSTALL_LOCATION}
         CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
-        LOG_DOWNLOAD 1
-        LOG_UPDATE 1
-        LOG_INSTALL 1
-        LOG_CONFIGURE 1
-        LOG_BUILD 1)
+        LOG_DOWNLOAD ON
+        LOG_UPDATE ON
+        LOG_INSTALL ON
+        LOG_CONFIGURE ON
+        LOG_BUILD ON)
 
 #ExternalProject_Add(openblas
 #        GIT_REPOSITORY "https://github.com/xianyi/OpenBLAS.git"
@@ -103,7 +104,8 @@ ExternalProject_Add(fmt
 
 
 ExternalProject_Add(dlib
-        GIT_REPOSITORY https://github.com/davisking/dlib
+        GIT_REPOSITORY file:///home/asem/GP/dlib
+#        GIT_REPOSITORY https://github.com/davisking/dlib
         SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/dlib
         PREFIX ${EXTERNAL_INSTALL_LOCATION}
         CMAKE_ARGS
@@ -112,12 +114,12 @@ ExternalProject_Add(dlib
         -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
         -DDLIB_USE_BLAS=OFF
         -DDLIB_USE_LAPACK=OFF
-        BUILD_COMMAND make -j10
-        LOG_DOWNLOAD 1
-        LOG_UPDATE 1
-        LOG_INSTALL 1
-        LOG_CONFIGURE 1
-        LOG_BUILD 1
+        BUILD_COMMAND make -j6
+        LOG_DOWNLOAD ON
+        LOG_UPDATE ON
+        LOG_INSTALL ON
+        LOG_CONFIGURE ON
+        LOG_BUILD ON
         )
 
 
