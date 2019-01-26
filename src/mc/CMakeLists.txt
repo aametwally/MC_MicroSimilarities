@@ -66,16 +66,8 @@ set( MC_INCLUDES
         MCDefs.h
         Selection.hpp )
 
-ExternalProject_Get_Property( dlib source_dir )
-ExternalProject_Get_Property( dlib binary_dir )
-message( ${source_dir})
-message( ${binary_dir})
 
-
-include( ${source_dir} )
 add_library( ${MC_LIB} STATIC ${MC_SOURCES} ${MC_DETAILS_TEMPLATE_FILES} ${MC_INCLUDES}  )
-add_dependencies(${MC_LIB}  dlib fmt )
-
 
 target_include_directories( ${MC_LIB} PUBLIC
         ${EXTERNAL_INSTALL_LOCATION}/include
@@ -86,7 +78,7 @@ target_include_directories( ${MC_LIB} PUBLIC
         ../segmentation
         )
 
-target_link_libraries( ${MC_LIB} stdc++fs dlib::dlib
+target_link_libraries( ${MC_LIB} stdc++fs CONAN_PKG::dlib CONAN_PKG::fmt
         ${SEGMENTATION_LIB}
         ${REPORT_LIB}
         ${FEATURES_LIB}

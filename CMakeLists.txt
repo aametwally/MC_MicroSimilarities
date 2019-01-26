@@ -57,71 +57,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 ### Define test data directory and the output directory.
 set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
 
-ExternalProject_Add(fmt
-        GIT_REPOSITORY file:///home/asem/GP/fmt
-      #  GIT_REPOSITORY https://github.com/fmtlib/fmt
-        SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/fmt
-        PREFIX ${EXTERNAL_INSTALL_LOCATION}
-        CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
-        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
-        LOG_DOWNLOAD ON
-        LOG_UPDATE ON
-        LOG_INSTALL ON
-        LOG_CONFIGURE ON
-        LOG_BUILD ON)
-
-#ExternalProject_Add(openblas
-#        GIT_REPOSITORY "https://github.com/xianyi/OpenBLAS.git"
-#        SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/openblas
-#        PREFIX ${EXTERNAL_INSTALL_LOCATION}
-#        CMAKE_ARGS
-#        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
-#        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-#        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
-#        BUILD_COMMAND make -j10
-#        LOG_DOWNLOAD 1
-#        LOG_UPDATE 1
-#        LOG_INSTALL 1
-#        LOG_CONFIGURE 1
-#        LOG_BUILD 1
-#        )
-#
-#ExternalProject_Add(lapack
-#        GIT_REPOSITORY "https://github.com/Reference-LAPACK/lapack-release.git"
-#        SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/lapack
-#        PREFIX ${EXTERNAL_INSTALL_LOCATION}
-#        CMAKE_ARGS
-#        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
-#        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-#        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
-#        BUILD_COMMAND make -j10
-#        LOG_DOWNLOAD 1
-#        LOG_UPDATE 1
-#        LOG_INSTALL 1
-#        LOG_CONFIGURE 1
-#        LOG_BUILD 1 )
-
-
-ExternalProject_Add(dlib
-        GIT_REPOSITORY file:///home/asem/GP/dlib
-#        GIT_REPOSITORY https://github.com/davisking/dlib
-        SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/dlib
-        PREFIX ${EXTERNAL_INSTALL_LOCATION}
-        CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE}
-        -DDLIB_USE_BLAS=OFF
-        -DDLIB_USE_LAPACK=OFF
-        BUILD_COMMAND make -j6
-        LOG_DOWNLOAD ON
-        LOG_UPDATE ON
-        LOG_INSTALL ON
-        LOG_CONFIGURE ON
-        LOG_BUILD ON
-        )
-
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup(TARGETS)
 
 ### Add external libraries
 #message($ENV{FMT_SOURCE})
