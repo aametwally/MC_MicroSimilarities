@@ -1,6 +1,7 @@
 set( MC_LIB mc_lib )
 
 set( MC_SOURCES
+        CompositeMLSequenceClassifier.cpp
         SparseTransitionMatrix.cpp
         Selection.cpp
         AbstractMC.cpp
@@ -30,6 +31,7 @@ set( MC_SOURCES
 
 
 set( MC_DETAILS_TEMPLATE_FILES
+        CompositeMLSequenceClassifier.hpp
         SparseTransitionMatrix.hpp
         AbstractMC.hpp
         MCKmersClassifier.hpp

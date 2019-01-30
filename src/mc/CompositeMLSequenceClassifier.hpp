@@ -1,0 +1,17 @@
+//
+// Created by asem on 27/01/19.
+//
+
+#ifndef MARKOVIAN_FEATURES_COMPOSITEMLSEQUENCECLASSIFIER_HPP
+#define MARKOVIAN_FEATURES_COMPOSITEMLSEQUENCECLASSIFIER_HPP
+
+#include "KNNModel.hpp"
+#include "SVMModel.hpp"
+
+class CompositeMLSequenceClassifier
+{
+
+};
+
+
+#endif //MARKOVIAN_FEATURES_COMPOSITEMLSEQUENCECLASSIFIER_HPP

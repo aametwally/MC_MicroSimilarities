@@ -260,7 +260,6 @@ private:
     std::vector<double> _centroid;
     std::optional<NormalizerFunction> _normalizer;
 
-
     std::optional<dlib::matrix<double>> _Z;
     std::optional<dlib::matrix<double , 0 , 1>> _M;
     std::optional<size_t> _ldaDims;
