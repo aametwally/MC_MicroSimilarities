@@ -21,9 +21,6 @@ class AAIndexClustering
 {
     using SampleType = dlib::matrix<double , 0 , 0>;
 
-
-    static constexpr auto euclidean = Criteria<Euclidean>::template function<SampleType>;
-
 public:
     explicit AAIndexClustering( const std::vector<AAIndex1> &index ,
                                 size_t nClusters )
@@ -78,6 +75,8 @@ protected:
 
     long _closestIdx( const std::vector<SampleType> &centroids , const SampleType &point )
     {
+        static auto euclidean = Euclidean::template similarityFunctor<SampleType>();
+
         auto minIt = std::min_element(
                 centroids.cbegin() , centroids.cend() ,
                 [&]( SampleType x , SampleType y )

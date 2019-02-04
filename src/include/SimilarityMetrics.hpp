@@ -26,12 +26,18 @@ static double combineManhattan( std::vector<double> &&c )
 
 struct Cost
 {
-
+    static constexpr bool cost = true;
+    static constexpr bool score = !cost;
+    static constexpr bool worst = std::numeric_limits<double>::infinity();
+    static constexpr bool best = -worst;
 };
 
 struct Score
 {
-
+    static constexpr bool cost = false;
+    static constexpr bool score = !cost;
+    static constexpr bool worst = -std::numeric_limits<double>::infinity();
+    static constexpr bool best = -worst;
 };
 
 
@@ -41,14 +47,102 @@ using MetricFunction = std::function<double( const Vector &, const Vector & )>;
 template<typename Vector>
 using WeightedMetricFunction = std::function<double( const Vector &, const Vector &, const Vector & )>;
 
-template<typename Derived>
+template<typename Container>
+struct SimilarityFunctor
+{
+    explicit SimilarityFunctor( const double eps,
+                                const double inf,
+                                const double best,
+                                const double worst,
+                                const bool cost,
+                                const bool score,
+                                const bool weighted,
+                                const MetricFunction<Container> metricFunction,
+                                const WeightedMetricFunction<Container> weightedMetricFunction,
+                                const std::function<bool( double, double )> closerThan )
+            : inf( inf ), eps( eps ),
+              best( best ), worst( worst ),
+              cost( cost ), score( score ),
+              weighted( weighted ),
+              weightedMetricFunction( weightedMetricFunction ),
+              metricFunction( metricFunction ),
+              closerThan( closerThan )
+    {}
+
+    const double eps;
+    const double inf;
+    const double best;
+    const double worst;
+    const bool cost;
+    const bool score;
+    const bool weighted;
+    const WeightedMetricFunction<Container> weightedMetricFunction;
+    const MetricFunction<Container> metricFunction;
+    const std::function<bool( double, double )> closerThan;
+
+    inline double operator()( const Container &kernel1, const Container &kernel2, const Container &kernel3 ) const
+    {
+        return weightedMetricFunction( kernel1, kernel2, kernel3 );
+    }
+
+    inline double operator()( const Container &kernel1, const Container &kernel2 ) const
+    {
+        return metricFunction( kernel1, kernel2 );
+    }
+};
+
+template<typename Derived, typename MetricKind, bool Weighted = false>
 struct Criteria
 {
     static constexpr double eps = std::numeric_limits<double>::epsilon();
     static constexpr double inf = std::numeric_limits<double>::infinity();
+    static constexpr bool cost = MetricKind::cost;
+    static constexpr bool score = MetricKind::score;
+    static constexpr bool worst = MetricKind::worst;
+    static constexpr bool best = MetricKind::best;
+
+    static constexpr bool weighted = Weighted;
+
+    template<typename K = MetricKind, typename std::enable_if<std::is_same<K, Cost>::value, int>::type = 0>
+    static inline auto metricCompare()
+    {
+        return std::less<double>();
+    }
+
+    template<typename K = MetricKind, typename std::enable_if<std::is_same<K, Score>::value, int>::type = 0>
+    static inline auto metricCompare()
+    {
+        return std::greater<double>();
+    }
+
+    template<typename Container, bool W = Weighted, typename std::enable_if<W, int>::type = 0>
+    static inline double measure( const Container &kernel1, const Container &kernel2, const Container &weights )
+    {
+        assert( std::all_of( std::cbegin( kernel1 ), std::cend( kernel1 ),
+                             []( auto val ) { return !std::isnan( val ); } ));
+        assert( std::all_of( std::cbegin( kernel2 ), std::cend( kernel2 ),
+                             []( auto val ) { return !std::isnan( val ); } ));
+        assert( std::all_of( std::cbegin( weights ), std::cend( weights ),
+                             []( auto val ) { return !std::isnan( val ); } ));
+
+        return Derived::apply( std::cbegin( kernel1 ), std::cend( kernel1 ),
+                               std::cbegin( kernel2 ), std::cend( kernel2 ),
+                               std::cbegin( weights ), std::cend( weights ));
+    }
+
+    template<typename Container, bool W = Weighted, typename std::enable_if<!W, int>::type = 0>
+    static inline double measure( const Container &kernel1, const Container &kernel2, const Container & )
+    {
+        assert( std::all_of( std::cbegin( kernel1 ), std::cend( kernel1 ),
+                             []( auto val ) { return !std::isnan( val ); } ));
+        assert( std::all_of( std::cbegin( kernel2 ), std::cend( kernel2 ),
+                             []( auto val ) { return !std::isnan( val ); } ));
+
+        return measure( kernel1, kernel2 );
+    }
 
     template<typename Container>
-    static double measure( const Container &kernel1, const Container &kernel2 )
+    static inline double measure( const Container &kernel1, const Container &kernel2 )
     {
         assert( std::all_of( std::cbegin( kernel1 ), std::cend( kernel1 ),
                              []( auto val ) { return !std::isnan( val ); } ));
@@ -59,8 +153,31 @@ struct Criteria
                                std::cbegin( kernel2 ), std::cend( kernel2 ));
     }
 
-    template<typename Vector>
-    static constexpr auto function = measure<Vector>;
+    template<typename Container>
+    static inline double measureUnweighted( const Container &kernel1, const Container &kernel2 )
+    {
+        return measure( kernel1, kernel2 );
+    }
+
+    template<typename Container>
+    static inline double measureWeighted( const Container &kernel1, const Container &kernel2, const Container &kernel3 )
+    {
+        return measure( kernel1, kernel2, kernel3 );
+    }
+
+    template<typename Container>
+    static SimilarityFunctor<Container> similarityFunctor()
+    {
+        return SimilarityFunctor<Container>( eps, inf, best, worst, cost, score, weighted,
+                                             []( const Container &kernel1, const Container &kernel2 ) -> double {
+                                                 return measure( kernel1, kernel2 );
+                                             },
+                                             []( const Container &kernel1, const Container &kernel2,
+                                                 const Container &kernel3 ) -> double {
+                                                 return measure( kernel1, kernel2, kernel3 );
+                                             },
+                                             metricCompare());
+    }
 
     template<typename Container>
     static double combine( Container &&c )
@@ -74,7 +191,7 @@ private:
     friend Derived;
 };
 
-struct Euclidean : public Criteria<Euclidean>, Cost
+struct Euclidean : public Criteria<Euclidean, Cost>
 {
     static constexpr const char *label = "euclidean";
 
@@ -97,7 +214,7 @@ private:
     Euclidean() = default;
 };
 
-struct Mahalanobis : public Criteria<Mahalanobis>, Cost
+struct Mahalanobis : public Criteria<Mahalanobis, Cost, true>
 {
     static constexpr const char *label = "mahalanobis";
 
@@ -118,22 +235,6 @@ struct Mahalanobis : public Criteria<Mahalanobis>, Cost
         return sum;
     }
 
-    template<typename Container>
-    static double measure( const Container &kernel1, const Container &kernel2, const Container &weights )
-    {
-        assert( std::all_of( std::cbegin( kernel1 ), std::cend( kernel1 ),
-                             []( auto val ) { return !std::isnan( val ); } ));
-        assert( std::all_of( std::cbegin( kernel2 ), std::cend( kernel2 ),
-                             []( auto val ) { return !std::isnan( val ); } ));
-        assert( std::all_of( std::cbegin( weights ), std::cend( weights ),
-                             []( auto val ) { return !std::isnan( val ); } ));
-
-        return apply( std::cbegin( kernel1 ), std::cend( kernel1 ),
-                      std::cbegin( kernel2 ), std::cend( kernel2 ),
-                      std::cbegin( weights ), std::cend( weights ));
-
-    }
-
     template<typename Iterator>
     static double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
     {
@@ -146,7 +247,7 @@ private:
 };
 
 
-struct Manhattan : public Criteria<Manhattan>, Cost
+struct Manhattan : public Criteria<Manhattan, Cost>
 {
     static constexpr const char *label = "manhattan";
 
@@ -169,7 +270,7 @@ private:
     Manhattan() = default;
 };
 
-struct ChiSquared : public Criteria<ChiSquared>, Score
+struct ChiSquared : public Criteria<ChiSquared, Score>
 {
     static constexpr const char *label = "chi";
 
@@ -192,7 +293,7 @@ private:
     ChiSquared() = default;
 };
 
-struct Cosine : public Criteria<Cosine>, Score
+struct Cosine : public Criteria<Cosine, Score>
 {
     static constexpr const char *label = "cos";
 
@@ -226,7 +327,47 @@ private:
 };
 
 
-struct Dot : public Criteria<Dot>, Score
+struct DWCosine : public Criteria<DWCosine, Score, true>
+{
+    static constexpr const char *label = "dwcos";
+
+    template<typename Iterator>
+    static double apply( Iterator first1, Iterator last1,
+                         Iterator first2, Iterator last2,
+                         Iterator weightsFirst, Iterator weightsLast )
+    {
+        auto n = std::distance( first1, last1 );
+        assert( std::distance( first1, last1 ) == std::distance( first2, last2 )
+                && std::distance( first1, last1 ) == std::distance( weightsFirst, weightsLast ));
+
+        auto cos = Cosine::apply( first1, last1, first2, last2 );
+        auto dist = Mahalanobis::apply( first1, last1, first2, last2, weightsFirst, weightsLast );
+        return cos / (cos + dist * dist);
+    }
+
+    template<typename Container>
+    static double measure( const Container &kernel1, const Container &kernel2, const Container &weights )
+    {
+        assert( std::all_of( std::cbegin( kernel1 ), std::cend( kernel1 ),
+                             []( auto val ) { return !std::isnan( val ); } ));
+        assert( std::all_of( std::cbegin( kernel2 ), std::cend( kernel2 ),
+                             []( auto val ) { return !std::isnan( val ); } ));
+        assert( std::all_of( std::cbegin( weights ), std::cend( weights ),
+                             []( auto val ) { return !std::isnan( val ); } ));
+
+        return apply( std::cbegin( kernel1 ), std::cend( kernel1 ),
+                      std::cbegin( kernel2 ), std::cend( kernel2 ),
+                      std::cbegin( weights ), std::cend( weights ));
+
+    }
+
+    static constexpr auto combine = combineEuclidean;
+private:
+    DWCosine() = default;
+};
+
+
+struct Dot : public Criteria<Dot, Score>
 {
     static constexpr const char *label = "dot";
 
@@ -247,7 +388,7 @@ private:
 };
 
 
-struct Intersection : public Criteria<Intersection>, Score
+struct Intersection : public Criteria<Intersection, Score>
 {
     static constexpr const char *label = "intersection";
 
@@ -270,7 +411,7 @@ private:
 };
 
 
-struct MaxIntersection : public Criteria<MaxIntersection>, Score
+struct MaxIntersection : public Criteria<MaxIntersection, Score>
 {
     static constexpr const char *label = "max_intersection";
 
@@ -292,7 +433,7 @@ private:
     MaxIntersection() = default;
 };
 
-struct Gaussian : public Criteria<Gaussian>, Score
+struct Gaussian : public Criteria<Gaussian, Score>
 {
     static constexpr const char *label = "gaussian";
 
@@ -321,7 +462,7 @@ private:
     Gaussian() = default;
 };
 
-struct KullbackLeiblerDivergence : public Criteria<KullbackLeiblerDivergence>, Score
+struct KullbackLeiblerDivergence : public Criteria<KullbackLeiblerDivergence, Score>
 {
     static constexpr const char *label = "kl";
 
@@ -352,7 +493,7 @@ private:
 };
 
 template<uint8_t Alpha>
-struct DensityPowerDivergence : public Criteria<DensityPowerDivergence<Alpha>>, Score
+struct DensityPowerDivergence : public Criteria<DensityPowerDivergence<Alpha>, Score>
 {
     /**
      * @brief Density Power Divergence :https://hal.inria.fr/inria-00542337/document
@@ -405,7 +546,7 @@ struct DensityPowerDivergence3 : DensityPowerDivergence<3>
     static constexpr const char *label = "dpd3";
 };
 
-struct ItakuraSaitu : public Criteria<ItakuraSaitu>, Score
+struct ItakuraSaitu : public Criteria<ItakuraSaitu, Score>
 {
     static constexpr const char *label = "itakura-saitu";
 
@@ -440,7 +581,7 @@ private:
 };
 
 
-struct Bhattacharyya : public Criteria<Bhattacharyya>, Score
+struct Bhattacharyya : public Criteria<Bhattacharyya, Score>
 {
     static constexpr const char *label = "bhat";
 
@@ -473,7 +614,7 @@ private:
 };
 
 
-struct Hellinger : public Criteria<Hellinger>, Score
+struct Hellinger : public Criteria<Hellinger, Score>
 {
     static constexpr const char *label = "hell";
 
@@ -772,6 +913,9 @@ enum class CriteriaEnum
 {
     ChiSquared,
     Cosine,
+    Euclidean,
+    Mahalanobis,
+    DWCosine,
     Dot,
     KullbackLeiblerDiv,
     Intersection,
@@ -788,6 +932,9 @@ enum class CriteriaEnum
 const std::map<std::string, CriteriaEnum> CriteriaLabels{
         {ChiSquared::label,                CriteriaEnum::ChiSquared},
         {Cosine::label,                    CriteriaEnum::Cosine},
+        {Euclidean::label,                 CriteriaEnum::Euclidean},
+        {Mahalanobis::label,               CriteriaEnum::Mahalanobis},
+        {DWCosine::label,                  CriteriaEnum::DWCosine},
         {Dot::label,                       CriteriaEnum::Dot},
         {KullbackLeiblerDivergence::label, CriteriaEnum::KullbackLeiblerDiv},
         {Intersection::label,              CriteriaEnum::Intersection},

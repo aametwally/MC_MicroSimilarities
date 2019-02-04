@@ -22,8 +22,8 @@ public:
     using SampleType = dlib::matrix<double, 0, 0>;
     using Label = int;
     static constexpr std::optional<double> Auto = std::nullopt;
-private:
 
+private:
     using SVMRBFKernel = dlib::radial_basis_kernel<SampleType>;
     using SVMLinearKernel = dlib::linear_kernel<SampleType>;
 
@@ -32,6 +32,7 @@ private:
 
     using SVMTrainer = dlib::one_vs_one_trainer<dlib::any_trainer<SampleType>, Label>;
     using DecisionFunction = SVMTrainer::trained_function_type;
+
 public:
     explicit SVMModel( std::optional<double> lambda, std::optional<double> gamma = Auto );
 
@@ -42,7 +43,6 @@ public:
     ScoredLabels predict( const std::vector<double> &features ) const;
 
 private:
-
     static SampleType _svmFeatures( const std::vector<double> &features );
 
     static std::vector<SampleType> _svmFeatures( std::vector<std::vector<double >> &&features );
@@ -57,7 +57,6 @@ private:
     std::unordered_map<int, std::string_view> _index2Label;
 
     DecisionFunction _decisionFunction;
-
 };
 
 

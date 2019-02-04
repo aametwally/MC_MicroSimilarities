@@ -12,8 +12,6 @@ template < typename Distance = Euclidean >
 class KNNModel
 {
 public:
-    static constexpr auto distance = Criteria<Distance>::template function<std::vector<double >>;
-
     explicit KNNModel( size_t k = 3 ) : _k( k ) {}
 
     virtual ~KNNModel() = default;
@@ -54,12 +52,14 @@ public:
 
     ScoredLabels predict( const std::vector<double> &f ) const
     {
+        static const auto distanceFunctor = Distance::template similarityFunctor<std::vector<double>>();
+
         PenalizedIndices topK( _k );
         size_t id = 0;
         for ( const auto &[clusterLabel , cluster] : _population )
             for ( const auto &point : cluster )
             {
-                topK.emplace( id , distance( f , point ));
+                topK.emplace( id , distanceFunctor( f , point ));
                 ++id;
             }
         std::map<std::string_view , double> voter;

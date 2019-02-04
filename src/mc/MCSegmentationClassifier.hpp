@@ -5,14 +5,14 @@
 #ifndef MARKOVIAN_FEATURES_MCSEGMENTATIONCLASSIFIER_H
 #define MARKOVIAN_FEATURES_MCSEGMENTATIONCLASSIFIER_H
 
-#include "AbstractClassifier.hpp"
+#include "AbstractMCClassifier.hpp"
 #include "AbstractMC.hpp"
 #include "SequenceAnnotator.hpp"
 
 namespace MC
 {
 template < size_t States >
-class MCSegmentationClassifier : public AbstractClassifier
+class MCSegmentationClassifier : public AbstractMCClassifier<States>
 {
     static constexpr size_t MAX_SEGMENTS = 10;
     using MCModel = AbstractMC<States>;
@@ -29,7 +29,7 @@ public:
             : _backbones( backbones ) ,
               _background( backgrounds ) ,
               _scoringFunctions( _extractScoringFunctions( backbones , backgrounds )) ,
-              _modelTrainer( modelTrainer )
+              AbstractMCClassifier<States>( modelTrainer )
     {
         _segmentationLearners =
                 _learnBySegmentation( backbones , backgrounds , _scoringFunctions ,
@@ -39,10 +39,7 @@ public:
     virtual ~MCSegmentationClassifier() = default;
 
 protected:
-    bool _validTraining() const override
-    {
-        return _backbones.size() == _background.size();
-    }
+
 
     static std::vector<ScoreFunction>
     _extractScoringFunctions( const BackboneProfiles &profiles , const BackboneProfiles &backgrounds )
@@ -144,7 +141,10 @@ protected:
         return MCModel::train( trainingSegments , modelTrainer );
     }
 
-    ScoredLabels _predict( std::string_view sequence ) const override
+    ScoredLabels _predict( std::string_view sequence,
+                           const BackboneProfiles &,
+                           const BackboneProfiles &,
+                           const std::optional<BackboneProfile> & ) const override
     {
         const SequenceAnnotator annotator( sequence , _scoringFunctions );
         const std::vector<SequenceAnnotation> annotations = annotator.annotate( MAX_SEGMENTS );
@@ -201,7 +201,6 @@ protected:
     const BackboneProfiles &_backbones;
     const BackboneProfiles &_background;
     const std::vector<ScoreFunction> &_scoringFunctions;
-    const ModelGenerator <States> _modelTrainer;
     BackboneProfiles _segmentationLearners;
 };
 }
