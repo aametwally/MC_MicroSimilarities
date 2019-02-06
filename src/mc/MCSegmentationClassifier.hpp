@@ -144,7 +144,7 @@ protected:
     ScoredLabels _predict( std::string_view sequence,
                            const BackboneProfiles &,
                            const BackboneProfiles &,
-                           const std::optional<BackboneProfile> & ) const override
+                           const BackboneProfile & ) const override
     {
         const SequenceAnnotator annotator( sequence , _scoringFunctions );
         const std::vector<SequenceAnnotation> annotations = annotator.annotate( MAX_SEGMENTS );

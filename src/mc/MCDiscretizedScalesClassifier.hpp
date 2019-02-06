@@ -50,7 +50,8 @@ public:
               AbstractMCClassifier<States>( generator )
     {}
 
-    void runTraining( const std::map<std::string_view, std::vector<std::string >> &trainingClusters )
+    template<typename TrainingData>
+    void runTraining( const TrainingData &trainingClusters )
     {
         _discretizedAAScales.runClustering();
         auto transformedSequences = _transformSequences( trainingClusters, _discretizedAAScales );
@@ -109,8 +110,9 @@ protected:
         return transformed;
     }
 
+    template<typename InputSequence>
     static std::vector<std::string> _transformSequences(
-            const std::vector<std::string> &sequences,
+            const std::vector<InputSequence> &sequences,
             const aaindex::AAIndexClustering &discretizedAAScales )
     {
         std::vector<std::string> transformed;
@@ -120,8 +122,9 @@ protected:
         return transformed;
     }
 
+    template<typename InputSequence>
     static std::map<std::string_view, std::vector<std::string >> _transformSequences(
-            const std::map<std::string_view, std::vector<std::string >> &labeledSequences,
+            const std::map<std::string_view, std::vector<InputSequence >> &labeledSequences,
             const aaindex::AAIndexClustering &discretizedAAScales )
     {
         std::map<std::string_view, std::vector<std::string >> transformed;
@@ -133,7 +136,7 @@ protected:
     ScoredLabels _predict( std::string_view sequence,
                            const BackboneProfiles &backbones,
                            const BackboneProfiles &background,
-                           const std::optional<BackboneProfile> & ) const override
+                           const BackboneProfile & ) const override
     {
         std::map<std::string_view, double> propensitites;
 

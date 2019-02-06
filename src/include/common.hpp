@@ -168,7 +168,24 @@ inline auto randomIndexSampler( I begin, I end )
     };
 }
 
-template< typename ContainerOut, typename ContainerIn , typename ConverterFn >
+
+template<typename ContainerOut, typename ContainerIn, typename ConverterFn>
+inline ContainerOut
+randomSubset( ContainerIn &&items, size_t select, ConverterFn converter )
+{
+    using InputItem = typename std::remove_reference_t<ContainerIn>::value_type;
+    using OutputItem = typename std::remove_reference_t<ContainerOut>::value_type;
+    ContainerOut subset;
+    subset.reserve( select );
+    auto sampler = randomIndexSampler( std::begin( items ), std::end( items ));
+    while (std::size( subset ) < select)
+    {
+        subset.push_back( converter( items.at( sampler())));
+    }
+    return subset;
+}
+
+template<typename ContainerOut, typename ContainerIn, typename ConverterFn>
 inline std::pair<ContainerOut, ContainerOut>
 subsetRandomSeparation( ContainerIn &&items, size_t select, ConverterFn converter )
 {
@@ -188,7 +205,7 @@ subsetRandomSeparation( ContainerIn &&items, size_t select, ConverterFn converte
     ContainerOut subset;
     ContainerOut rest;
     std::transform( subsetIndices.cbegin(), subsetIndices.cend(),
-                    std::back_inserter( subset ), [&]( size_t index )->OutputItem {
+                    std::back_inserter( subset ), [&]( size_t index ) -> OutputItem {
                 const InputItem &item = items.at( index );
                 return converter( item );
             } );
@@ -436,8 +453,19 @@ template<typename K, typename V>
 inline std::vector<K> keys( const std::map<K, V> &m )
 {
     std::vector<K> ks;
-    for (auto[k, v] : m)
+    for (auto &&[k, v] : m)
         ks.push_back( k );
+    return ks;
+};
+
+template<typename MapType, typename ConverterType>
+inline auto keys( const MapType &m, ConverterType converter )
+{
+    using K = typename std::remove_reference_t<MapType>::key_type;
+    using NewKeyType = decltype( converter( std::declval<K>()));
+    std::vector<NewKeyType> ks;
+    for (auto &&[k, v] : m)
+        ks.push_back( converter( k ));
     return ks;
 };
 
@@ -445,7 +473,7 @@ template<typename K, typename V>
 inline std::vector<K> keys( const std::unordered_map<K, V> &m )
 {
     std::vector<K> ks;
-    for (auto[k, v] : m)
+    for (auto &&[k, v] : m)
         ks.push_back( k );
     return ks;
 };
@@ -454,7 +482,7 @@ template<typename K, typename V>
 inline std::vector<V> values( const std::map<K, V> &m )
 {
     std::vector<V> vs;
-    for (auto[k, v] : m)
+    for (auto &&[k, v] : m)
         vs.push_back( v );
     return vs;
 };
@@ -463,7 +491,7 @@ template<typename K, typename V>
 inline std::vector<V> values( const std::unordered_map<K, V> &m )
 {
     std::vector<V> vs;
-    for (auto &[k, v] : m)
+    for (auto &&[k, v] : m)
         vs.push_back( v );
     return vs;
 };

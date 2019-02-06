@@ -7,18 +7,34 @@
 
 #include <dlib/matrix.h>
 
+namespace dlib_utilities {
+
 template<typename T>
-struct op_vector_to_matrix
+struct ColumnVectorMatrixLike
 {
     /*!
         This object defines a matrix expression that holds a reference to a std::vector<T>
         and makes it look like a column vector.  Thus it enables you to use a std::vector
         as if it was a dlib::matrix.
     !*/
-    op_vector_to_matrix( const std::vector<T> &vect_ ) : vect( vect_ )
+    explicit ColumnVectorMatrixLike( std::vector<T> vect_ ) : _vect( std::move( vect_ ))
     {}
 
-    const std::vector<T> &vect;
+    template<typename MatrixExpression>
+    explicit ColumnVectorMatrixLike( MatrixExpression exp )
+    {
+        _vect.reserve( exp.size());
+        _vect.insert( _vect.end(), exp.begin(), exp.end());
+    }
+
+    template<typename MatrixExpression>
+    ColumnVectorMatrixLike &operator=( MatrixExpression exp )
+    {
+        _vect.clear();
+        _vect.reserve( exp.nr());
+        _vect.insert( _vect.end(), exp.cbegin(), exp.cend());
+        return *this;
+    }
 
     // This expression wraps direct memory accesses so we use the lowest possible cost.
     const static long cost = 1;
@@ -37,13 +53,18 @@ struct op_vector_to_matrix
     typedef const T &const_ret_type;
 
     const_ret_type apply( long r, long ) const
-    { return vect[r]; }
+    { return _vect[r]; }
 
     long nr() const
-    { return vect.size(); }
+    { return _vect.size(); }
 
     long nc() const
     { return 1; }
+
+    std::vector<T> steal_vector()
+    {
+        return std::move( _vect );
+    }
 
     // This expression never aliases anything since it doesn't contain any matrix expression (it
     // contains only a std::vector which doesn't count since you can't assign a matrix expression
@@ -55,13 +76,24 @@ struct op_vector_to_matrix
     template<typename U>
     bool destructively_aliases( const dlib::matrix_exp<U> & ) const
     { return false; }
+
+private:
+    std::vector<T> _vect;
 };
 
 template<typename T>
-const dlib::matrix_op<op_vector_to_matrix<T> > vector_to_cmatrix( const std::vector<T> &vector )
+const dlib::matrix_op<ColumnVectorMatrixLike<T> > vectorToColumnMatrixLike( std::vector<T> &&vector )
 {
-    typedef op_vector_to_matrix<T> op;
-    return dlib::matrix_op<op>( op( vector ));
+    using MatrixLike = ColumnVectorMatrixLike<T>;
+    return dlib::matrix_op<MatrixLike>( MatrixLike( std::move( vector )));
 }
 
+template<typename T>
+const dlib::matrix_op<ColumnVectorMatrixLike<T> > vectorToColumnMatrixLike( std::initializer_list<T> &&vector )
+{
+    using MatrixLike = ColumnVectorMatrixLike<T>;
+    return dlib::matrix_op<MatrixLike>( MatrixLike( std::vector<double>( vector )));
+}
+
+}
 #endif //MARKOVIAN_FEATURES_DLIB_UTILITIES_HPP

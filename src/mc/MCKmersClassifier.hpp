@@ -20,17 +20,15 @@ class MCKmersClassifier : public AbstractMCClassifier<States>
 public:
     explicit MCKmersClassifier( ModelGenerator <States> generator )
             : AbstractMCClassifier<States>( generator )
-    {
-    }
+    {}
 
     virtual ~MCKmersClassifier() = default;
 
-
 protected:
-    ScoredLabels _predict( std::string_view sequence,
-                           const BackboneProfiles &backboneProfiles,
-                           const BackboneProfiles &backgroundProfiles,
-                           const std::optional<BackboneProfile> &) const override
+    ScoredLabels _predict(  std::string_view sequence,
+                            const BackboneProfiles &backboneProfiles,
+                            const BackboneProfiles &backgroundProfiles,
+                            const BackboneProfile &  ) const override
     {
         auto kmers = extractKmersWithPositions( sequence, {20, 30, 40, 50, 60, 70, 80} );
 

@@ -10,20 +10,36 @@
 template<typename Label = std::string, typename T = int64_t>
 class ConfusionMatrix
 {
-
-
 private:
     using Row = std::vector<T>;
     using Matrix = std::vector<Row>;
     static constexpr double eps = std::numeric_limits<double>::epsilon();
-public:
 
-    explicit ConfusionMatrix( const std::set <Label> &labels ) :
+public:
+    explicit ConfusionMatrix( const std::set<Label> &labels ) :
             _dictionary( _makeDictionary( labels )),
             _order( _dictionary.size()),
             _matrix( Matrix( _order, Row( _order, 0 )))
-    {
+    {}
 
+    template<typename U>
+    static ConfusionMatrix<std::string, U>
+    fromRawConfusionMatrix( const std::vector<std::vector<U>> &raw )
+    {
+        assert( !raw.empty());
+        auto nRows = raw.size();
+        auto nCols = raw.front().size();
+        assert( nRows == nCols && std::all_of( raw.cbegin(), raw.cend(),
+                                               [=]( auto &&row ) {
+                                                   return row.size() == nCols;
+                                               } ));
+        std::set<std::string> labels;
+
+        for (auto i = 0; i < nRows; ++i)
+            labels.insert( fmt::format( "Label#{}", i ));
+        auto cm = ConfusionMatrix<std::string, U>( labels );
+        cm._matrix = raw;
+        return cm;
     }
 
     void countInstance( const Label &prediction, const Label &actual )
@@ -74,7 +90,7 @@ public:
     T population() const
     {
         return std::accumulate( _matrix.cbegin(), _matrix.cend(),
-                                size_t( 0 ), [this]( size_t count, const Row &row ) {
+                                T( 0 ), [this]( T count, const Row &row ) {
                     return count + _rowCount( row );
                 } );
     }
@@ -237,9 +253,9 @@ public:
         return double( allTp + eps ) / (allTp + allFn + eps);
     }
 
-    std::map <Label, std::map<Label, size_t >> misclassifications() const
+    std::map<Label, std::map<Label, size_t >> misclassifications() const
     {
-        std::map <Label, std::map<Label, size_t >> missclassified;
+        std::map<Label, std::map<Label, size_t >> missclassified;
         for (auto &[label, idx] : _dictionary)
         {
             for (auto &[misslabel, hits] : _misclassifications( idx ))
@@ -248,27 +264,27 @@ public:
         return missclassified;
     }
 
-    std::map <Label, size_t> misclassifications( const Label &l ) const
+    std::map<Label, size_t> misclassifications( const Label &l ) const
     {
         auto classIdx = _getClassIdx( l );
         return _misclassifications( classIdx );
     }
 
-    std::vector <Label> getLabels() const
+    std::vector<Label> getLabels() const
     {
-        std::vector <Label> ls;
+        std::vector<Label> ls;
         for (auto &[label, i] : _dictionary)
             if ( label != _unclassifiedLabel())
                 ls.push_back( label );
         return ls;
     }
 
-    std::map< Label , size_t > getLabelsWithCounts() const
+    std::map<Label, T> getLabelsWithCounts() const
     {
-        std::map <Label, size_t > ls;
-        for (auto &[label, index ] : _dictionary)
+        std::map<Label, T> ls;
+        for (auto &[label, index] : _dictionary)
             if ( label != _unclassifiedLabel())
-                ls.emplace( label , _population( index ));
+                ls.emplace( label, _population( index ));
         return ls;
     }
 
@@ -338,9 +354,9 @@ private:
         };
     }
 
-    static std::map <Label, size_t> _makeDictionary( const std::set <Label> &labels )
+    static std::map<Label, size_t> _makeDictionary( const std::set<Label> &labels )
     {
-        std::map <Label, size_t> dic;
+        std::map<Label, size_t> dic;
         size_t i = 0;
         for (auto &label : labels)
             dic.emplace( label, i++ );
@@ -467,9 +483,9 @@ private:
         return (double( tp + eps ) / (tp + fn + eps) + double( tn + eps ) / (tn + fp + eps)) / 2;
     }
 
-    std::map <Label, size_t> _misclassifications( size_t classIdx ) const
+    std::map<Label, size_t> _misclassifications( size_t classIdx ) const
     {
-        std::map <Label, size_t> misclassified;
+        std::map<Label, size_t> misclassified;
         auto &row = _matrix.at( classIdx );
         for (auto &[label, col] : _dictionary)
         {
@@ -493,7 +509,7 @@ private:
     }
 
 private:
-    const std::map <Label, size_t> _dictionary;
+    const std::map<Label, size_t> _dictionary;
     const size_t _order;
     Matrix _matrix;
 };

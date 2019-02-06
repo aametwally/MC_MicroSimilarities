@@ -38,8 +38,6 @@ public:
 public:
 
 
-
-
 public:
     explicit AbstractMC( Order order, double epsilon = TransitionMatrixEpsilon )
             : _order( order ),
@@ -248,6 +246,11 @@ public:
     inline size_t histogramsCount() const
     {
         return _centroids.size();
+    }
+
+    inline size_t parametersCount() const
+    {
+        return _centroids.parametersCount();
     }
 
     template<typename Histograms>
@@ -519,11 +522,11 @@ public:
                                                                   return cluster1.second.size() <
                                                                          cluster2.second.size();
                                                               } );
-        auto sampleSize = minimumCluster.size();
+        const auto sampleSize = minimumCluster.size();
 
         for (const auto &[classLabel, sequences] : trainingSequences)
         {
-            if ( classLabel == minLabel )
+            if ( minimumCluster.size() >= sequences.size())
             {
                 sampledData[classLabel].insert(
                         sampledData.at( classLabel ).end(), sequences.cbegin(), sequences.cend());
@@ -537,6 +540,81 @@ public:
                         } );
 
                 sampledData.emplace( classLabel, std::move( subset ));
+            }
+        }
+        return sampledData;
+    }
+
+    static std::map<std::string_view, std::vector<std::string_view>>
+    oversampleBalancing(
+            const std::map<std::string_view, std::vector<std::string >> &trainingSequences )
+    {
+        std::map<std::string_view, std::vector<std::string_view>> sampledData;
+        auto &[maxLabel, maximumCluster] = *std::max_element( trainingSequences.cbegin(), trainingSequences.cend(),
+                                                              []( const auto &cluster1, const auto &cluster2 ) {
+                                                                  return cluster1.second.size() <
+                                                                         cluster2.second.size();
+                                                              } );
+        auto sampleSize = maximumCluster.size();
+
+        for (const auto &[classLabel, sequences] : trainingSequences)
+        {
+            auto &&newSample = sampledData[classLabel];
+            newSample.insert(
+                    sampledData.at( classLabel ).end(), sequences.cbegin(), sequences.cend());
+            if ( sampleSize > newSample.size())
+            {
+                using OutType = std::vector<std::string_view>;
+                auto subset = randomSubset<OutType>(
+                        sequences, static_cast<size_t>( sampleSize - newSample.size()),
+                        []( const std::string &s ) {
+                            return std::string_view( s );
+                        } );
+                newSample.insert(
+                        sampledData.at( classLabel ).end(), subset.cbegin(), subset.cend());
+            }
+        }
+        return sampledData;
+    }
+
+    static std::map<std::string_view, std::vector<std::string_view>>
+    oversampleStateBalancing(
+            const std::map<std::string_view, std::vector<std::string >> &trainingSequences )
+    {
+        std::map<std::string_view, std::vector<std::string_view>> sampledData;
+        std::map<std::string_view, size_t> newSizes;
+
+        auto averageLength =
+                LabeledEntry::groupAveragedValue<std::string>(
+                        trainingSequences,
+                        []( std::string_view, auto &&sequence ) -> double {
+                            return sequence.length();
+                        } );
+
+        auto &[maxLabel, maximumCluster] = *std::max_element(
+                trainingSequences.cbegin(), trainingSequences.cend(),
+                [&]( const auto &cluster1, const auto &cluster2 ) {
+                    return cluster1.second.size() * averageLength.at( cluster1.first ) <
+                           cluster2.second.size() * averageLength.at( cluster2.first );
+                } );
+
+        double unifiedStatesSize = maximumCluster.size() * averageLength.at( maxLabel );
+
+        for (const auto &[classLabel, sequences] : trainingSequences)
+        {
+            auto &&newSample = sampledData[classLabel];
+            newSample.insert(
+                    sampledData.at( classLabel ).end(), sequences.cbegin(), sequences.cend());
+            double sampleStates = newSample.size() * averageLength.at( classLabel );
+
+            auto sampler = randomIndexSampler( std::begin( newSample ), std::end( newSample ));
+
+            assert( unifiedStatesSize >= sampleStates );
+            while (unifiedStatesSize > sampleStates)
+            {
+                auto &&instance = newSample.at( sampler());
+                sampleStates += instance.length();
+                newSample.push_back( instance );
             }
         }
         return sampledData;
@@ -632,7 +710,6 @@ class ModelGenerator
 private:
     using TransitionMatrices2D = typename CoreModel::TransitionMatrices2D;
     using ConfiguredModelFunction =std::function<std::unique_ptr<CoreModel>( void )>;
-
 
 
     const ConfiguredModelFunction _modelFunction;

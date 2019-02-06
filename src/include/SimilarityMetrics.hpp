@@ -7,7 +7,6 @@
 
 #include "common.hpp"
 
-
 static double combineEuclidean( std::vector<double> &&c )
 {
     double squares = std::accumulate( std::begin( c ), std::end( c ),
@@ -28,16 +27,16 @@ struct Cost
 {
     static constexpr bool cost = true;
     static constexpr bool score = !cost;
-    static constexpr bool worst = std::numeric_limits<double>::infinity();
-    static constexpr bool best = -worst;
+    static constexpr double worst = std::numeric_limits<double>::infinity();
+    static constexpr double best = -worst;
 };
 
 struct Score
 {
     static constexpr bool cost = false;
     static constexpr bool score = !cost;
-    static constexpr bool worst = -std::numeric_limits<double>::infinity();
-    static constexpr bool best = -worst;
+    static constexpr double worst = -std::numeric_limits<double>::infinity();
+    static constexpr double best = -worst;
 };
 
 
@@ -98,8 +97,8 @@ struct Criteria
     static constexpr double inf = std::numeric_limits<double>::infinity();
     static constexpr bool cost = MetricKind::cost;
     static constexpr bool score = MetricKind::score;
-    static constexpr bool worst = MetricKind::worst;
-    static constexpr bool best = MetricKind::best;
+    static constexpr double worst = MetricKind::worst;
+    static constexpr double best = MetricKind::best;
 
     static constexpr bool weighted = Weighted;
 
@@ -342,6 +341,18 @@ struct DWCosine : public Criteria<DWCosine, Score, true>
 
         auto cos = Cosine::apply( first1, last1, first2, last2 );
         auto dist = Mahalanobis::apply( first1, last1, first2, last2, weightsFirst, weightsLast );
+        return cos / (cos + dist * dist);
+    }
+
+    template<typename Iterator>
+    static double apply( Iterator first1, Iterator last1,
+                         Iterator first2, Iterator last2 )
+    {
+        auto n = std::distance( first1, last1 );
+        assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
+
+        auto cos = Cosine::apply( first1, last1, first2, last2 );
+        auto dist = Mahalanobis::apply( first1, last1, first2, last2 );
         return cos / (cos + dist * dist);
     }
 

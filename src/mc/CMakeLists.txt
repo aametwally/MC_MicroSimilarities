@@ -1,7 +1,6 @@
 set( MC_LIB mc_lib )
 
 set( MC_SOURCES
-  CompositeMLSequenceClassifier.cpp
   Selection.cpp
   AbstractMCClassifier.cpp
   MCKmersClassifier.cpp
@@ -14,7 +13,6 @@ set( MC_SOURCES
 
 
 set( MC_DETAILS_TEMPLATE_FILES
-  CompositeMLSequenceClassifier.hpp
   SparseTransitionMatrix.hpp
   AbstractMC.hpp
   MCKmersClassifier.hpp
@@ -24,7 +22,7 @@ set( MC_DETAILS_TEMPLATE_FILES
   KNNModel.hpp
   Pipeline.hpp
   SVMModel.hpp
-  MLStackedMC.hpp
+  MCBasedMLModel.hpp
   )
 
 set( MC_INCLUDES

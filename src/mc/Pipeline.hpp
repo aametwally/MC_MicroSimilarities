@@ -22,7 +22,7 @@
 
 #include "MCSegmentationClassifier.hpp"
 #include "MCKmersClassifier.hpp"
-#include "MLStackedMC.hpp"
+#include "MCBasedMLModel.hpp"
 #include "AbstractMCClassifier.hpp"
 #include "MCDiscretizedScalesClassifier.hpp"
 
@@ -76,21 +76,23 @@ public:
     Pipeline( ModelGenerator<States> modelTrainer,
               SimilarityFunctor<Histogram> similarity,
               Order order )
-            : _modelGenerator( modelTrainer ),
-              _similarity( similarity ),
+            : _modelGenerator( std::move( modelTrainer )),
+              _similarity( std::move( similarity )),
               _order( order )
     {}
 
 public:
 
+    template<typename InputSequence>
     static std::vector<std::string>
-    reducedAlphabetEntries( const std::vector<std::string> &entries )
+    reducedAlphabetEntries( const std::vector<InputSequence> &entries )
     {
         return LabeledEntry::reducedAlphabetEntries<Grouping>( entries );
     }
 
+    template<typename InputSequence>
     static std::map<std::string_view, std::vector<std::string >>
-    reducedAlphabetEntries( const std::map<std::string_view, std::vector<std::string >> &entries )
+    reducedAlphabetEntries( const std::map<std::string_view, std::vector<InputSequence >> &entries )
     {
         std::map<std::string_view, std::vector<std::string >> newEntries;
         for (auto &[label, sequences] : entries)
@@ -98,44 +100,50 @@ public:
         return newEntries;
     }
 
+    template<typename TrainingDataType>
     std::vector<ScoredLabels>
     scoredPredictions( const std::vector<std::string> &queries,
                        const BackboneProfiles &backbones,
                        const BackboneProfiles &backgrounds,
-                       const std::map<std::string_view, std::vector<std::string >> &trainingClusters,
+                       const BackboneProfile &centralBackground,
+                       const TrainingDataType &trainingClusters,
                        const ClassificationEnum classificationStrategy,
                        std::optional<std::reference_wrapper<const Selection>> selection = std::nullopt ) const
     {
+        SVMConfiguration svmConfiguration;
+        PCAConfiguration pcaConfiguration;
+        LDAConfiguration ldaConfiguration;
+        svmConfiguration.tuning = SVMConfiguration::defaultTuning();
+
         switch (classificationStrategy)
         {
             using MacroScoringEnum = typename MicroSimilarityBasedClassifier<States>::MacroScoringEnum;
-
             case ClassificationEnum::MacroSimilarityCombined:
             {
                 auto model = MicroSimilarityBasedClassifier<States>(
                         MacroScoringEnum::Combine, _modelGenerator, _similarity );
                 return model.scoredPredictions( reducedAlphabetEntries( queries ),
-                                                backbones, backgrounds, std::nullopt  );
+                                                backbones, backgrounds, centralBackground );
             }
             case ClassificationEnum::MacroSimilarityAccumulative :
             {
                 auto model = MicroSimilarityBasedClassifier<States>(
                         MacroScoringEnum::Accumulative, _modelGenerator, _similarity );
                 return model.scoredPredictions( reducedAlphabetEntries( queries ),
-                                                backbones, backgrounds, std::nullopt  );
+                                                backbones, backgrounds, centralBackground );
             }
             case ClassificationEnum::MacroSimilarityVoting :
             {
                 auto model = MicroSimilarityBasedClassifier<States>(
                         MacroScoringEnum::Voting, _modelGenerator, _similarity );
                 return model.scoredPredictions( reducedAlphabetEntries( queries ),
-                                                backbones, backgrounds, std::nullopt  );
+                                                backbones, backgrounds, centralBackground );
             }
             case ClassificationEnum::Propensity :
             {
                 MCPropensityClassifier<States> classifier( _modelGenerator );
                 return classifier.scoredPredictions( reducedAlphabetEntries( queries ),
-                                                     backbones, backgrounds );
+                                                     backbones, backgrounds, centralBackground );
             }
             case ClassificationEnum::Segmentation :
             {
@@ -146,43 +154,53 @@ public:
             }
             case ClassificationEnum::SVM :
             {
-                SVMMCParameters <States> svm( _modelGenerator, _similarity );
+                SVMCMMicroSimilarity<States> svm(
+                        svmConfiguration, _modelGenerator, _similarity,
+                        ldaConfiguration, pcaConfiguration );
                 svm.fit( reducedAlphabetEntries( trainingClusters ),
-                         backbones, backgrounds, std::nullopt  );
+                         backbones, backgrounds, centralBackground );
                 return svm.scoredPredictions( reducedAlphabetEntries( queries ),
-                                              backbones, backgrounds, std::nullopt  );
+                                              backbones, backgrounds, centralBackground );
             }
             case ClassificationEnum::KNN :
             {
-                KNNMCParameters <States> knn( _modelGenerator, _similarity, 7 );
+                KNNMCMicroSimilarity<States> knn(
+                        7, _modelGenerator, _similarity, ldaConfiguration, pcaConfiguration );
+
                 knn.fit( reducedAlphabetEntries( trainingClusters ),
-                         backbones, backgrounds, std::nullopt );
+                         backbones, backgrounds, centralBackground );
                 return knn.scoredPredictions( reducedAlphabetEntries( queries ),
-                                              backbones, backgrounds, std::nullopt );
+                                              backbones, backgrounds, centralBackground );
             }
             case ClassificationEnum::SVM_Stack :
             {
-                SVMStackedMC<States> svm( _modelGenerator );
-                svm.fit( reducedAlphabetEntries( trainingClusters ),
-                         backbones, backgrounds, std::nullopt  );
+                SVMStackedMC<States> svm(
+                        svmConfiguration, _modelGenerator, ldaConfiguration, pcaConfiguration  );
+
                 svm.initWeakModels( _similarity );
+
+                svm.fit( reducedAlphabetEntries( trainingClusters ),
+                         backbones, backgrounds, centralBackground );
                 return svm.scoredPredictions( reducedAlphabetEntries( queries ),
-                                              backbones, backgrounds, std::nullopt );
+                                              backbones, backgrounds, centralBackground );
             }
             case ClassificationEnum::KNN_Stack :
             {
-                KNNStackedMC <States> knn( _modelGenerator, 7 );
-                knn.fit( reducedAlphabetEntries( trainingClusters ),
-                         backbones, backgrounds, std::nullopt  );
+                KNNStackedMC<States> knn(
+                        7, _modelGenerator, ldaConfiguration, pcaConfiguration );
+
                 knn.initWeakModels( _similarity );
+
+                knn.fit( reducedAlphabetEntries( trainingClusters ),
+                         backbones, backgrounds, centralBackground );
                 return knn.scoredPredictions( reducedAlphabetEntries( queries ),
-                                              backbones, backgrounds, std::nullopt );
+                                              backbones, backgrounds, centralBackground );
             }
             case ClassificationEnum::KMERS :
             {
                 MCKmersClassifier<States> classifier( _modelGenerator );
                 return classifier.scoredPredictions( reducedAlphabetEntries( queries ),
-                                                     backbones, backgrounds, std::nullopt );
+                                                     backbones, backgrounds, centralBackground );
             }
             case ClassificationEnum::DiscretizedScales :
             {
@@ -193,6 +211,16 @@ public:
             default:
                 throw std::runtime_error( "Undefined Strategy" );
         }
+    }
+
+    BackboneProfile
+    balancedCentroid( const std::map<std::string_view, std::vector<std::string >> &trainingClusters ) const
+    {
+        auto centralBackground = _modelGenerator();
+        for (auto &&[_, subset] : AbstractMC<States>::undersampleBalancing( trainingClusters ))
+            centralBackground->addSequences( subset );
+        centralBackground->normalize();
+        return centralBackground;
     }
 
     void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries, const size_t k,
@@ -233,13 +261,13 @@ public:
         fmt::print( "[All Sequences:{} (unique:{})]\n", entries.size(), uniqueIds.size());
 
         auto groupedEntries = LabeledEntry::groupEntriesByLabels( std::move( entries ));
-        auto averageLength = LabeledEntry::groupAveragedValue(
+        auto averageLength = LabeledEntry::groupAveragedValue<LabeledEntry>(
                 groupedEntries,
                 []( std::string_view, const auto &sequence ) -> double {
                     return sequence.length();
                 } );
 
-        auto varianceLength = LabeledEntry::groupAveragedValue(
+        auto varianceLength = LabeledEntry::groupAveragedValue<LabeledEntry>(
                 groupedEntries,
                 [&]( std::string_view label, const auto &sequence ) -> double {
                     double deviation = sequence.length() - averageLength.at( std::string( label ));
@@ -285,9 +313,32 @@ public:
             const auto
             [ids, queries, qLabels] = unzip( folds.at( i ));
             fmt::print( "Training..\n" );
-            auto reducedTrainingData = reducedAlphabetEntries( trainingClusters );
+            const auto trainingData = AbstractModel::oversampleStateBalancing( trainingClusters );
+
+            auto labelsAverageStates = LabeledEntry::groupAveragedValue<std::string_view>(
+                    trainingData,
+                    []( std::string_view, auto &&sequence ) -> double {
+                        return sequence.length();
+                    } );
+
+            auto currentLabelsInfo = keys( trainingData, []( auto &&s ) -> std::string {
+                return std::string( s );
+            } );
+
+            for (auto &l : currentLabelsInfo)
+                l = fmt::format( "{}({}*{}={})", l,
+                                 trainingData.at( l ).size(),
+                                 labelsAverageStates.at( l ),
+                                 labelsAverageStates.at( l ) * trainingData.at( l ).size());
+
+            fmt::print( "[Clusters:{}][{}]\n",
+                        trainingData.size(),
+                        io::join( currentLabelsInfo, "|" ));
+
+            auto reducedTrainingData = reducedAlphabetEntries( trainingData );
             BackboneProfiles backbones = AbstractModel::train( reducedTrainingData, _modelGenerator );
             BackboneProfiles backgrounds = AbstractModel::backgroundProfiles( reducedTrainingData, _modelGenerator );
+            auto balancedBackgroundCentroid = balancedCentroid( reducedTrainingData );
             fmt::print( "[DONE] Training..\n" );
 
             fmt::print( "Classification..\n" );
@@ -295,7 +346,8 @@ public:
             {
                 auto classifierEnum = ClassifierEnum.at( classifier );
                 auto predictions = scoredPredictions( queries, backbones, backgrounds,
-                                                      trainingClusters, classifierEnum );
+                                                      balancedBackgroundCentroid,
+                                                      trainingData, classifierEnum );
 
                 assert( predictions.size() == qLabels.size() && qLabels.size() == queries.size() &&
                         queries.size() == ids.size());
@@ -428,6 +480,12 @@ PipelineVariant getConfiguredPipeline( CriteriaEnum criteria, MCModelsEnum model
         case CriteriaEnum::MaxIntersection :
             return getConfiguredPipeline<AAGrouping>(
                     model, mxOrder, MaxIntersection::similarityFunctor<Histogram>());
+        case CriteriaEnum::DWCosine:
+            return getConfiguredPipeline<AAGrouping>(
+                    model, mxOrder, DWCosine::similarityFunctor<Histogram>());
+        case CriteriaEnum::Mahalanobis:
+            return getConfiguredPipeline<AAGrouping>(
+                    model, mxOrder, Mahalanobis::similarityFunctor<Histogram>());
         default:
             throw std::runtime_error( "Undefined Strategy" );
     }

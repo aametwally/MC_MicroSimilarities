@@ -97,6 +97,11 @@ public:
         return _tm.size();
     }
 
+    inline size_t parametersCount() const
+    {
+        return size() * States;
+    }
+
 private:
     std::unordered_map<Dim, HistogramType> _tm;
 };
@@ -235,10 +240,15 @@ public:
     inline size_t size() const
     {
         return std::accumulate( _tm.cbegin(), _tm.cend(),
-                                size_t( 0 ), []( size_t acc, const auto &inner ) {
+                                size_t( 0 ), []( size_t acc, auto &&inner ) {
                     const InnerSparseTransitionMatrices &item = inner.second;
                     return acc + item.size();
                 } );
+    }
+
+    inline size_t parametersCount() const
+    {
+        return size() * States;
     }
 
     static std::unordered_map<Dim1, std::set<Dim2 >>
@@ -263,7 +273,7 @@ public:
                            for (const auto &[id1, isoMatrices] : getter( matrices ))
                                for (const auto &[id2, _] : isoMatrices)
                                    coverage[id1].insert( id2 );
-                       });
+                       } );
         return coverage;
     }
 

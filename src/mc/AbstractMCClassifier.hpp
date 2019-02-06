@@ -60,7 +60,8 @@ public:
     {
     }
 
-    void trainMC( const std::map<std::string_view, std::vector<std::string >> &trainingData )
+    template<typename TrainingDataType>
+    void trainMC( const TrainingDataType &trainingData )
     {
         for (auto &&[label, classSequences]: trainingData)
         {
@@ -87,13 +88,15 @@ public:
     }
 
 public:
-    std::vector<std::string_view> predict( const std::vector<std::string> &sequences ) const
+    template<typename SequencesType>
+    std::vector<std::string_view> predict( const SequencesType &sequences ) const
     {
         return predict( sequences, _backbones, _backgrounds, _centralBackground );
     }
 
+    template<typename SequencesType>
     std::vector<std::string_view> predict(
-            const std::vector<std::string> &sequences,
+            const SequencesType &sequences,
             const BackboneProfiles &backboneProfiles,
             const BackboneProfiles &backgroundProfiles,
             const std::optional<BackboneProfile> &centralBackground = std::nullopt ) const
@@ -106,17 +109,19 @@ public:
         return labels;
     }
 
+    template<typename InputSequence>
     std::vector<ScoredLabels> scoredPredictions(
-            const std::vector<std::string> &sequences ) const
+            const std::vector<InputSequence> &sequences ) const
     {
         return scoredPredictions( sequences, _backbones, _backgrounds, _centralBackground );
     }
 
+    template<typename InputSequence>
     std::vector<ScoredLabels> scoredPredictions(
-            const std::vector<std::string> &sequences,
+            const std::vector<InputSequence> &sequences,
             const BackboneProfiles &backboneProfiles,
             const BackboneProfiles &backgroundProfiles,
-            const std::optional<BackboneProfile> &centralBackground = std::nullopt ) const
+            const BackboneProfile &centralBackground ) const
     {
         assert( _validTraining( backboneProfiles, backgroundProfiles, centralBackground ));
         std::vector<ScoredLabels> scoredLabels;
@@ -130,7 +135,7 @@ public:
     ScoredLabels scoredPredictions(
             std::string_view sequence ) const
     {
-        assert( _validTraining( backboneProfiles, backgroundProfiles, centralBackground ));
+        assert( _validTraining( _backbones, _backgrounds, _centralBackground ));
         return _predict( sequence, _backbones, _backgrounds, _centralBackground );
     }
 
@@ -138,7 +143,7 @@ public:
             std::string_view sequence,
             const BackboneProfiles &backboneProfiles,
             const BackboneProfiles &backgroundProfiles,
-            const std::optional<BackboneProfile> &centralBackground = std::nullopt ) const
+            const BackboneProfile &centralBackground ) const
     {
         assert( _validTraining( backboneProfiles, backgroundProfiles, centralBackground ));
         return _predict( sequence, backboneProfiles, backgroundProfiles, centralBackground );
@@ -147,11 +152,10 @@ public:
 protected:
     static bool _validTraining( const BackboneProfiles &backboneProfiles,
                                 const BackboneProfiles &backgroundProfiles,
-                                const std::optional<BackboneProfile> &centralBackground )
+                                const BackboneProfile &centralBackground )
     {
         return !backgroundProfiles.empty() &&
-               backboneProfiles.size() == backgroundProfiles.size() &&
-               (!centralBackground || backboneProfiles.size() == centralBackground.size());
+               backboneProfiles.size() == backgroundProfiles.size();
     };
 
     bool _validTraining() const
@@ -162,7 +166,7 @@ protected:
     std::string_view _bestPrediction( std::string_view sequence,
                                       const BackboneProfiles &backboneProfiles,
                                       const BackboneProfiles &backgroundProfiles,
-                                      const std::optional<BackboneProfile> &centralBackground ) const
+                                      const BackboneProfile &centralBackground ) const
     {
         auto predictions = _predict( sequence, backgroundProfiles, backgroundProfiles, centralBackground );
         if ( auto top = predictions.top(); top )
@@ -174,13 +178,13 @@ protected:
     virtual ScoredLabels _predict( std::string_view sequence,
                                    const BackboneProfiles &backboneProfiles,
                                    const BackboneProfiles &backgroundProfiles,
-                                   const std::optional<BackboneProfile> &centralBackground ) const = 0;
+                                   const BackboneProfile &centralBackground ) const = 0;
 
 protected:
     const ModelGenerator <States> _generator;
     BackboneProfiles _backbones;
     BackboneProfiles _backgrounds;
-    std::optional<BackboneProfile> _centralBackground;
+    BackboneProfile _centralBackground;
 };
 
 template<size_t States>
@@ -202,7 +206,7 @@ protected:
     ScoredLabels _predict( std::string_view sequence,
                            const BackboneProfiles &backboneProfiles,
                            const BackboneProfiles &backgroundProfiles,
-                           const std::optional<BackboneProfile> & ) const override
+                           const BackboneProfile & ) const override
     {
         std::map<std::string_view, double> propensitites;
 
@@ -327,7 +331,7 @@ protected:
     ScoredLabels _predict( std::string_view sequence,
                            const BackboneProfiles &backboneProfiles,
                            const BackboneProfiles &backgroundProfiles,
-                           const std::optional<BackboneProfile> &centralBackground ) const override
+                           const BackboneProfile &centralBackground ) const override
     {
         MicroMeasurements measurements;
         AlternativeMeasurements alternatives;
@@ -344,7 +348,7 @@ protected:
             histograms.forEach(
                     [&]( Order order, HistogramID id, const Histogram &histogram ) {
                         double &measurement = _measurements[order][id];
-                        double &furthest = alternatives[order].try_emplace( id, -inf ).first->second;
+                        double &furthest = alternatives[order].try_emplace( id, bestInfinity ).first->second;
 
                         auto backboneHistogram = backbone->centroid( order, id );
                         if ( backboneHistogram )
@@ -355,9 +359,9 @@ protected:
 
                         } else if ( centralBackground )
                         {
-                            if ( auto center = centralBackground.value()->centroid( order, id ); center.has_value())
+                            if ( auto center = centralBackground->centroid( order, id ); center.has_value())
                             {
-                                auto standardDeviation = centralBackground.value()->standardDeviation( order, id );
+                                auto standardDeviation = centralBackground->standardDeviation( order, id );
                                 measurement = _similarityFunctor( center->get(), histogram,
                                                                   standardDeviation->get());
                             }
@@ -382,14 +386,14 @@ protected:
                 auto macroScores = minmaxNormalize(
                         macroScoresFromMicroMeasurement( measurements, alternatives, _similarityFunctor ));
                 for (auto &[label, _] : backboneProfiles)
-                    matchSet.emplace( label, (macroScores[label]) / 2 );
+                    matchSet.emplace( label, macroScores[label] );
             }
                 break;
             case MacroScoringEnum::Voting:
             {
                 auto voteScores = minmaxNormalize( votingFromMicroMeasurements( measurements, closerThan ));
                 for (auto &[label, _] : backboneProfiles)
-                    matchSet.emplace( label, (voteScores[label]) / 2 );
+                    matchSet.emplace( label, voteScores[label] );
             }
                 break;
             case MacroScoringEnum::Combine :

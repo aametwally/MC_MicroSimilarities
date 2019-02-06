@@ -53,6 +53,7 @@ public:
 
     std::optional<SampleType> getPoint( char aa ) const
     {
+        using namespace dlib_utilities;
         std::vector<double> point;
         for ( auto &index : _index )
         {
@@ -60,7 +61,7 @@ public:
                 point.push_back( component.value());
             else return std::nullopt;
         }
-        return vector_to_cmatrix( point );
+        return vectorToColumnMatrixLike( std::move( point ));
     }
 
     std::optional<size_t> getCluster( char aa ) const
