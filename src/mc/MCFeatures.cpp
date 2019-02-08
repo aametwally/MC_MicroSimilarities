@@ -4,8 +4,10 @@
 
 #include "MCFeatures.hpp"
 
-namespace MC
-{
-    template class  MCFeatures<COUNT_OFER15 >;
-    template class  MCFeatures<COUNT_NOGROUPING22 >;
+namespace MC {
+template
+class MCFeatures<COUNT_OFER15>;
+
+template
+class MCFeatures<COUNT_NOGROUPING22>;
 }

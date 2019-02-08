@@ -4,4 +4,5 @@
 
 #include "ConfusionMatrix.hpp"
 
-template class ConfusionMatrix< std::string >;
+template
+class ConfusionMatrix<std::string>;

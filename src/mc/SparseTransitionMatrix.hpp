@@ -40,7 +40,9 @@ public:
         else return std::nullopt;
     }
 
-    auto increment( Dim index, ValueType init = ValueType())
+    auto increment(
+            Dim index,
+            ValueType init = ValueType())
     {
         auto it = _tm.try_emplace( index, init ).first;
         return [it]( size_t state ) {
@@ -48,7 +50,9 @@ public:
         };
     }
 
-    auto swap( Dim index, ValueType init = ValueType())
+    auto swap(
+            Dim index,
+            ValueType init = ValueType())
     {
         auto it = _tm.try_emplace( index, init ).first;
         return [it]( HistogramType &other ) {
@@ -57,7 +61,10 @@ public:
     }
 
     template<typename InputHistogram>
-    void set( Dim index, InputHistogram &&histogram )
+    void set(
+            Dim index,
+            InputHistogram &&histogram
+    )
     {
         _tm.insert_or_assign( index, std::forward<InputHistogram>( histogram ));
     }
@@ -153,27 +160,45 @@ public:
         return _tm.cend();
     }
 
-    auto increment( Dim1 index1, Dim2 index2, ValueType init = ValueType())
+    auto increment(
+            Dim1 index1,
+            Dim2 index2,
+            ValueType init = ValueType())
     {
         auto it1 = _tm.try_emplace( index1 ).first;
         return it1->second.increment( index2, init );
     }
 
-    void forEach( std::function<void( Dim1, Dim2, const HistogramType & )> fn ) const
+    void forEach(
+            std::function<void(
+                    Dim1,
+                    Dim2,
+                    const HistogramType &
+            )> fn
+    ) const
     {
         for (const auto &[index1, isoHistograms] : _tm)
             for (const auto &[index2, histogram] : isoHistograms)
                 fn( index1, index2, histogram );
     }
 
-    void forEach( std::function<void( Dim1, Dim2, HistogramType & )> fn )
+    void forEach(
+            std::function<void(
+                    Dim1,
+                    Dim2,
+                    HistogramType &
+            )> fn
+    )
     {
         for (auto &[index1, isoHistograms] : _tm)
             for (auto &[index2, histogram] : isoHistograms)
                 fn( index1, index2, histogram );
     }
 
-    auto swap( Dim1 index1, Dim2 index2, ValueType init = ValueType())
+    auto swap(
+            Dim1 index1,
+            Dim2 index2,
+            ValueType init = ValueType())
     {
         auto it1 = _tm.try_emplace( index1 ).first;
         return it1->second.swap( index2, init );
@@ -198,14 +223,20 @@ public:
         else return std::nullopt;
     }
 
-    std::optional<HistogramConstReference> operator()( Dim1 index1, Dim2 index2 ) const
+    std::optional<HistogramConstReference> operator()(
+            Dim1 index1,
+            Dim2 index2
+    ) const
     {
         if ( auto it = _tm.find( index1 ); it != _tm.cend())
             return it->second( index2 );
         else return std::nullopt;
     }
 
-    std::optional<HistogramReference> operator()( Dim1 index1, Dim2 index2 )
+    std::optional<HistogramReference> operator()(
+            Dim1 index1,
+            Dim2 index2
+    )
     {
         if ( auto it = _tm.find( index1 ); it != _tm.cend())
             return it->second( index2 );
@@ -213,13 +244,21 @@ public:
     }
 
     template<typename InputHistogram>
-    void set( Dim1 index1, Dim2 index2, InputHistogram &&histogram )
+    void set(
+            Dim1 index1,
+            Dim2 index2,
+            InputHistogram &&histogram
+    )
     {
         auto it1 = _tm.try_emplace( index1 ).first;
         it1->second.set( index2, std::forward<InputHistogram>( histogram ));
     }
 
-    std::optional<typename HistogramType::ValueType> operator()( Dim1 index1, Dim2 index2, size_t state ) const
+    std::optional<typename HistogramType::ValueType> operator()(
+            Dim1 index1,
+            Dim2 index2,
+            size_t state
+    ) const
     {
         if ( auto histogram = this->operator()( index1, index2 );histogram )
         {
@@ -240,7 +279,10 @@ public:
     inline size_t size() const
     {
         return std::accumulate( _tm.cbegin(), _tm.cend(),
-                                size_t( 0 ), []( size_t acc, auto &&inner ) {
+                                size_t( 0 ), [](
+                        size_t acc,
+                        auto &&inner
+                ) {
                     const InnerSparseTransitionMatrices &item = inner.second;
                     return acc + item.size();
                 } );
@@ -264,7 +306,10 @@ public:
 
     template<typename Conainers, typename GetterFn>
     static std::unordered_map<Dim1, std::set<Dim2 >>
-    getCoverage( Conainers &&containers, GetterFn &&getter )
+    getCoverage(
+            Conainers &&containers,
+            GetterFn &&getter
+    )
     {
         using T = typename std::remove_reference_t<Conainers>::value_type;
         std::unordered_map<Dim1, std::set<Dim2 >> coverage;

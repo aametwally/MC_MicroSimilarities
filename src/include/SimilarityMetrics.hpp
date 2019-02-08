@@ -10,7 +10,10 @@
 static double combineEuclidean( std::vector<double> &&c )
 {
     double squares = std::accumulate( std::begin( c ), std::end( c ),
-                                      double( 0 ), []( double acc, double val ) {
+                                      double( 0 ), [](
+                    double acc,
+                    double val
+            ) {
                 return acc + val * val;
             } );
     return std::sqrt( squares );
@@ -41,24 +44,36 @@ struct Score
 
 
 template<typename Vector>
-using MetricFunction = std::function<double( const Vector &, const Vector & )>;
+using MetricFunction = std::function<double(
+        const Vector &,
+        const Vector &
+)>;
 
 template<typename Vector>
-using WeightedMetricFunction = std::function<double( const Vector &, const Vector &, const Vector & )>;
+using WeightedMetricFunction = std::function<double(
+        const Vector &,
+        const Vector &,
+        const Vector &
+)>;
 
 template<typename Container>
 struct SimilarityFunctor
 {
-    explicit SimilarityFunctor( const double eps,
-                                const double inf,
-                                const double best,
-                                const double worst,
-                                const bool cost,
-                                const bool score,
-                                const bool weighted,
-                                const MetricFunction<Container> metricFunction,
-                                const WeightedMetricFunction<Container> weightedMetricFunction,
-                                const std::function<bool( double, double )> closerThan )
+    explicit SimilarityFunctor(
+            const double eps,
+            const double inf,
+            const double best,
+            const double worst,
+            const bool cost,
+            const bool score,
+            const bool weighted,
+            const MetricFunction<Container> metricFunction,
+            const WeightedMetricFunction<Container> weightedMetricFunction,
+            const std::function<bool(
+                    double,
+                    double
+            )> closerThan
+    )
             : inf( inf ), eps( eps ),
               best( best ), worst( worst ),
               cost( cost ), score( score ),
@@ -77,14 +92,24 @@ struct SimilarityFunctor
     const bool weighted;
     const WeightedMetricFunction<Container> weightedMetricFunction;
     const MetricFunction<Container> metricFunction;
-    const std::function<bool( double, double )> closerThan;
+    const std::function<bool(
+            double,
+            double
+    )> closerThan;
 
-    inline double operator()( const Container &kernel1, const Container &kernel2, const Container &kernel3 ) const
+    inline double operator()(
+            const Container &kernel1,
+            const Container &kernel2,
+            const Container &kernel3
+    ) const
     {
         return weightedMetricFunction( kernel1, kernel2, kernel3 );
     }
 
-    inline double operator()( const Container &kernel1, const Container &kernel2 ) const
+    inline double operator()(
+            const Container &kernel1,
+            const Container &kernel2
+    ) const
     {
         return metricFunction( kernel1, kernel2 );
     }
@@ -115,7 +140,11 @@ struct Criteria
     }
 
     template<typename Container, bool W = Weighted, typename std::enable_if<W, int>::type = 0>
-    static inline double measure( const Container &kernel1, const Container &kernel2, const Container &weights )
+    static inline double measure(
+            const Container &kernel1,
+            const Container &kernel2,
+            const Container &weights
+    )
     {
         assert( std::all_of( std::cbegin( kernel1 ), std::cend( kernel1 ),
                              []( auto val ) { return !std::isnan( val ); } ));
@@ -130,7 +159,11 @@ struct Criteria
     }
 
     template<typename Container, bool W = Weighted, typename std::enable_if<!W, int>::type = 0>
-    static inline double measure( const Container &kernel1, const Container &kernel2, const Container & )
+    static inline double measure(
+            const Container &kernel1,
+            const Container &kernel2,
+            const Container &
+    )
     {
         assert( std::all_of( std::cbegin( kernel1 ), std::cend( kernel1 ),
                              []( auto val ) { return !std::isnan( val ); } ));
@@ -141,7 +174,10 @@ struct Criteria
     }
 
     template<typename Container>
-    static inline double measure( const Container &kernel1, const Container &kernel2 )
+    static inline double measure(
+            const Container &kernel1,
+            const Container &kernel2
+    )
     {
         assert( std::all_of( std::cbegin( kernel1 ), std::cend( kernel1 ),
                              []( auto val ) { return !std::isnan( val ); } ));
@@ -153,13 +189,20 @@ struct Criteria
     }
 
     template<typename Container>
-    static inline double measureUnweighted( const Container &kernel1, const Container &kernel2 )
+    static inline double measureUnweighted(
+            const Container &kernel1,
+            const Container &kernel2
+    )
     {
         return measure( kernel1, kernel2 );
     }
 
     template<typename Container>
-    static inline double measureWeighted( const Container &kernel1, const Container &kernel2, const Container &kernel3 )
+    static inline double measureWeighted(
+            const Container &kernel1,
+            const Container &kernel2,
+            const Container &kernel3
+    )
     {
         return measure( kernel1, kernel2, kernel3 );
     }
@@ -168,11 +211,17 @@ struct Criteria
     static SimilarityFunctor<Container> similarityFunctor()
     {
         return SimilarityFunctor<Container>( eps, inf, best, worst, cost, score, weighted,
-                                             []( const Container &kernel1, const Container &kernel2 ) -> double {
+                                             [](
+                                                     const Container &kernel1,
+                                                     const Container &kernel2
+                                             ) -> double {
                                                  return measure( kernel1, kernel2 );
                                              },
-                                             []( const Container &kernel1, const Container &kernel2,
-                                                 const Container &kernel3 ) -> double {
+                                             [](
+                                                     const Container &kernel1,
+                                                     const Container &kernel2,
+                                                     const Container &kernel3
+                                             ) -> double {
                                                  return measure( kernel1, kernel2, kernel3 );
                                              },
                                              metricCompare());
@@ -195,7 +244,12 @@ struct Euclidean : public Criteria<Euclidean, Cost>
     static constexpr const char *label = "euclidean";
 
     template<typename Iterator>
-    static double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    static double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2
+    )
     {
         auto n = std::distance( first1, last1 );
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
@@ -218,9 +272,14 @@ struct Mahalanobis : public Criteria<Mahalanobis, Cost, true>
     static constexpr const char *label = "mahalanobis";
 
     template<typename Iterator>
-    static double apply( Iterator first1, Iterator last1,
-                         Iterator first2, Iterator last2,
-                         Iterator weightsFirst, Iterator weightsLast )
+    static double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2,
+            Iterator weightsFirst,
+            Iterator weightsLast
+    )
     {
         auto n = std::distance( first1, last1 );
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 )
@@ -235,7 +294,12 @@ struct Mahalanobis : public Criteria<Mahalanobis, Cost, true>
     }
 
     template<typename Iterator>
-    static double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    static double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2
+    )
     {
         return Euclidean::apply( first1, last1, first2, last2 );
     }
@@ -251,7 +315,12 @@ struct Manhattan : public Criteria<Manhattan, Cost>
     static constexpr const char *label = "manhattan";
 
     template<typename Iterator>
-    static double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    static double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2
+    )
     {
         auto n = std::distance( first1, last1 );
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
@@ -274,7 +343,12 @@ struct ChiSquared : public Criteria<ChiSquared, Score>
     static constexpr const char *label = "chi";
 
     template<typename Iterator>
-    static double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    static double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2
+    )
     {
         auto n = std::distance( first1, last1 );
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
@@ -297,7 +371,10 @@ struct Cosine : public Criteria<Cosine, Score>
     static constexpr const char *label = "cos";
 
     template<typename Iterator>
-    static inline double norm2( Iterator first, Iterator last )
+    static inline double norm2(
+            Iterator first,
+            Iterator last
+    )
     {
         double sum = 0;
         for (auto it = first; it != last; ++it)
@@ -308,7 +385,12 @@ struct Cosine : public Criteria<Cosine, Score>
     }
 
     template<typename Iterator>
-    static inline double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    static inline double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2
+    )
     {
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
         double sum = 0;
@@ -331,9 +413,14 @@ struct DWCosine : public Criteria<DWCosine, Score, true>
     static constexpr const char *label = "dwcos";
 
     template<typename Iterator>
-    static double apply( Iterator first1, Iterator last1,
-                         Iterator first2, Iterator last2,
-                         Iterator weightsFirst, Iterator weightsLast )
+    static double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2,
+            Iterator weightsFirst,
+            Iterator weightsLast
+    )
     {
         auto n = std::distance( first1, last1 );
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 )
@@ -345,8 +432,12 @@ struct DWCosine : public Criteria<DWCosine, Score, true>
     }
 
     template<typename Iterator>
-    static double apply( Iterator first1, Iterator last1,
-                         Iterator first2, Iterator last2 )
+    static double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2
+    )
     {
         auto n = std::distance( first1, last1 );
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
@@ -357,7 +448,11 @@ struct DWCosine : public Criteria<DWCosine, Score, true>
     }
 
     template<typename Container>
-    static double measure( const Container &kernel1, const Container &kernel2, const Container &weights )
+    static double measure(
+            const Container &kernel1,
+            const Container &kernel2,
+            const Container &weights
+    )
     {
         assert( std::all_of( std::cbegin( kernel1 ), std::cend( kernel1 ),
                              []( auto val ) { return !std::isnan( val ); } ));
@@ -383,7 +478,12 @@ struct Dot : public Criteria<Dot, Score>
     static constexpr const char *label = "dot";
 
     template<typename Iterator>
-    static inline double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    static inline double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2
+    )
     {
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
         double sum{0};
@@ -404,7 +504,12 @@ struct Intersection : public Criteria<Intersection, Score>
     static constexpr const char *label = "intersection";
 
     template<typename Iterator>
-    static inline double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    static inline double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2
+    )
     {
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
         auto n = std::distance( first1, last1 );
@@ -427,7 +532,12 @@ struct MaxIntersection : public Criteria<MaxIntersection, Score>
     static constexpr const char *label = "max_intersection";
 
     template<typename Iterator>
-    static inline double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    static inline double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2
+    )
     {
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
         auto n = std::distance( first1, last1 );
@@ -449,7 +559,12 @@ struct Gaussian : public Criteria<Gaussian, Score>
     static constexpr const char *label = "gaussian";
 
     template<typename Iterator>
-    static inline double apply( Iterator first1, Iterator last1, Iterator first2, Iterator last2 )
+    static inline double apply(
+            Iterator first1,
+            Iterator last1,
+            Iterator first2,
+            Iterator last2
+    )
     {
         assert( std::distance( first1, last1 ) == std::distance( first2, last2 ));
         auto n = std::distance( first1, last1 );
@@ -487,7 +602,12 @@ struct KullbackLeiblerDivergence : public Criteria<KullbackLeiblerDivergence, Sc
      * @return
      */
     template<typename Iterator>
-    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
+    static inline double apply(
+            Iterator qFirst,
+            Iterator qLast,
+            Iterator pFirst,
+            Iterator pLast
+    )
     {
         assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
         auto n = std::distance( qFirst, qLast );
@@ -517,7 +637,12 @@ struct DensityPowerDivergence : public Criteria<DensityPowerDivergence<Alpha>, S
      */
     template<typename Iterator, uint8_t Alpha_ = Alpha, typename std::enable_if<(Alpha_ >
                                                                                  0), void>::type * = nullptr>
-    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
+    static inline double apply(
+            Iterator qFirst,
+            Iterator qLast,
+            Iterator pFirst,
+            Iterator pLast
+    )
     {
         assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
         auto n = std::distance( qFirst, qLast );
@@ -571,7 +696,12 @@ struct ItakuraSaitu : public Criteria<ItakuraSaitu, Score>
      * @return
      */
     template<typename Iterator>
-    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
+    static inline double apply(
+            Iterator qFirst,
+            Iterator qLast,
+            Iterator pFirst,
+            Iterator pLast
+    )
     {
         assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
         auto n = std::distance( qFirst, qLast );
@@ -606,7 +736,12 @@ struct Bhattacharyya : public Criteria<Bhattacharyya, Score>
      * @return
      */
     template<typename Iterator>
-    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
+    static inline double apply(
+            Iterator qFirst,
+            Iterator qLast,
+            Iterator pFirst,
+            Iterator pLast
+    )
     {
         assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
         auto n = std::distance( qFirst, qLast );
@@ -639,7 +774,12 @@ struct Hellinger : public Criteria<Hellinger, Score>
      * @return
      */
     template<typename Iterator>
-    static inline double apply( Iterator qFirst, Iterator qLast, Iterator pFirst, Iterator pLast )
+    static inline double apply(
+            Iterator qFirst,
+            Iterator qLast,
+            Iterator pFirst,
+            Iterator pLast
+    )
     {
         assert( std::distance( qFirst, qLast ) == std::distance( pFirst, pLast ));
         auto n = std::distance( qFirst, qLast );
@@ -663,7 +803,10 @@ private:
 template<typename Label = std::string_view>
 struct ValuedLabel
 {
-    ValuedLabel( Label label, double val )
+    ValuedLabel(
+            Label label,
+            double val
+    )
             : _label( label ), _value( val )
     {}
 
@@ -715,7 +858,10 @@ struct PriorityQueueFixed
     using ConstantIterator = typename Queue::const_iterator;
     using ValueType = ValuedLabel<Label>;
 
-    explicit PriorityQueueFixed( const Comp &cmp, size_t kTop )
+    explicit PriorityQueueFixed(
+            const Comp &cmp,
+            size_t kTop
+    )
             : _kTop( kTop ), _q( cmp )
     {}
 
@@ -749,7 +895,10 @@ struct PriorityQueueFixed
     }
 
 
-    void forTopK( size_t k, const std::function<void( const ValueType & )> &op ) const
+    void forTopK(
+            size_t k,
+            const std::function<void( const ValueType & )> &op
+    ) const
     {
         if ( k == 0 )
             k = _q.size();
@@ -761,7 +910,13 @@ struct PriorityQueueFixed
         std::for_each( std::crbegin( _q ), lastIt, op );
     }
 
-    void forTopK( size_t k, const std::function<void( const ValueType &, size_t )> &op ) const
+    void forTopK(
+            size_t k,
+            const std::function<void(
+                    const ValueType &,
+                    size_t
+            )> &op
+    ) const
     {
         if ( k == 0 )
             k = _q.size();
@@ -838,7 +993,10 @@ struct PriorityQueueFixed
         return std::find_if( _q.cbegin(), _q.cend(), predicate ) != _q.cend();
     }
 
-    void findOrInsert( const Label &label, double value = 0 )
+    void findOrInsert(
+            const Label &label,
+            double value = 0
+    )
     {
         auto it = std::find_if( _q.crbegin(), _q.crend(), [&]( const ValueType &item ) {
             return item.label() == label;
@@ -884,7 +1042,10 @@ struct ClassificationCandidates
 
     using Queue =  typename MatchSet<Criteria>::template Queue<std::string_view>;
 
-    explicit ClassificationCandidates( std::string_view trueLabel, Queue q )
+    explicit ClassificationCandidates(
+            std::string_view trueLabel,
+            Queue q
+    )
             : _trueLabel( trueLabel ), _bestMatches( std::move( q ))
     {}
 

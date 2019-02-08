@@ -11,7 +11,10 @@
 
 template<typename T>
 inline std::vector<std::vector<T >>
-kFoldSplit( std::vector<T> &&input, size_t k )
+kFoldSplit(
+        std::vector<T> &&input,
+        size_t k
+)
 {
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::shuffle( input.begin(), input.end(), std::default_random_engine( seed ));
@@ -22,9 +25,12 @@ kFoldSplit( std::vector<T> &&input, size_t k )
 }
 
 
-template< typename T, typename Label = std::string >
+template<typename T, typename Label = std::string>
 inline std::vector<std::vector<std::pair<Label, T >>>
-kFoldStratifiedSplit( std::map<Label, std::vector<T> > &&input, size_t k )
+kFoldStratifiedSplit(
+        std::map<Label, std::vector<T> > &&input,
+        size_t k
+)
 {
     std::vector<std::vector<std::pair<Label, T >>> folds( k );
     for (auto &[label, v] : input)
@@ -44,16 +50,19 @@ kFoldStratifiedSplit( std::map<Label, std::vector<T> > &&input, size_t k )
     return folds;
 }
 
-template< typename T >
-inline std::map<std::string_view , std::vector<T >>
-joinFoldsExceptK( const std::vector<std::vector<std::pair<std::string, T >>> &input, size_t k )
+template<typename T>
+inline std::map<std::string_view, std::vector<T >>
+joinFoldsExceptK(
+        const std::vector<std::vector<std::pair<std::string, T >>> &input,
+        size_t k
+)
 {
     assert( k < input.size());
 
     std::map<std::string_view, std::vector<T >> joined;
     auto mapInserter = [&]( const std::vector<std::pair<std::string, T >> &vec ) {
         for (auto &p : vec)
-            joined[ p.first ].push_back( p.second );
+            joined[p.first].push_back( p.second );
     };
 
     for (auto i = 0; i < input.size(); ++i)

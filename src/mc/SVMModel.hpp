@@ -20,7 +20,11 @@ struct SVMConfiguration
 {
     struct Tuning
     {
-        explicit Tuning( size_t trials, std::pair<double, double> bounds, bool tuneGammaPerClass )
+        explicit Tuning(
+                size_t trials,
+                std::pair<double, double> bounds,
+                bool tuneGammaPerClass
+        )
                 : maxTrials( trials ),
                   gammaBounds( std::move( bounds )),
                   tuneGammaPerClass( tuneGammaPerClass )
@@ -36,12 +40,17 @@ struct SVMConfiguration
         return Tuning( 50, {1e-5, 100}, false );
     }
 
-    explicit SVMConfiguration( double g, std::optional<Tuning> tuning )
+    explicit SVMConfiguration(
+            double g,
+            std::optional<Tuning> tuning
+    )
             : gamma( g ), tuning( std::move( tuning ))
     {}
 
     explicit SVMConfiguration(
-            std::map<std::string_view, double> gammas, std::optional<Tuning> tuning )
+            std::map<std::string_view, double> gammas,
+            std::optional<Tuning> tuning
+    )
             : gammas( std::move( gammas )), tuning( std::move( tuning ))
     {}
 
@@ -79,7 +88,10 @@ public:
 
     virtual ~SVMModel() = default;
 
-    void fit( std::vector<std::string_view> &&labels, std::vector<std::vector<double >> &&featuresVector );
+    void fit(
+            std::vector<std::string_view> &&labels,
+            std::vector<std::vector<double >> &&featuresVector
+    );
 
     ScoredLabels predict( std::vector<double> &&features ) const;
 
@@ -88,28 +100,33 @@ private:
             std::vector<Label> &&labels,
             std::vector<SampleType> &&featuresVector,
             const SVMConfiguration &configuration,
-            const std::map<std::string_view, int> &label2Index );
+            const std::map<std::string_view, int> &label2Index
+    );
 
     static DecisionFunction _fitFixedHyperParameters(
             std::vector<Label> &&labels,
             std::vector<SampleType> &&featuresVector,
             const SVMConfiguration &configuration,
-            const std::map<std::string_view, int> &label2Index  );
+            const std::map<std::string_view, int> &label2Index
+    );
 
     static DecisionFunction _fitTuningHyperParameters(
             std::vector<Label> &&labels,
             std::vector<SampleType> &&featuresVector,
             const SVMConfiguration &configuration,
-            const std::map<std::string_view, int> &label2Index );
+            const std::map<std::string_view, int> &label2Index
+    );
 
     static auto _crossValidationScoreSingleGamma(
             const std::vector<SVMModel::SampleType> &samples,
-            const std::vector<SVMModel::Label> &labels );
+            const std::vector<SVMModel::Label> &labels
+    );
 
     static auto _crossValidationScoreMultipleGammas(
             const std::vector<SVMModel::SampleType> &samples,
             const std::vector<SVMModel::Label> &labels,
-            const std::map<std::string_view, int> &label2Index );
+            const std::map<std::string_view, int> &label2Index
+    );
 
     static SampleType _svmFeatures( std::vector<double> &&features );
 

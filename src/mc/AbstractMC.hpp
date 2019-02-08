@@ -39,7 +39,10 @@ public:
 
 
 public:
-    explicit AbstractMC( Order order, double epsilon = TransitionMatrixEpsilon )
+    explicit AbstractMC(
+            Order order,
+            double epsilon = TransitionMatrixEpsilon
+    )
             : _order( order ),
               _epsilon( epsilon ),
               _n( 0 )
@@ -94,7 +97,10 @@ public:
         return _centroids( order ).has_value();
     }
 
-    inline bool contains( Order order, HistogramID id ) const
+    inline bool contains(
+            Order order,
+            HistogramID id
+    ) const
     {
         return _centroids( order, id ).has_value();
     }
@@ -157,7 +163,11 @@ public:
 
     virtual void normalize( std::optional<size_t> minimumOccurrence )
     {
-        _centroids.forEach( [this]( Order order, HistogramID id, Histogram &histogram ) {
+        _centroids.forEach( [this](
+                Order order,
+                HistogramID id,
+                Histogram &histogram
+        ) {
             histogram.normalize();
             _standardDeviations.set( order, id, Histogram::ones());
         } );
@@ -168,9 +178,15 @@ public:
         return _order;
     }
 
-    virtual double probability( std::string_view, char ) const = 0;
+    virtual double probability(
+            std::string_view,
+            char
+    ) const = 0;
 
-    inline double transitionalPropensity( std::string_view context, char state ) const
+    inline double transitionalPropensity(
+            std::string_view context,
+            char state
+    ) const
     {
         if ( context.empty())
             return std::log2( probability( state ));
@@ -184,7 +200,10 @@ public:
      * @param acc
      * @return
      */
-    double propensity( std::string_view query, double acc = 0 ) const
+    double propensity(
+            std::string_view query,
+            double acc = 0
+    ) const
     {
         if ( !query.empty())
         {
@@ -233,12 +252,18 @@ public:
         return std::cref( _standardDeviations );
     }
 
-    inline auto standardDeviation( Order order, HistogramID id ) const
+    inline auto standardDeviation(
+            Order order,
+            HistogramID id
+    ) const
     {
         return _standardDeviations( order, id );
     }
 
-    inline auto centroid( Order order, HistogramID id ) const
+    inline auto centroid(
+            Order order,
+            HistogramID id
+    ) const
     {
         return _centroids( order, id );
     }
@@ -274,8 +299,10 @@ protected:
         return char( id + ReducedAlphabet.front());
     }
 
-    static HistogramID _sequence2ID( const std::string_view seq,
-                                     HistogramID init = 0 )
+    static HistogramID _sequence2ID(
+            const std::string_view seq,
+            HistogramID init = 0
+    )
     {
         HistogramID code = init;
         for (char c : seq)
@@ -283,7 +310,11 @@ protected:
         return code;
     }
 
-    static std::string _id2Sequence( HistogramID id, const size_t size, std::string &&acc = "" )
+    static std::string _id2Sequence(
+            HistogramID id,
+            const size_t size,
+            std::string &&acc = ""
+    )
     {
         if ( acc.size() == size ) return acc;
         else return _id2Sequence( id / States, size, _id2Char( id % States ) + acc );
@@ -298,7 +329,9 @@ protected:
 
 public:
     std::vector<double> extractFlatFeatureVector(
-            const Selection &select, double missingVals = 0 ) const noexcept
+            const Selection &select,
+            double missingVals = 0
+    ) const noexcept
     {
         std::vector<double> features;
         features.reserve( size( select ) * States );
@@ -329,7 +362,9 @@ public:
     }
 
     std::vector<double> extractFlatFeatureVector(
-            const AbstractMC &reference, double missingVals = 0 ) const noexcept
+            const AbstractMC &reference,
+            double missingVals = 0
+    ) const noexcept
     {
         std::vector<double> features;
         features.reserve( reference.histogramsCount() * States );
@@ -379,9 +414,11 @@ public:
         return allFeatureSpace;
     }
 
-    static Selection jointFeatures( const BackboneProfiles &profiles,
-                                    const std::unordered_map<Order, std::set<HistogramID >> &allFeatures,
-                                    std::optional<double> minSharedPercentage = std::nullopt )
+    static Selection jointFeatures(
+            const BackboneProfiles &profiles,
+            const std::unordered_map<Order, std::set<HistogramID >> &allFeatures,
+            std::optional<double> minSharedPercentage = std::nullopt
+    )
     {
         Selection joint;
         if ( minSharedPercentage )
@@ -437,9 +474,11 @@ public:
 
     template<typename ModelGenerator, typename Sequence>
     static BackboneProfiles
-    train( const std::map<std::string_view, std::vector<Sequence >> &training,
-           ModelGenerator trainer,
-           std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt )
+    train(
+            const std::map<std::string_view, std::vector<Sequence >> &training,
+            ModelGenerator trainer,
+            std::optional<std::reference_wrapper<const Selection >> selection = std::nullopt
+    )
     {
         BackboneProfiles trainedProfiles;
         for (const auto &[label, sequences] : training)
@@ -451,9 +490,11 @@ public:
 
     template<typename ModelGenerator>
     BackboneProfiles
-    static backgroundProfiles( const std::map<std::string_view, std::vector<std::string >> &trainingSequences,
-                               ModelGenerator modelTrainer,
-                               std::optional<std::reference_wrapper<const Selection> > selection = std::nullopt )
+    static backgroundProfiles(
+            const std::map<std::string_view, std::vector<std::string >> &trainingSequences,
+            ModelGenerator modelTrainer,
+            std::optional<std::reference_wrapper<const Selection> > selection = std::nullopt
+    )
     {
         BackboneProfiles background;
         for (auto &[label, _] : trainingSequences)
@@ -477,11 +518,15 @@ public:
     static backgroundProfilesSampled(
             const std::map<std::string_view, std::vector<std::string >> &trainingSequences,
             ModelGenerator modelTrainer,
-            const Selection &selection )
+            const Selection &selection
+    )
     {
         BackboneProfiles background;
         auto minimumCluster = std::min_element( trainingSequences.cbegin(), trainingSequences.cend(),
-                                                []( const auto &cluster1, const auto &cluster2 ) {
+                                                [](
+                                                        const auto &cluster1,
+                                                        const auto &cluster2
+                                                ) {
                                                     return cluster1.second.size() < cluster2.second.size();
                                                 } );
         auto sampleSize = minimumCluster->second.size();
@@ -514,11 +559,15 @@ public:
 
     static std::map<std::string_view, std::vector<std::string_view>>
     undersampleBalancing(
-            const std::map<std::string_view, std::vector<std::string >> &trainingSequences )
+            const std::map<std::string_view, std::vector<std::string >> &trainingSequences
+    )
     {
         std::map<std::string_view, std::vector<std::string_view>> sampledData;
         auto &[minLabel, minimumCluster] = *std::min_element( trainingSequences.cbegin(), trainingSequences.cend(),
-                                                              []( const auto &cluster1, const auto &cluster2 ) {
+                                                              [](
+                                                                      const auto &cluster1,
+                                                                      const auto &cluster2
+                                                              ) {
                                                                   return cluster1.second.size() <
                                                                          cluster2.second.size();
                                                               } );
@@ -547,11 +596,15 @@ public:
 
     static std::map<std::string_view, std::vector<std::string_view>>
     oversampleBalancing(
-            const std::map<std::string_view, std::vector<std::string >> &trainingSequences )
+            const std::map<std::string_view, std::vector<std::string >> &trainingSequences
+    )
     {
         std::map<std::string_view, std::vector<std::string_view>> sampledData;
         auto &[maxLabel, maximumCluster] = *std::max_element( trainingSequences.cbegin(), trainingSequences.cend(),
-                                                              []( const auto &cluster1, const auto &cluster2 ) {
+                                                              [](
+                                                                      const auto &cluster1,
+                                                                      const auto &cluster2
+                                                              ) {
                                                                   return cluster1.second.size() <
                                                                          cluster2.second.size();
                                                               } );
@@ -579,7 +632,8 @@ public:
 
     static std::map<std::string_view, std::vector<std::string_view>>
     oversampleStateBalancing(
-            const std::map<std::string_view, std::vector<std::string >> &trainingSequences )
+            const std::map<std::string_view, std::vector<std::string >> &trainingSequences
+    )
     {
         std::map<std::string_view, std::vector<std::string_view>> sampledData;
         std::map<std::string_view, size_t> newSizes;
@@ -587,13 +641,19 @@ public:
         auto averageLength =
                 LabeledEntry::groupAveragedValue<std::string>(
                         trainingSequences,
-                        []( std::string_view, auto &&sequence ) -> double {
+                        [](
+                                std::string_view,
+                                auto &&sequence
+                        ) -> double {
                             return sequence.length();
                         } );
 
         auto &[maxLabel, maximumCluster] = *std::max_element(
                 trainingSequences.cbegin(), trainingSequences.cend(),
-                [&]( const auto &cluster1, const auto &cluster2 ) {
+                [&](
+                        const auto &cluster1,
+                        const auto &cluster2
+                ) {
                     return cluster1.second.size() * averageLength.at( cluster1.first ) <
                            cluster2.second.size() * averageLength.at( cluster2.first );
                 } );
@@ -622,9 +682,11 @@ public:
 
     template<typename ModelGenerator>
     BackboneProfile
-    static backgroundProfile( const std::map<std::string_view, std::vector<std::string >> &trainingSequences,
-                              ModelGenerator modelTrainer,
-                              std::optional<std::reference_wrapper<const Selection>> selection )
+    static backgroundProfile(
+            const std::map<std::string_view, std::vector<std::string >> &trainingSequences,
+            ModelGenerator modelTrainer,
+            std::optional<std::reference_wrapper<const Selection>> selection
+    )
     {
         BackboneProfiles background;
         std::vector<std::string_view> backgroundSequences;
@@ -637,9 +699,11 @@ public:
 
     template<typename ModelGenerator>
     static std::pair<Selection, BackboneProfiles>
-    filterJointKernels( const std::map<std::string_view, std::vector<std::string >> &trainingClusters,
-                        ModelGenerator trainer,
-                        double minSharedPercentage = 0.75 )
+    filterJointKernels(
+            const std::map<std::string_view, std::vector<std::string >> &trainingClusters,
+            ModelGenerator trainer,
+            double minSharedPercentage = 0.75
+    )
     {
         assert( minSharedPercentage > 0 && minSharedPercentage <= 1 );
         return filterJointKernels( train( trainingClusters, trainer ), minSharedPercentage );
@@ -648,13 +712,19 @@ public:
     static size_t size( const Selection &features )
     {
         return std::accumulate( std::cbegin( features ), std::cend( features ), size_t( 0 ),
-                                []( size_t s, const auto &p ) {
+                                [](
+                                        size_t s,
+                                        const auto &p
+                                ) {
                                     return s + p.second.size();
                                 } );
     }
 
     static std::pair<Selection, BackboneProfiles>
-    filterJointKernels( BackboneProfiles &&profiles, double minSharedPercentage = 0.75 )
+    filterJointKernels(
+            BackboneProfiles &&profiles,
+            double minSharedPercentage = 0.75
+    )
     {
         assert( minSharedPercentage >= 0 && minSharedPercentage <= 1 );
         const size_t k = profiles.size();
@@ -668,8 +738,10 @@ public:
     }
 
     static BackboneProfiles
-    filter( BackboneProfiles &&profiles,
-            const Selection &selection )
+    filter(
+            BackboneProfiles &&profiles,
+            const Selection &selection
+    )
     {
         BackboneProfiles filteredProfiles;
         for (auto &[cluster, profile] : profiles)
@@ -682,9 +754,11 @@ public:
 
     template<typename ModelGenerator>
     static Selection
-    withinJointAllUnionKernels( const std::map<std::string_view, std::vector<std::string>> &trainingClusters,
-                                ModelGenerator trainer,
-                                double withinCoverage = 0.5 )
+    withinJointAllUnionKernels(
+            const std::map<std::string_view, std::vector<std::string>> &trainingClusters,
+            ModelGenerator trainer,
+            double withinCoverage = 0.5
+    )
     {
         const size_t k = trainingClusters.size();
         std::vector<Selection> withinKernels;
@@ -737,7 +811,8 @@ public:
 
     template<typename SequenceData>
     std::unique_ptr<CoreModel> operator()(
-            SequenceData &&sequences ) const
+            SequenceData &&sequences
+    ) const
     {
         auto model = _modelFunction();
         model->train( std::forward<SequenceData>( sequences ));
@@ -747,7 +822,8 @@ public:
     template<typename SequenceData>
     std::unique_ptr<CoreModel> operator()(
             SequenceData &&sequences,
-            std::optional<std::reference_wrapper<const Selection >> selection ) const
+            std::optional<std::reference_wrapper<const Selection >> selection
+    ) const
     {
         if ( selection )
         {

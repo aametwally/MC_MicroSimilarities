@@ -32,14 +32,20 @@ std::vector<std::string> splitParameters( std::string params )
     return io::split( params, "," );
 }
 
-std::string prefix( const std::string &input,
-                    MC::Order mnOrder, MC::Order mxOrder,
-                    const std::string &g )
+std::string prefix(
+        const std::string &input,
+        MC::Order mnOrder,
+        MC::Order mxOrder,
+        const std::string &g
+)
 {
     return fmt::format( "[{}][{}][order:{}-{}][grouping:{}]", timeNow(), input, mnOrder, mxOrder, g );
 }
 
-int main( int argc, char *argv[] )
+int main(
+        int argc,
+        char *argv[]
+)
 {
     using namespace MC;
     using io::join;

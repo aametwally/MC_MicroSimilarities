@@ -7,10 +7,8 @@
 
 #include "common.hpp"
 
-namespace hash
-{
+namespace hash {
 
-    
 
 }
 

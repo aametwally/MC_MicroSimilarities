@@ -32,14 +32,25 @@ public:
               _features( _getFeatures( folds ))
     {}
 
-    void countInstance( FoldID k, ClassifierLabel classifier, ItemID id, ScoredLabels predictions )
+    void countInstance(
+            FoldID k,
+            ClassifierLabel classifier,
+            ItemID id,
+            ScoredLabels predictions
+    )
     {
         assert( k >= 0 && k < _k );
         assert( _actualLabels.find( id ) != _actualLabels.cend());
         _predictions[k][classifier].emplace_back( id, std::move( predictions ));
     }
 
-    void countInstance( FoldID k, ClassifierLabel classifier, ItemID id, ScoredLabels predictions, Label label )
+    void countInstance(
+            FoldID k,
+            ClassifierLabel classifier,
+            ItemID id,
+            ScoredLabels predictions,
+            Label label
+    )
     {
         assert( _actualLabels.at( id ) == label );
         assert( k >= 0 && k < _k );
@@ -51,36 +62,42 @@ public:
     std::vector<std::tuple<
             std::vector<ClassifierLabel>,
             CrossValidationStatistics<Label>,
-            std::map< std::string_view , FeatureScoreAUC >>>
+            std::map<std::string_view, FeatureScoreAUC >>>
     majorityVotingOverallAccuracy() const
     {
-        return ensembleOverallAccuracy( [this]( auto &combination, auto &assignment ){
-            return _majorityVoting( combination , assignment );
-        });
+        return ensembleOverallAccuracy( [this](
+                auto &combination,
+                auto &assignment
+        ) {
+            return _majorityVoting( combination, assignment );
+        } );
     }
 
     std::vector<std::tuple<
             std::vector<ClassifierLabel>,
             CrossValidationStatistics<Label>,
-            std::map< std::string_view , FeatureScoreAUC >>>
+            std::map<std::string_view, FeatureScoreAUC >>>
     weightedVotingOverallAccuracy() const
     {
-        return ensembleOverallAccuracy( [this]( auto &combination, auto &assignment ){
-            return _weightedVoting( combination , assignment );
-        });
+        return ensembleOverallAccuracy( [this](
+                auto &combination,
+                auto &assignment
+        ) {
+            return _weightedVoting( combination, assignment );
+        } );
     }
 
-    template< typename VotingMethod >
+    template<typename VotingMethod>
     std::vector<std::tuple<
             std::vector<ClassifierLabel>,
             CrossValidationStatistics<Label>,
-            std::map< std::string_view , FeatureScoreAUC >>>
+            std::map<std::string_view, FeatureScoreAUC >>>
     ensembleOverallAccuracy( VotingMethod votingMethod ) const
     {
         std::vector<std::tuple<
                 std::vector<ClassifierLabel>,
                 CrossValidationStatistics<Label>,
-                std::map< std::string_view , FeatureScoreAUC> >> ensembleCrossValidation;
+                std::map<std::string_view, FeatureScoreAUC> >> ensembleCrossValidation;
 
         for (auto &combination : _getClassifiersCombinations())
         {
@@ -89,22 +106,25 @@ public:
             for (auto &[k, assignments] : _predictions)
             {
                 auto predictions = votingMethod( combination, assignments );
-                for (auto &[id, predicted] : predictions )
+                for (auto &[id, predicted] : predictions)
                 {
                     std::string_view actualLabel = _actualLabels.at( id );
                     validation.countInstance( k, predicted, actualLabel );
-                    for( auto &[feature,value] : _features.at( id ))
-                        auc[feature].record( value , predicted == actualLabel );
+                    for (auto &[feature, value] : _features.at( id ))
+                        auc[feature].record( value, predicted == actualLabel );
                 }
             }
-            ensembleCrossValidation.emplace_back( combination, validation , auc );
+            ensembleCrossValidation.emplace_back( combination, validation, auc );
         }
         return ensembleCrossValidation;
     }
 
 private:
     static std::map<ItemID, ClassLabel>
-    _getActualLabels( const std::vector<ItemID> &members, const std::vector<Label> &labels )
+    _getActualLabels(
+            const std::vector<ItemID> &members,
+            const std::vector<Label> &labels
+    )
     {
         assert( members.size() == labels.size());
         std::map<ItemID, ClassLabel> m;
@@ -130,13 +150,13 @@ private:
         return m;
     }
 
-    static std::map<ItemID, std::map< std::string , double>>
+    static std::map<ItemID, std::map<std::string, double>>
     _getFeatures( const Folds &folds )
     {
-        std::map<ItemID, std::map< std::string , double>> m;
+        std::map<ItemID, std::map<std::string, double>> m;
         for (auto &fold : folds)
             for (auto &[label, entry] : fold)
-                m[ entry.memberId() ][ "length" ] = entry.length();
+                m[entry.memberId()]["length"] = entry.length();
 
         return m;
     }
@@ -164,14 +184,16 @@ private:
 
 
     std::vector<std::pair<ItemID, PredictionLabel>>
-    _majorityVoting( const std::vector<ClassifierLabel> &voters,
-                     const std::map<ClassifierLabel, std::vector<std::pair<ItemID, ScoredLabels >>> &predictions ) const
+    _majorityVoting(
+            const std::vector<ClassifierLabel> &voters,
+            const std::map<ClassifierLabel, std::vector<std::pair<ItemID, ScoredLabels >>> &predictions
+    ) const
     {
         std::map<ItemID, std::map<PredictionLabel, size_t >> votes;
         for (auto &voter : voters)
             for (auto&[id, prediction] : predictions.at( voter ))
-                if( auto top = prediction.top() ; top )
-                    ++votes[id][ top->get().label()];
+                if ( auto top = prediction.top(); top )
+                    ++votes[id][top->get().label()];
 
         std::vector<std::pair<ItemID, PredictionLabel>> majorityPredictions;
         for (auto &[id, _votes] : votes)
@@ -190,14 +212,16 @@ private:
     }
 
     std::vector<std::pair<ItemID, PredictionLabel>>
-    _weightedVoting( const std::vector<ClassifierLabel> &voters,
-                     const std::map<ClassifierLabel, std::vector<std::pair<ItemID, ScoredLabels >>> &predictions ) const
+    _weightedVoting(
+            const std::vector<ClassifierLabel> &voters,
+            const std::map<ClassifierLabel, std::vector<std::pair<ItemID, ScoredLabels >>> &predictions
+    ) const
     {
         std::map<ItemID, std::map<PredictionLabel, size_t >> votes;
         for (auto &voter : voters)
             for (auto&[id, prediction] : predictions.at( voter ))
-                if( auto top = prediction.top() ; top )
-                    votes[id][ top->get().label()] += top->get().value();
+                if ( auto top = prediction.top(); top )
+                    votes[id][top->get().label()] += top->get().value();
 
         std::vector<std::pair<ItemID, PredictionLabel>> majorityPredictions;
         for (auto &[id, _votes] : votes)

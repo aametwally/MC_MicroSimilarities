@@ -9,7 +9,10 @@ std::vector<std::string> splitParameters( std::string params )
     return io::split( params, "," );
 }
 
-int main( int argc, char *argv[] )
+int main(
+        int argc,
+        char *argv[]
+)
 {
     using namespace MC;
     using io::join;
@@ -83,24 +86,24 @@ int main( int argc, char *argv[] )
         {
             for (auto &m : splitParameters( model ))
             {
-                    for (auto &o : splitParameters( order ))
+                for (auto &o : splitParameters( order ))
+                {
+
+                    for (auto &g : splitParameters( grouping ))
                     {
 
-                            for (auto &g : splitParameters( grouping ))
-                            {
+                        fmt::print( "[Params]"
+                                    "[model:{}]"
+                                    "[order:{}]"
+                                    "[criteria:{}]"
+                                    "[grouping:{}]\n", m, o, c, g );
 
-                                fmt::print( "[Params]"
-                                            "[model:{}]"
-                                            "[order:{}]"
-                                            "[criteria:{}]"
-                                            "[grouping:{}]\n", m , o, c, g );
-
-                                std::visit( [&]( auto &&p ) {
-                                    p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ), k,
-                                                              splitParameters( strategy ));
-                                }, getConfiguredPipeline( g, c, m,  std::stoi( o )));
-                            }
+                        std::visit( [&]( auto &&p ) {
+                            p.runPipeline_VALIDATION( LabeledEntry::loadEntries( input, fastaFormat ), k,
+                                                      splitParameters( strategy ));
+                        }, getConfiguredPipeline( g, c, m, std::stoi( o )));
                     }
+                }
             }
         }
     }

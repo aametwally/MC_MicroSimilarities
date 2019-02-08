@@ -14,19 +14,21 @@
 #include "common.hpp"
 #include "LUT.hpp"
 
-namespace aaindex
-{
+namespace aaindex {
 
 class AAIndexClustering
 {
-    using SampleType = dlib::matrix<double , 0 , 0>;
+    using SampleType = dlib::matrix<double, 0, 0>;
 
 public:
-    explicit AAIndexClustering( const std::vector<AAIndex1> &index ,
-                                size_t nClusters )
-            : _index( index ) ,
-              _dims( index.size()) ,
-              _nClusters( nClusters ) {}
+    explicit AAIndexClustering(
+            const std::vector<AAIndex1> &index,
+            size_t nClusters
+    )
+            : _index( index ),
+              _dims( index.size()),
+              _nClusters( nClusters )
+    {}
 
     virtual void runClustering()
     {
@@ -36,17 +38,16 @@ public:
         {
             std::vector<SampleType> centroids;
 
-            dlib::pick_initial_centers( _nClusters , centroids , samplesVector );
-            dlib::find_clusters_using_kmeans( samplesVector , centroids );
+            dlib::pick_initial_centers( _nClusters, centroids, samplesVector );
+            dlib::find_clusters_using_kmeans( samplesVector, centroids );
 
             _centroids.emplace( std::move( centroids ));
         }
 
-        _clusters.emplace( LUT<char , long>::makeLUT(
-                [this]( char aa ) -> long
-                {
+        _clusters.emplace( LUT<char, long>::makeLUT(
+                [this]( char aa ) -> long {
                     if ( auto point = getPoint( aa ); point )
-                        return _closestIdx( _centroids.value() , point.value());
+                        return _closestIdx( _centroids.value(), point.value());
                     else return -1;
                 } ));
     }
@@ -55,13 +56,13 @@ public:
     {
         using namespace dlib_utilities;
         std::vector<double> point;
-        for ( auto &index : _index )
+        for (auto &index : _index)
         {
             if ( auto component = index.normalizedIndex( aa ); component )
                 point.push_back( component.value());
             else return std::nullopt;
         }
-        return vectorToColumnMatrixLike( std::move( point ));
+        return vector_to_column_matrix_like( std::move( point ));
     }
 
     std::optional<size_t> getCluster( char aa ) const
@@ -74,23 +75,28 @@ public:
 
 protected:
 
-    long _closestIdx( const std::vector<SampleType> &centroids , const SampleType &point )
+    long _closestIdx(
+            const std::vector<SampleType> &centroids,
+            const SampleType &point
+    )
     {
         static auto euclidean = Euclidean::template similarityFunctor<SampleType>();
 
         auto minIt = std::min_element(
-                centroids.cbegin() , centroids.cend() ,
-                [&]( SampleType x , SampleType y )
-                {
-                    return euclidean( x , point ) < euclidean( y , point );
+                centroids.cbegin(), centroids.cend(),
+                [&](
+                        SampleType x,
+                        SampleType y
+                ) {
+                    return euclidean( x, point ) < euclidean( y, point );
                 } );
-        return std::distance( centroids.cbegin() , minIt );
+        return std::distance( centroids.cbegin(), minIt );
     }
 
     std::vector<SampleType> _samples() const
     {
         std::vector<SampleType> samples;
-        for ( auto aa : AMINO_ACIDS20 )
+        for (auto aa : AMINO_ACIDS20)
         {
             auto point = getPoint( aa );
             assert( point.has_value());
@@ -106,7 +112,7 @@ private:
     const size_t _dims;
 
     std::optional<std::vector<SampleType>> _centroids;
-    std::optional<LUT<char , long>> _clusters;
+    std::optional<LUT<char, long>> _clusters;
 };
 
 }

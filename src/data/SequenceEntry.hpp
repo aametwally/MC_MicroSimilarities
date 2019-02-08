@@ -44,8 +44,13 @@ public:
 
     template<typename InputSequence, typename MapType>
     static auto
-    groupAveragedValue( const MapType &groups,
-                        std::function<double( std::string_view, const InputSequence & )> measuringFunction )
+    groupAveragedValue(
+            const MapType &groups,
+            std::function<double(
+                    std::string_view,
+                    const InputSequence &
+            )> measuringFunction
+    )
     {
         using K = typename std::remove_reference_t<MapType>::key_type;
         using V = typename std::remove_reference_t<MapType>::value_type;
@@ -123,7 +128,10 @@ public:
 
     template<typename AAGrouping>
     static inline std::pair<std::vector<std::string>, size_t>
-    mutateFirstReducedPolymorphicAA( std::string_view sequence, int64_t offset = 0 )
+    mutateFirstReducedPolymorphicAA(
+            std::string_view sequence,
+            int64_t offset = 0
+    )
     {
         static constexpr auto States = AAGrouping::StatesN;
         assert( isPolymorphicReducedSequence<States>( sequence ));
@@ -251,16 +259,21 @@ public:
     }
 
     template<typename AAGrouping>
-    static double polymorphicSummer( char polymorphicState,
-                                     std::function<double( char )> fn,
-                                     double acc = 0 )
+    static double polymorphicSummer(
+            char polymorphicState,
+            std::function<double( char )> fn,
+            double acc = 0
+    )
     {
         if ( isPolymorphicReducedAA( polymorphicState ))
         {
             auto stateMutations = generateReducedAAMutations<AAGrouping>( polymorphicState );
             return std::accumulate( stateMutations.cbegin(),
                                     stateMutations.cend(), acc,
-                                    [fn]( double acc, char stateMutation ) {
+                                    [fn](
+                                            double acc,
+                                            char stateMutation
+                                    ) {
                                         return acc + fn( stateMutation );
                                     } );
         } else
@@ -270,16 +283,25 @@ public:
     }
 
     template<typename AAGrouping>
-    static double polymorphicSummer( std::string_view polymorphicContext, char polymorphicState,
-                                     std::function<double( std::string_view, char )> fn,
-                                     double acc = 0 )
+    static double polymorphicSummer(
+            std::string_view polymorphicContext,
+            char polymorphicState,
+            std::function<double(
+                    std::string_view,
+                    char
+            )> fn,
+            double acc = 0
+    )
     {
         if ( isPolymorphicReducedSequence<AAGrouping::StatesN>( polymorphicContext ))
         {
             auto contextMutations =
                     generateReducedPolymorphicSequenceOutcome<AAGrouping>( polymorphicContext );
             return std::accumulate( contextMutations.cbegin(), contextMutations.cend(), acc,
-                                    [=]( double acc, std::string_view contextMutation ) {
+                                    [=](
+                                            double acc,
+                                            std::string_view contextMutation
+                                    ) {
                                         return acc + polymorphicSummer<AAGrouping>(
                                                 polymorphicState,
                                                 [contextMutation, fn]( char state ) {
@@ -296,7 +318,10 @@ public:
     }
 
     template<typename AAGrouping, typename AppliedFn>
-    static void polymorphicApply( char polymorphicState, AppliedFn fn )
+    static void polymorphicApply(
+            char polymorphicState,
+            AppliedFn fn
+    )
     {
         if ( isPolymorphicReducedAA( polymorphicState ))
         {
@@ -309,7 +334,11 @@ public:
     }
 
     template<typename AAGrouping, typename AppliedFn>
-    static void polymorphicApply( std::string_view polymorphicContext, char polymorphicState, AppliedFn fn )
+    static void polymorphicApply(
+            std::string_view polymorphicContext,
+            char polymorphicState,
+            AppliedFn fn
+    )
     {
         static constexpr auto States = AAGrouping::StatesN;
         if ( isPolymorphicReducedSequence<States>( polymorphicContext ))

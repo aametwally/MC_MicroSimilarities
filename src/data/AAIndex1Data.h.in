@@ -10,8 +10,7 @@
 /**
  * @brief https://www.genome.jp/aaindex/aaindex_help.html
  */
-namespace aaindex
-{
+namespace aaindex {
 
 constexpr std::string_view ACESSION_NUMBER_FLAG = "H";
 constexpr std::string_view DATA_DESCRIPTION_FLAG = "D";

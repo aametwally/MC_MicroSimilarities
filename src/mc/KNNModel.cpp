@@ -4,5 +4,8 @@
 
 #include "KNNModel.hpp"
 
-template class  KNNModel<Euclidean>;
-template class  KNNModel<Manhattan>;
+template
+class KNNModel<Euclidean>;
+
+template
+class KNNModel<Manhattan>;

@@ -25,10 +25,12 @@ public:
     virtual ~MCKmersClassifier() = default;
 
 protected:
-    ScoredLabels _predict(  std::string_view sequence,
-                            const BackboneProfiles &backboneProfiles,
-                            const BackboneProfiles &backgroundProfiles,
-                            const BackboneProfile &  ) const override
+    ScoredLabels _predict(
+            std::string_view sequence,
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &
+    ) const override
     {
         auto kmers = extractKmersWithPositions( sequence, {20, 30, 40, 50, 60, 70, 80} );
 
@@ -66,8 +68,12 @@ protected:
 
     struct SequenceRange
     {
-        SequenceRange( size_t begin, size_t size,
-                       std::tuple<std::string_view, std::string_view, size_t> sequence, double score )
+        SequenceRange(
+                size_t begin,
+                size_t size,
+                std::tuple<std::string_view, std::string_view, size_t> sequence,
+                double score
+        )
                 : _begin( begin ), _size( size ),
                   _maximalSequence( std::move( sequence )), _score( score )
         {}
@@ -98,7 +104,11 @@ protected:
             return _maximalSequence;
         }
 
-        void setMaximalSequence( std::string_view seq, std::string_view label, size_t pos )
+        void setMaximalSequence(
+                std::string_view seq,
+                std::string_view label,
+                size_t pos
+        )
         {
             _maximalSequence = {seq, label, pos};
         }
@@ -138,7 +148,8 @@ protected:
     static std::vector<SequenceRange>
     _nonoverlapMaximalAffinities(
             const std::map<std::string_view, std::vector<size_t >> &kmers,
-            const std::map<std::string_view, std::map<std::string_view, double>> &affinity )
+            const std::map<std::string_view, std::map<std::string_view, double>> &affinity
+    )
     {
         assert( std::all_of( kmers.cbegin(), kmers.cend(), []( const auto &p ) {
             return std::is_sorted( p.second.cbegin(), p.second.cend());
@@ -147,7 +158,10 @@ protected:
         auto max = [&]( std::string_view sequence ) {
             auto &aff = affinity.at( sequence );
             return *std::max_element( aff.cbegin(), aff.cend(),
-                                      []( const auto &p1, const auto &p2 ) {
+                                      [](
+                                              const auto &p1,
+                                              const auto &p2
+                                      ) {
                                           return p1.second < p2.second;
                                       } );
         };

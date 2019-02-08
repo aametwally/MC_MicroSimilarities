@@ -12,7 +12,10 @@ class FeatureScoreAUC
 private:
     struct Case
     {
-        Case( double score, bool tp ) : _featureScore( score ), _tp( tp )
+        Case(
+                double score,
+                bool tp
+        ) : _featureScore( score ), _tp( tp )
         {}
 
         Case( Case &&other ) = default;
@@ -38,7 +41,10 @@ private:
     };
 
 public:
-    void record( double score, bool tp )
+    void record(
+            double score,
+            bool tp
+    )
     {
         _cases.emplace_back( score, tp );
     }
@@ -58,7 +64,10 @@ public:
             return !std::isnan( c.score());
         } );
 
-        std::sort( std::begin( _cases ), it, []( const Case &c1, const Case &c2 ) {
+        std::sort( std::begin( _cases ), it, [](
+                const Case &c1,
+                const Case &c2
+        ) {
             return c1.score() > c2.score();
         } );
 
@@ -123,21 +132,30 @@ public:
     double max() const
     {
         auto it = std::max_element( std::begin( _cases ), std::end( _cases ),
-                                    []( const Case &c1, const Case &c2 ) { return c1.score() < c2.score(); } );
+                                    [](
+                                            const Case &c1,
+                                            const Case &c2
+                                    ) { return c1.score() < c2.score(); } );
         return it->score();
     }
 
     double min() const
     {
         auto it = std::min_element( std::begin( _cases ), std::end( _cases ),
-                                    []( const Case &c1, const Case &c2 ) { return c1.score() < c2.score(); } );
+                                    [](
+                                            const Case &c1,
+                                            const Case &c2
+                                    ) { return c1.score() < c2.score(); } );
         return it->score();
     }
 
     std::pair<double, double> minMax() const
     {
         auto mm = std::minmax_element( std::begin( _cases ), std::end( _cases ),
-                                       []( const Case &c1, const Case &c2 ) { return c1.score() < c2.score(); } );
+                                       [](
+                                               const Case &c1,
+                                               const Case &c2
+                                       ) { return c1.score() < c2.score(); } );
         return {mm.first->score(), mm.second->score()};
     }
 
@@ -158,9 +176,9 @@ public:
     std::string tpfn2String() const
     {
         std::string scores;
-        for( auto &c : _cases )
+        for (auto &c : _cases)
         {
-            scores += (c.tp())? "1 ": "0 ";
+            scores += (c.tp()) ? "1 " : "0 ";
         }
         return scores;
     }

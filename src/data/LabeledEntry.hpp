@@ -23,7 +23,7 @@ const std::map<std::string, DBFormatProcessor> FormatLabels = {
         {"uniref",      DBFormatProcessor::UniRef},
         {"psort",       DBFormatProcessor::PSORT},
         {"targetp",     DBFormatProcessor::TargetP},
-        {"files1",    DBFormatProcessor::Files1},
+        {"files1",      DBFormatProcessor::Files1},
         {"deeploc_loc", DBFormatProcessor::DeepLoc_Location},
         {"deeploc_sol", DBFormatProcessor::DeepLoc_Solubility}
 };
@@ -68,7 +68,10 @@ public:
         return entry;
     }
 
-    static LabeledEntry from_fasta_TARGETP( const FastaEntry &fEntry, const std::string &clusterName )
+    static LabeledEntry from_fasta_TARGETP(
+            const FastaEntry &fEntry,
+            const std::string &clusterName
+    )
     {
         using io::split;
         using io::join;
@@ -81,7 +84,10 @@ public:
         return entry;
     }
 
-    static LabeledEntry from_fasta_FILES1( const FastaEntry &fEntry, const std::string &clusterName )
+    static LabeledEntry from_fasta_FILES1(
+            const FastaEntry &fEntry,
+            const std::string &clusterName
+    )
     {
         using io::split;
         using io::join;
@@ -212,7 +218,10 @@ public:
     }
 
     static std::vector<LabeledEntry>
-    loadEntries( const std::string &input, const std::string &format )
+    loadEntries(
+            const std::string &input,
+            const std::string &format
+    )
     {
         switch (DBFormatProcessor formatLabel = FormatLabels.at( format ); formatLabel)
         {

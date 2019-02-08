@@ -4,8 +4,10 @@
 
 #include "Pipeline.hpp"
 
-namespace MC
-{
-    template class  Pipeline<AAGrouping_OFER15 >;
-    template class  Pipeline<AAGrouping_NOGROUPING22 >;
+namespace MC {
+template
+class Pipeline<AAGrouping_OFER15>;
+
+template
+class Pipeline<AAGrouping_NOGROUPING22>;
 }

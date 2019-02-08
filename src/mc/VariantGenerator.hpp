@@ -17,8 +17,11 @@ constexpr std::tuple<C<Ts...>> tupleExpand( std::tuple<Ts...> const & );
 template<template<typename...> class C, typename ... Ts,
         template<typename...> class C0, typename ... Ls,
         typename ... Cs>
-constexpr auto tupleExpand( std::tuple<Ts...> const &, C0<Ls...> const &,
-Cs const &... cs )
+constexpr auto tupleExpand(
+        std::tuple<Ts...> const &,
+        C0<Ls...> const &,
+        Cs const &... cs
+)
 -> decltype( std::tuple_cat(
         tupleExpand<C>( std::declval<std::tuple<Ts..., Ls>>(), cs... )... ));
 

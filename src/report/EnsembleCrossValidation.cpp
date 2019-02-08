@@ -6,4 +6,5 @@
 
 
 //template class EnsembleCrossValidation< std::string  >;
-template class EnsembleCrossValidation< std::string_view  >;
+template
+class EnsembleCrossValidation<std::string_view>;

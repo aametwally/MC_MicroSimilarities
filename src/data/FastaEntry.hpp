@@ -12,7 +12,10 @@
 class FastaEntry : public SequenceEntry<FastaEntry>
 {
 public:
-    FastaEntry( std::string id, std::string seq )
+    FastaEntry(
+            std::string id,
+            std::string seq
+    )
             : _id( std::move( id )), _sequence( std::move( seq ))
     {}
 
@@ -36,10 +39,10 @@ public:
         return _sequence;
     }
 
-    template< typename Sequence >
+    template<typename Sequence>
     void setSequence( Sequence &&sequence )
     {
-        _sequence = std::forward<Sequence>(sequence);
+        _sequence = std::forward<Sequence>( sequence );
     }
 
     static std::vector<FastaEntry>
@@ -60,14 +63,14 @@ public:
         } else return readFastaFile( pathString );
     }
 
-    static std::map<std::string, std::vector< FastaEntry>>
+    static std::map<std::string, std::vector<FastaEntry>>
     readFastaGroupByFilename( const std::string &pathString )
     {
         namespace fs = std::experimental::filesystem;
         fs::path p( pathString );
         if ( fs::is_directory( p ))
         {
-            std::map<std::string, std::vector< FastaEntry >> entries;
+            std::map<std::string, std::vector<FastaEntry >> entries;
             for (const auto &p : fs::directory_iterator( p ))
             {
                 auto newEntries = readFastaFile( p.path());
@@ -125,8 +128,10 @@ public:
         return fasta;
     }
 
-    static void writeFastaFile( const std::vector<FastaEntry> &fItems,
-                                const std::string &filePath )
+    static void writeFastaFile(
+            const std::vector<FastaEntry> &fItems,
+            const std::string &filePath
+    )
     {
         std::ofstream ostream( filePath );
         for (auto &item : fItems)

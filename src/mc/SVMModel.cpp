@@ -11,7 +11,10 @@ SVMModel::SVMModel( SVMConfiguration config )
 
 }
 
-void SVMModel::fit( std::vector<std::string_view> &&labels, std::vector<std::vector<double >> &&samples )
+void SVMModel::fit(
+        std::vector<std::string_view> &&labels,
+        std::vector<std::vector<double >> &&samples
+)
 {
     _decisionFunction =
             _fit( _registerLabels( std::move( labels )),
@@ -24,7 +27,8 @@ SVMModel::DecisionFunction SVMModel::_fit(
         std::vector<Label> &&labels,
         std::vector<SampleType> &&samples,
         const SVMConfiguration &configuration,
-        const std::map<std::string_view, int> &label2Index )
+        const std::map<std::string_view, int> &label2Index
+)
 {
     if ( configuration.tuning )
     {
@@ -55,7 +59,7 @@ ScoredLabels SVMModel::predict( std::vector<double> &&features ) const
 SVMModel::SampleType SVMModel::_svmFeatures( std::vector<double> &&features )
 {
     using namespace dlib_utilities;
-    return vectorToColumnMatrixLike( std::move( features ));
+    return vector_to_column_matrix_like( std::move( features ));
 }
 
 std::vector<SVMModel::SampleType> SVMModel::_svmSamples( std::vector<std::vector<double >> &&samples )
@@ -93,7 +97,8 @@ SVMModel::DecisionFunction SVMModel::_fitFixedHyperParameters(
         std::vector<Label> &&labels,
         std::vector<SampleType> &&samples,
         const SVMConfiguration &configuration,
-        const std::map<std::string_view, int> &label2Index )
+        const std::map<std::string_view, int> &label2Index
+)
 {
     SVMTrainer trainer;
     trainer.set_num_threads( std::thread::hardware_concurrency());
@@ -123,7 +128,8 @@ SVMModel::DecisionFunction SVMModel::_fitFixedHyperParameters(
 
 auto SVMModel::_crossValidationScoreSingleGamma(
         const std::vector<SVMModel::SampleType> &samples,
-        const std::vector<SVMModel::Label> &labels )
+        const std::vector<SVMModel::Label> &labels
+)
 {
     return [&]( const double gamma ) {
         SVMBinaryTrainer btrainer;
@@ -153,7 +159,8 @@ auto SVMModel::_crossValidationScoreSingleGamma(
 auto SVMModel::_crossValidationScoreMultipleGammas(
         const std::vector<SVMModel::SampleType> &samples,
         const std::vector<SVMModel::Label> &labels,
-        const std::map<std::string_view, int> &label2Index )
+        const std::map<std::string_view, int> &label2Index
+)
 {
     return [&]( dlib::matrix<double, 0, 1> gammas ) {
         assert( gammas.size() == label2Index.size());
@@ -186,7 +193,8 @@ SVMModel::DecisionFunction SVMModel::_fitTuningHyperParameters(
         std::vector<Label> &&labels,
         std::vector<SampleType> &&samples,
         const SVMConfiguration &configuration,
-        const std::map<std::string_view, int> &label2Index )
+        const std::map<std::string_view, int> &label2Index
+)
 {
     assert( configuration.tuning );
     auto newConfig = configuration;
@@ -200,9 +208,9 @@ SVMModel::DecisionFunction SVMModel::_fitTuningHyperParameters(
 
     if ( configuration.tuning->tuneGammaPerClass )
     {
-        dlib::matrix<double, 0, 1> minMat = dlib_utilities::vectorToColumnMatrixLike(
+        dlib::matrix<double, 0, 1> minMat = dlib_utilities::vector_to_column_matrix_like(
                 std::vector<double>( label2Index.size(), min ));
-        dlib::matrix<double, 0, 1> maxMat = dlib_utilities::vectorToColumnMatrixLike(
+        dlib::matrix<double, 0, 1> maxMat = dlib_utilities::vector_to_column_matrix_like(
                 std::vector<double>( label2Index.size(), max ));
 
         auto result = dlib::find_max_global(
@@ -217,8 +225,10 @@ SVMModel::DecisionFunction SVMModel::_fitTuningHyperParameters(
         newConfig.gammas.emplace( std::move( newGammas ));
     } else
     {
-        dlib::matrix<double, 0, 1> minMat = dlib_utilities::vectorToColumnMatrixLike( {min} );
-        dlib::matrix<double, 0, 1> maxMat = dlib_utilities::vectorToColumnMatrixLike( {max} );
+        dlib::matrix<double, 0, 1> minMat =
+                dlib_utilities::vector_to_column_matrix_like( std::vector<double>( {min} ));
+        dlib::matrix<double, 0, 1> maxMat =
+                dlib_utilities::vector_to_column_matrix_like( std::vector<double>( {max} ));
 
         auto result = dlib::find_max_global(
                 tp, _crossValidationScoreSingleGamma( samples, labels ),

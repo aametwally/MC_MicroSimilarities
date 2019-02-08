@@ -18,7 +18,10 @@ public:
     using TransitionMatrices2D  = typename Base::TransitionMatrices2D;
 
 public:
-    explicit MC( Order order, double epsilon = Base::TransitionMatrixEpsilon )
+    explicit MC(
+            Order order,
+            double epsilon = Base::TransitionMatrixEpsilon
+    )
             : Base( order, epsilon )
     {
         assert( order >= 1 );
@@ -53,7 +56,10 @@ public:
     using Base::probability;
     using Base::normalize;
 
-    double probability( std::string_view context, char state ) const override
+    double probability(
+            std::string_view context,
+            char state
+    ) const override
     {
         if ( context.size() > this->getOrder())
         {
@@ -77,8 +83,10 @@ public:
     }
 
 protected:
-    virtual void _incrementInstance( std::string_view context,
-                                     char state )
+    virtual void _incrementInstance(
+            std::string_view context,
+            char state
+    )
     {
         if ( !LabeledEntry::isPolymorphicReducedSequence<States>( context ) &&
              !LabeledEntry::isPolymorphicReducedAA( state ))
@@ -124,7 +132,10 @@ public:
     using HeteroHistograms = std::unordered_map<Order, IsoHistograms>;
 
 public:
-    explicit ZYMC( Order order, double epsilon = Base::TransitionMatrixEpsilon ) : Base( order, epsilon )
+    explicit ZYMC(
+            Order order,
+            double epsilon = Base::TransitionMatrixEpsilon
+    ) : Base( order, epsilon )
     {
         assert( order >= 1 );
     }
@@ -134,9 +145,11 @@ public:
     static constexpr inline HistogramID lowerOrderID( HistogramID id )
     { return id / States; }
 
-    inline double pairwiseProbability( char context,
-                                       char state,
-                                       Order distance ) const
+    inline double pairwiseProbability(
+            char context,
+            char state,
+            Order distance
+    ) const
     {
         auto c = Base::_char2ID( context );
         auto s = Base::_char2ID( state );
@@ -144,7 +157,10 @@ public:
         return value.value_or( 0.0 );
     }
 
-    double probability( std::string_view context, char state ) const override
+    double probability(
+            std::string_view context,
+            char state
+    ) const override
     {
         if ( context.size() > this->getOrder())
         {
@@ -169,9 +185,11 @@ public:
     }
 
 protected:
-    virtual void _incrementInstance( std::string_view context,
-                                     char state,
-                                     Order distance )
+    virtual void _incrementInstance(
+            std::string_view context,
+            char state,
+            Order distance
+    )
     {
         assert( context.size() == 1 );
 
@@ -213,20 +231,28 @@ public:
     using IsoHistograms = std::unordered_map<HistogramID, Histogram>;
     using HeteroHistograms = std::unordered_map<Order, IsoHistograms>;
 
-    explicit GappedMC( Order order,
-                       double epsilon = Base::TransitionMatrixEpsilon )
+    explicit GappedMC(
+            Order order,
+            double epsilon = Base::TransitionMatrixEpsilon
+    )
             : Base( order, epsilon )
     {}
 
     virtual ~GappedMC() = default;
 
     template<typename HistogramsCollection>
-    explicit GappedMC( Order order, HistogramsCollection &&histograms,
-                       double epsilon = Base::TransitionMatrixEpsilon )
+    explicit GappedMC(
+            Order order,
+            HistogramsCollection &&histograms,
+            double epsilon = Base::TransitionMatrixEpsilon
+    )
             : Base( order, std::forward<HistogramsCollection>( histograms ), epsilon )
     {}
 
-    double probability( std::string_view context, char currentState ) const override
+    double probability(
+            std::string_view context,
+            char currentState
+    ) const override
     {
         if ( context.size() > this->getOrder())
         {
@@ -265,7 +291,10 @@ class PolymorphicMC : public MC<AAGrouping::StatesN>
 public:
     virtual ~PolymorphicMC() = default;
 
-    double probability( std::string_view polymorphicContext, char polymorphicState ) const override
+    double probability(
+            std::string_view polymorphicContext,
+            char polymorphicState
+    ) const override
     {
         if ( polymorphicContext.size() > this->getOrder())
         {
@@ -274,7 +303,10 @@ public:
 
         return LabeledEntry::polymorphicSummer<AAGrouping>(
                 polymorphicContext, polymorphicState,
-                [this]( std::string_view context, char state ) {
+                [this](
+                        std::string_view context,
+                        char state
+                ) {
                     auto distance = Order( context.length());
                     auto id = Base::_sequence2ID( context );
                     auto stateID = Base::_char2ID( state );
@@ -286,12 +318,17 @@ public:
     }
 
 protected:
-    void _incrementInstance( std::string_view context, char state ) override
+    void _incrementInstance(
+            std::string_view context,
+            char state
+    ) override
     {
         LabeledEntry::polymorphicApply<AAGrouping>(
                 context, state,
-                [this]( std::string_view context,
-                        char state ) {
+                [this](
+                        std::string_view context,
+                        char state
+                ) {
                     auto order = static_cast<Order>( context.size());
                     auto id = Base::_sequence2ID( context );
                     auto c = Base::_char2ID( state );
@@ -325,7 +362,10 @@ class PolymorphicZYMC : public ZYMC<AAGrouping::StatesN>
 public:
     virtual ~PolymorphicZYMC() = default;
 
-    double probability( std::string_view polymorphicContext, char polymorphicState ) const override
+    double probability(
+            std::string_view polymorphicContext,
+            char polymorphicState
+    ) const override
     {
         if ( polymorphicContext.size() > this->getOrder())
         {
@@ -334,7 +374,10 @@ public:
 
         return LabeledEntry::polymorphicSummer<AAGrouping>(
                 polymorphicContext, polymorphicState,
-                [this]( std::string_view context, char state ) {
+                [this](
+                        std::string_view context,
+                        char state
+                ) {
                     double p = 1.0;
                     for (auto i = 0; i < context.size(); ++i)
                     {
@@ -354,14 +397,18 @@ public:
     }
 
 protected:
-    virtual void _incrementInstance( std::string_view context,
-                                     char state,
-                                     Order distance )
+    virtual void _incrementInstance(
+            std::string_view context,
+            char state,
+            Order distance
+    )
     {
         LabeledEntry::polymorphicApply<AAGrouping>(
                 context, state,
-                [this, distance]( std::string_view context,
-                                  char state ) {
+                [this, distance](
+                        std::string_view context,
+                        char state
+                ) {
                     assert( context.size() == 1 );
                     auto c = Base::_char2ID( context.front());
                     auto s = Base::_char2ID( state );
@@ -392,11 +439,15 @@ private:
     };
 
 public:
-    explicit RegularizedBinaryMC( Order order, double epsilon = AbstractMC<States>::TransitionMatrixEpsilon )
+    explicit RegularizedBinaryMC(
+            Order order,
+            double epsilon = AbstractMC<States>::TransitionMatrixEpsilon
+    )
             : CoreMCModel( order, epsilon )
     {}
 
     using AbstractMC<States>::normalize;
+
     void normalize( std::optional<size_t> minimumOccurrence ) override
     {
         assert( minimumOccurrence.value_or( 2 ) > 1 );
@@ -474,11 +525,14 @@ private:
 
 public:
     explicit RegularizedVectorsMC(
-            Order order, double epsilon = AbstractMC<States>::TransitionMatrixEpsilon )
+            Order order,
+            double epsilon = AbstractMC<States>::TransitionMatrixEpsilon
+    )
             : CoreMCModel( order, epsilon )
     {}
 
     using AbstractMC<States>::normalize;
+
     void normalize( std::optional<size_t> minimumOccurrence ) override
     {
         assert( minimumOccurrence.value_or( 1 ) > 0 );

@@ -14,7 +14,7 @@
 
 #include "dlib_utilities.hpp"
 #include "dlib/svm.h"
-
+#include "dlib/statistics.h"
 
 namespace MC {
 
@@ -25,7 +25,7 @@ struct LDAConfiguration
 
 struct PCAConfiguration
 {
-
+    double explainedVariance = 0.95;
 };
 
 template<size_t States>
@@ -39,6 +39,17 @@ class MCBasedMLModel : public AbstractMCClassifier<States>
          * Given an input vector x, Z*x-M, is the transformed version of x.
          */
         dlib::matrix<double> Z;
+        dlib::matrix<double, 0, 1> M;
+    };
+
+    struct SVDData
+    {
+        /**
+         * Given an input vector x, (x-M) * Vk, is the transformed version of x.
+         * V == tr(VT) [nFeatures * nFeatures]
+         * Vk is a subsetted columns from V, that correspont to the most significant PC.
+         */
+        dlib::matrix<double> Vk;
         dlib::matrix<double, 0, 1> M;
     };
 
@@ -58,60 +69,33 @@ public:
     using BackboneProfile = typename MCModel::BackboneProfile;
     using BackboneProfiles = typename MCModel::BackboneProfiles;
     using ModelTrainer =  ModelGenerator<States>;
-    using MacroSimilarityEnum = typename MicroSimilarityBasedClassifier<States>::MacroScoringEnum;
     using FeatureVector = std::vector<double>;
 
 public:
-    MCBasedMLModel( ModelGenerator <States> generator,
-                    std::optional<LDAConfiguration> ldaConfig,
-                    std::optional<PCAConfiguration> pcaConfig )
+    MCBasedMLModel(
+            ModelGenerator <States> generator,
+            std::optional<LDAConfiguration> ldaConfig,
+            std::optional<PCAConfiguration> pcaConfig
+    )
             : AbstractMCClassifier<States>( generator ),
               _ldaConfiguration( std::move( ldaConfig )),
-              _pcaConfiguration( std::move( pcaConfig ))
+              _svdConfiguration( std::move( pcaConfig ))
     {}
 
     virtual ~MCBasedMLModel() = default;
-
-
-    virtual void initWeakModels( SimilarityFunctor<Histogram> similarity )
-    {
-        _ensemble.emplace(
-                ClassificationEnum::Propensity, new MCPropensityClassifier<States>( this->_generator ));
-
-        _ensemble.emplace(
-                ClassificationEnum::MacroSimilarityAccumulative,
-                new MicroSimilarityBasedClassifier<States>( MacroSimilarityEnum::Accumulative,
-                                                            this->_generator, similarity ));
-
-        _ensemble.emplace(
-                ClassificationEnum::MacroSimilarityVoting,
-                new MicroSimilarityBasedClassifier<States>( MacroSimilarityEnum::Voting,
-                                                            this->_generator, similarity ));
-
-
-//            _ensemble.emplace( ClassificationEnum::KNN,
-//                               new KNNMCMicroSimilarity<Grouping>( backbones, background, training,
-//                                                              7, trainer, similarity ));
-//
-//            _ensemble.emplace( ClassificationEnum::SVM,
-//                               new SVMCMMicroSimilarity<Grouping>( backbones, background, training, trainer, similarity ));
-
-//            _ensemble.emplace( ClassificationEnum::KMERS,
-//                               new MCKmersClassifier<Grouping>( backbones, background ));
-    }
 
     void fit( const std::map<std::string_view, std::vector<std::string >> &training )
     {
         fit( training, this->_backbones, this->_backgrounds, this->_centralBackground );
     }
 
-    void fit( const std::map<std::string_view, std::vector<std::string >> &training,
-              const BackboneProfiles &backbones,
-              const BackboneProfiles &backgrounds,
-              const BackboneProfile &centralBackground )
+    void fit(
+            const std::map<std::string_view, std::vector<std::string >> &training,
+            const BackboneProfiles &backbones,
+            const BackboneProfiles &backgrounds,
+            const BackboneProfile &centralBackground
+    )
     {
-        _normalizer = [this]( FeatureVector &&f ) { return _standardNormalizeColumns( std::move( f )); };
-
         std::vector<std::string_view> labels;
         std::vector<FeatureVector> featuresVector;
         for (auto &[trainLabel, trainSeqs] : training)
@@ -134,24 +118,34 @@ public:
                                 } );
         }());
 
+        _normalizer = [this]( FeatureVector &&f ) { return _standardNormalizeColumns( std::move( f )); };
+
         if ( _normalizer )
         {
             _trainNormalizers( featuresVector );
             featuresVector = _normalizeFeatures( std::move( featuresVector ));
         }
+        if ( _svdConfiguration )
+        {
+            if ( _normData ) _trainSVD( featuresVector, _normData->centroid );
+            else _trainSVD( featuresVector, std::nullopt );
+            featuresVector = _transformFeaturesSVD( std::move( featuresVector ));
+        }
         if ( _ldaConfiguration )
         {
             _trainLDA( featuresVector, labels );
-            featuresVector = _transformFeatures( std::move( featuresVector ));
+            featuresVector = _transformFeaturesLDA( std::move( featuresVector ));
         }
         _fitML( std::move( labels ), std::move( featuresVector ));
     }
 
 protected:
-    ScoredLabels _predict( std::string_view sequence,
-                           const BackboneProfiles &backboneProfiles,
-                           const BackboneProfiles &backgroundProfiles,
-                           const BackboneProfile &centralBackground ) const override
+    ScoredLabels _predict(
+            std::string_view sequence,
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &centralBackground
+    ) const override
     {
         auto features = _extractFeatures( sequence, backboneProfiles, backgroundProfiles, centralBackground );
         assert( std::all_of( features.begin(), features.end(),
@@ -160,38 +154,30 @@ protected:
         if ( _normalizer )
             features = _normalizeFeatures( std::move( features ));
 
+        assert((_svdConfiguration && _svdData) || !_svdConfiguration );
+        if ( _svdConfiguration && _svdData )
+            features = _transformFeaturesSVD( std::move( features ));
+
         assert((_ldaConfiguration && _ldaData) || !_ldaConfiguration );
         if ( _ldaConfiguration && _ldaData )
-            features = _transformFeatures( std::move( features ));
+            features = _transformFeaturesLDA( std::move( features ));
 
         return _predictML( std::move( features ));
     }
 
-    virtual void _fitML( std::vector<std::string_view> &&labels, std::vector<FeatureVector> &&f ) = 0;
+    virtual void _fitML(
+            std::vector<std::string_view> &&labels,
+            std::vector<FeatureVector> &&f
+    ) = 0;
 
     virtual ScoredLabels _predictML( FeatureVector &&f ) const = 0;
 
-    virtual FeatureVector _extractFeatures( std::string_view sequence,
-                                            const BackboneProfiles &backboneProfiles,
-                                            const BackboneProfiles &backgroundProfiles,
-                                            const BackboneProfile &centralBackground ) const
-    {
-        FeatureVector f;
-        for (auto &[enumm, classifier] : this->_ensemble)
-        {
-            auto propensityPredictions =
-                    classifier->scoredPredictions(
-                            sequence,
-                            backboneProfiles,
-                            backgroundProfiles,
-                            centralBackground ).toMap();
-
-            for (auto &[cluster, _] : backboneProfiles)
-                f.push_back( propensityPredictions.at( cluster ));
-        }
-        f.push_back( sequence.length());
-        return f;
-    };
+    virtual FeatureVector _extractFeatures(
+            std::string_view sequence,
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &centralBackground
+    ) const = 0;
 
 private:
     using NormalizerFunction = std::function<std::vector<double>( std::vector<double> && )>;
@@ -212,8 +198,10 @@ private:
         return numericLabels;
     }
 
-    virtual void _trainLDA( const std::vector<std::vector<double >> &features,
-                            const std::vector<std::string_view> &labels )
+    virtual void _trainLDA(
+            const std::vector<std::vector<double >> &features,
+            const std::vector<std::string_view> &labels
+    )
     {
         const size_t ncol = features.front().size();
         assert( std::all_of( features.begin(), features.end(),
@@ -237,14 +225,97 @@ private:
         _ldaData->M = std::move( M );
     }
 
-    virtual std::vector<FeatureVector> _transformFeatures( std::vector<FeatureVector> &&features ) const
+    virtual void _trainSVD(
+            const std::vector<std::vector<double >> &features,
+            const std::optional<std::vector<double>> &centroid
+    )
+    {
+        const size_t nFeatures = features.front().size();
+        const size_t nSamples = features.size();
+        assert( std::all_of( features.begin(), features.end(),
+                             [=]( auto &v ) { return v.size() == nFeatures; } ) && _svdConfiguration );
+
+        dlib::matrix<double, 1, 0> center =
+                (centroid) ?
+                dlib_utilities::vector_to_column_matrix_like( centroid.value()) :
+                dlib_utilities::vector_to_column_matrix_like( _centroid( features ));
+
+        dlib::matrix<double> X, U, S, V; // Data matrix,
+
+        X.set_size( nSamples, nFeatures );
+        for (size_t r = 0; r < X.nr(); ++r)
+            for (size_t c = 0; c < X.nc(); ++c)
+                X( r, c ) = features[r][c] - center( c );
+
+        dlib::svd3( X, U, S, V );
+
+        _svdData.emplace();
+        _svdData->Vk = explainedVarianceColumnsSelection( V, S, _svdConfiguration->explainedVariance );
+        _svdData->M = std::move( center );
+    }
+
+    static dlib::matrix<double> explainedVarianceColumnsSelection(
+            const dlib::matrix<double> &V,
+            const dlib::matrix<double> &S,
+            double exp
+    )
+    {
+        assert( S.nc() == 1 && S.nr() == V.nr() && V.nr() == V.nc());
+        assert( exp > 0 && exp <= 1 );
+        if ( exp <= 0 )
+        {
+            throw std::runtime_error( "Bad explained variance selection." );
+        } else if ( exp >= 1 )
+        {
+            return V;
+        } else
+        {
+            std::vector<size_t> indices;
+            indices.reserve( static_cast<size_t>(S.nr()));
+
+            for (size_t i = 0; i < S.nr(); ++i) indices.push_back( i );
+
+            std::sort( indices.begin(), indices.end(),
+                       [&]( size_t a, size_t b ) {
+                           return S( a ) > S( b );
+                       } );
+            double sumSuares = std::accumulate( S.begin(), S.end(), double( 0 ),
+                                                []( double acc, double s ) {
+                                                    return acc + s * s;
+                                                } );
+
+            double accVar = 0;
+            size_t k = 0;
+            for (k = 0; k < indices.size() && accVar < exp; ++k)
+            {
+                double s = S( indices.at( k ));
+                accVar += (s * s) / sumSuares;
+            }
+            dlib::matrix<double> Vk;
+            Vk.set_size( S.nr(), k + 1 );
+            for (size_t i = 0; i <= k; ++i)
+            {
+                dlib::set_colm( Vk, i ) = dlib::colm( V, indices.at( i ));
+            }
+            return Vk;
+        }
+    }
+
+    virtual std::vector<FeatureVector> _transformFeaturesLDA( std::vector<FeatureVector> &&features ) const
     {
         for (auto &&f : features)
-            f = _transformFeatures( std::move( f ));
+            f = _transformFeaturesLDA( std::move( f ));
         return features;
     }
 
-    virtual FeatureVector _transformFeatures( FeatureVector &&f ) const
+    virtual std::vector<FeatureVector> _transformFeaturesSVD( std::vector<FeatureVector> &&features ) const
+    {
+        for (auto &&f : features)
+            f = _transformFeaturesSVD( std::move( f ));
+        return features;
+    }
+
+    virtual FeatureVector _transformFeaturesLDA( FeatureVector &&f ) const
     {
         using namespace dlib_utilities;
         assert( _ldaConfiguration && _ldaData );
@@ -252,10 +323,47 @@ private:
         {
             auto &&Z = _ldaData->Z;
             auto &&M = _ldaData->M;
-            auto x = vectorToColumnMatrixLike( std::move( f ));
-            ColumnVectorMatrixLike<double> fv( Z * x - M );
+            auto x = vector_to_column_matrix_like( std::move( f ));
+            column_matrix_like<double> fv( Z * x - M );
             return std::move( fv.steal_vector());
         } else return f;
+    }
+
+    virtual FeatureVector _transformFeaturesSVD( FeatureVector &&f ) const
+    {
+        using namespace dlib_utilities;
+        assert( _svdConfiguration && _svdData );
+        if ( _svdConfiguration && _svdData )
+        {
+            auto &&Vk = _svdData->Vk;
+            auto &&M = _svdData->M;
+            auto x = vector_to_column_matrix_like( std::move( f ));
+            column_matrix_like<double> fv((x - M) * Vk );
+            return std::move( fv.steal_vector());
+        } else return f;
+    }
+
+    static std::vector<double> _centroid( const std::vector<std::vector<double >> &features )
+    {
+        const size_t ncol = features.front().size();
+        assert( std::all_of( features.cbegin(), features.cend(),
+                             [=]( auto &&v ) { return v.size() == ncol; } ));
+        auto centroid = std::vector<double>( ncol, 0 );
+        size_t n = 0;
+        for (auto &&fs : features)
+        {
+            for (size_t col = 0; col < ncol; ++col)
+            {
+                if ( !std::isnan( fs[col] ))
+                {
+                    centroid[col] += fs[col];
+                    ++n;
+                }
+            }
+        }
+        for (auto &&m : centroid)
+            m /= n;
+        return centroid;
     }
 
     void _trainNormalizers( const std::vector<std::vector<double >> &features )
@@ -276,7 +384,7 @@ private:
         colMax = std::vector<double>( ncol, -inf );
         colMagnitude = std::vector<double>( ncol, 0 );
         colStandardDeviation = std::vector<double>( ncol, 0 );
-        centroid = std::vector<double>( ncol, 0 );
+        centroid = _centroid( features );
 
         size_t n = 0;
         for (auto &&fs : features)
@@ -288,7 +396,6 @@ private:
                     colMin[col] = std::min( colMin[col], fs[col] );
                     colMax[col] = std::max( colMax[col], fs[col] );
                     colMagnitude[col] += fs[col] * fs[col];
-                    centroid[col] += fs[col];
                     ++n;
                 }
             }
@@ -296,9 +403,6 @@ private:
 
         for (auto &&m : colMagnitude)
             m = std::sqrt( m );
-
-        for (auto &&m : centroid)
-            m /= n;
 
         for (auto &&fs : features)
         {
@@ -373,7 +477,10 @@ private:
         const double min = *minIt;
         const double max = *maxIt;
         double magnitude = std::accumulate( features.cbegin(), features.cend(), double( 0 ),
-                                            []( double acc, double val ) {
+                                            [](
+                                                    double acc,
+                                                    double val
+                                            ) {
                                                 return acc + val * val;
                                             } );
         for (double &f : features)
@@ -402,19 +509,94 @@ private:
         return features;
     }
 
-protected:
-    std::map<ClassificationEnum, std::unique_ptr<AbstractMCClassifier < States> >> _ensemble;
-
 private:
     std::optional<NormalizationData> _normData;
     std::optional<NormalizerFunction> _normalizer;
     std::optional<LDAConfiguration> _ldaConfiguration;
-    std::optional<PCAConfiguration> _pcaConfiguration;
+    std::optional<PCAConfiguration> _svdConfiguration;
     std::optional<LDAData> _ldaData;
+    std::optional<SVDData> _svdData;
 };
 
 template<size_t States>
-class KNNStackedMC : protected KNNModel<Euclidean>, public MCBasedMLModel<States>
+class MCStackedMLClassifier : public MCBasedMLModel<States>
+{
+public:
+    using FeatureVector = typename MCBasedMLModel<States>::FeatureVector;
+    using MCModel = AbstractMC<States>;
+    using Histogram = typename MCModel::Histogram;
+    using BackboneProfiles = typename MCModel::BackboneProfiles;
+    using BackboneProfile = typename MCModel::BackboneProfile;
+    using Generator = ModelGenerator<States>;
+
+public:
+    explicit MCStackedMLClassifier(
+            Generator generator,
+            std::optional<LDAConfiguration> ldaConfig,
+            std::optional<PCAConfiguration> pcaConfig
+    )
+            : MCBasedMLModel<States>( generator, ldaConfig, pcaConfig )
+    {}
+
+    void initWeakModels( SimilarityFunctor<Histogram> similarity )
+    {
+        using MacroSimilarityEnum = typename MicroSimilarityBasedClassifier<States>::MacroScoringEnum;
+        _ensemble.emplace(
+                ClassificationEnum::Propensity, new MCPropensityClassifier<States>( this->_generator ));
+
+        _ensemble.emplace(
+                ClassificationEnum::MacroSimilarityAccumulative,
+                new MicroSimilarityBasedClassifier<States>( MacroSimilarityEnum::Accumulative,
+                                                            this->_generator, similarity ));
+
+        _ensemble.emplace(
+                ClassificationEnum::MacroSimilarityVoting,
+                new MicroSimilarityBasedClassifier<States>( MacroSimilarityEnum::Voting,
+                                                            this->_generator, similarity ));
+
+
+//            _ensemble.emplace( ClassificationEnum::KNN,
+//                               new KNNMCMicroSimilarity<Grouping>( backbones, background, training,
+//                                                              7, trainer, similarity ));
+//
+//            _ensemble.emplace( ClassificationEnum::SVM,
+//                               new SVMCMMicroSimilarity<Grouping>( backbones, background, training, trainer, similarity ));
+
+//            _ensemble.emplace( ClassificationEnum::KMERS,
+//                               new MCKmersClassifier<Grouping>( backbones, background ));
+    }
+
+
+protected:
+    FeatureVector _extractFeatures(
+            std::string_view sequence,
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &centralBackground
+    ) const override
+    {
+        FeatureVector f;
+        for (auto &[enumm, classifier] : this->_ensemble)
+        {
+            auto propensityPredictions =
+                    classifier->scoredPredictions(
+                            sequence,
+                            backboneProfiles,
+                            backgroundProfiles,
+                            centralBackground ).toMap();
+
+            for (auto &[cluster, _] : backboneProfiles)
+                f.push_back( propensityPredictions.at( cluster ));
+        }
+        f.push_back( sequence.length());
+        return f;
+    };
+private:
+    std::map<ClassificationEnum, std::unique_ptr<AbstractMCClassifier < States> >> _ensemble;
+};
+
+template<size_t States>
+class KNNStackedMC : protected KNNModel<Euclidean>, public MCStackedMLClassifier<States>
 {
     using KNN = KNNModel<Euclidean>;
     using FeatureVector = typename MCBasedMLModel<States>::FeatureVector;
@@ -422,10 +604,12 @@ class KNNStackedMC : protected KNNModel<Euclidean>, public MCBasedMLModel<States
 
 public:
     explicit KNNStackedMC(
-            size_t k, Generator generator,
+            size_t k,
+            Generator generator,
             std::optional<LDAConfiguration> ldaConfig,
-            std::optional<PCAConfiguration> pcaConfig )
-            : KNN( k ), MCBasedMLModel<States>( generator, ldaConfig, pcaConfig )
+            std::optional<PCAConfiguration> pcaConfig
+    )
+            : KNN( k ), MCStackedMLClassifier<States>( generator, ldaConfig, pcaConfig )
     {}
 
     virtual ~KNNStackedMC() = default;
@@ -433,9 +617,12 @@ public:
     using MCBasedMLModel<States>::fit;
 
 protected:
-    void _fitML( std::vector<std::string_view> &&labels, std::vector<FeatureVector> &&f ) override
+    void _fitML(
+            std::vector<std::string_view> &&labels,
+            std::vector<FeatureVector> &&f
+    ) override
     {
-        KNN::fit( std::move( labels), std::move( f ));
+        KNN::fit( std::move( labels ), std::move( f ));
     }
 
     ScoredLabels _predictML( FeatureVector &&f ) const override
@@ -445,7 +632,7 @@ protected:
 };
 
 template<size_t States>
-class SVMStackedMC : protected SVMModel, public MCBasedMLModel<States>
+class SVMStackedMC : protected SVMModel, public MCStackedMLClassifier<States>
 {
     using FeatureVector = typename MCBasedMLModel<States>::FeatureVector;
     using Generator = ModelGenerator<States>;
@@ -455,8 +642,9 @@ public:
             SVMConfiguration configuration,
             const Generator generator,
             std::optional<LDAConfiguration> ldaConfig,
-            std::optional<PCAConfiguration> pcaConfig )
-            : MCBasedMLModel<States>( generator, ldaConfig, pcaConfig ),
+            std::optional<PCAConfiguration> pcaConfig
+    )
+            : MCStackedMLClassifier<States>( generator, ldaConfig, pcaConfig ),
               SVMModel( configuration )
     {}
 
@@ -464,9 +652,12 @@ public:
 
     using MCBasedMLModel<States>::fit;
 protected:
-    void _fitML( std::vector<std::string_view> &&labels, std::vector<FeatureVector> &&f ) override
+    void _fitML(
+            std::vector<std::string_view> &&labels,
+            std::vector<FeatureVector> &&f
+    ) override
     {
-        SVMModel::fit( std::move( labels), std::move( f ));
+        SVMModel::fit( std::move( labels ), std::move( f ));
     }
 
     ScoredLabels _predictML( FeatureVector &&f ) const override
@@ -490,35 +681,41 @@ public:
     explicit MCParametersBasedMLClassifier(
             Generator generator,
             std::optional<LDAConfiguration> ldaConfig,
-            std::optional<PCAConfiguration> pcaConfig )
+            std::optional<PCAConfiguration> pcaConfig
+    )
             : MCBasedMLModel<States>( generator, ldaConfig, pcaConfig )
     {}
 
-    void initWeakModels( SimilarityFunctor<Histogram> similarity ) override
-    {}
-
 protected:
-    FeatureVector _extractFeatures( std::string_view sequence,
-                                    const BackboneProfiles &backboneProfiles,
-                                    const BackboneProfiles &backgroundProfiles,
-                                    const BackboneProfile &centralBackground ) const override
+    FeatureVector _extractFeatures(
+            std::string_view sequence,
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &centralBackground
+    ) const override
     {
         assert( centralBackground ); // must exist.
 
         size_t nCols = std::accumulate( backboneProfiles.cbegin(), backboneProfiles.cend(), size_t( 0 ),
-                                        []( size_t acc, auto &&kv ) {
-                                            return acc + kv.second.parametersCount();
+                                        [](
+                                                size_t acc,
+                                                auto &&kv
+                                        ) {
+                                            return acc + kv.second->parametersCount();
                                         } );
         std::vector<double> flatFeatures;
         flatFeatures.reserve( nCols ); // TODO: handle exceptions.
-
 
         auto sample = this->_generator( sequence );
         std::map<std::string_view, std::vector<double >> similarities;
         for (auto &[label, profile] : backboneProfiles)
         {
             auto &&backboneCentroids = profile->centroids().get();
-            backboneCentroids.forEach( [&]( Order order, HistogramID id, auto &&backboneCentroid ) {
+            backboneCentroids.forEach( [&](
+                    Order order,
+                    HistogramID id,
+                    auto &&backboneCentroid
+            ) {
 
                 auto sampleCentroid = sample->centroid( order, id );
                 if ( sampleCentroid )
@@ -561,7 +758,8 @@ public:
             SVMConfiguration configuration,
             Generator generator,
             std::optional<LDAConfiguration> ldaConfig,
-            std::optional<PCAConfiguration> pcaConfig )
+            std::optional<PCAConfiguration> pcaConfig
+    )
             : SVMModel( configuration ),
               MCParametersBasedMLClassifier<States>( generator, ldaConfig, pcaConfig )
     {}
@@ -571,9 +769,12 @@ public:
     using MCParametersBasedMLClassifier<States>::fit;
 
 protected:
-    void _fitML( std::vector<std::string_view> &&labels, std::vector<FeatureVector> &&f ) override
+    void _fitML(
+            std::vector<std::string_view> &&labels,
+            std::vector<FeatureVector> &&f
+    ) override
     {
-        SVMModel::fit( std::move( labels), std::move( f ));
+        SVMModel::fit( std::move( labels ), std::move( f ));
     }
 
     ScoredLabels _predictML( FeatureVector &&f ) const override
@@ -596,7 +797,8 @@ public:
             size_t k,
             Generator generator,
             std::optional<LDAConfiguration> ldaConfig,
-            std::optional<PCAConfiguration> pcaConfig )
+            std::optional<PCAConfiguration> pcaConfig
+    )
             : KNNModel( k ),
               MCParametersBasedMLClassifier<States>( generator, ldaConfig, pcaConfig )
     {}
@@ -606,9 +808,12 @@ public:
     using MCParametersBasedMLClassifier<States>::fit;
 
 protected:
-    void _fitML( std::vector<std::string_view> &&labels, std::vector<FeatureVector> &&f ) override
+    void _fitML(
+            std::vector<std::string_view> &&labels,
+            std::vector<FeatureVector> &&f
+    ) override
     {
-        KNNModel::fit( std::move( labels), std::move( f ));
+        KNNModel::fit( std::move( labels ), std::move( f ));
     }
 
     ScoredLabels _predictML( FeatureVector &&f ) const override
@@ -635,18 +840,18 @@ public:
             Generator generator,
             SimilarityFunctor<Histogram> similarity,
             std::optional<LDAConfiguration> ldaConfig,
-            std::optional<PCAConfiguration> pcaConfig )
+            std::optional<PCAConfiguration> pcaConfig
+    )
             : MCBasedMLModel<States>( generator, ldaConfig, pcaConfig ),
               _similarity( similarity )
-    {}
-
-    void initWeakModels( SimilarityFunctor<Histogram> similarity ) override
     {}
 
 protected:
     template<typename MicroMeasurementsType, typename AlternativeMeasurementsType>
     static MicroMeasurements compensateMissingMeasurements(
-            MicroMeasurementsType &&microMeasurements, AlternativeMeasurementsType &&alternativeMeasurements )
+            MicroMeasurementsType &&microMeasurements,
+            AlternativeMeasurementsType &&alternativeMeasurements
+    )
     {
         MicroMeasurements compensated = std::forward<MicroMeasurementsType>( microMeasurements );
         for (auto &&[label, measurements] : microMeasurements)
@@ -666,10 +871,12 @@ protected:
         return compensated;
     }
 
-    FeatureVector _extractFeatures( std::string_view sequence,
-                                    const BackboneProfiles &backboneProfiles,
-                                    const BackboneProfiles &backgroundProfiles,
-                                    const BackboneProfile &centralBackground ) const override
+    FeatureVector _extractFeatures(
+            std::string_view sequence,
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &centralBackground
+    ) const override
     {
         MicroMeasurements measurements;
         AlternativeMeasurements alternatives;
@@ -682,7 +889,11 @@ protected:
         {
             auto &_measurements = measurements[label];
             auto &&backboneCentroids = profile->centroids().get();
-            backboneCentroids.forEach( [&]( Order order, HistogramID id, auto &&backboneCentroid ) {
+            backboneCentroids.forEach( [&](
+                    Order order,
+                    HistogramID id,
+                    auto &&backboneCentroid
+            ) {
                 double &measurement = _measurements[order][id];
                 double &furthest = alternatives[order].try_emplace( id, bestInfinity ).first->second;
 
@@ -716,9 +927,15 @@ protected:
 
 //        measurements = compensateMissingMeasurements( std::move( measurements ), std::move( alternatives ));
         size_t size = std::accumulate( measurements.cbegin(), measurements.cend(), size_t( 0 ),
-                                       []( size_t acc, auto &&kv ) {
+                                       [](
+                                               size_t acc,
+                                               auto &&kv
+                                       ) {
                                            return std::accumulate( kv.second.cbegin(), kv.second.cend(), acc,
-                                                                   []( size_t acc, auto &&kv ) {
+                                                                   [](
+                                                                           size_t acc,
+                                                                           auto &&kv
+                                                                   ) {
                                                                        return acc + kv.second.size();
                                                                    } );
                                        } );
@@ -753,7 +970,8 @@ public:
             Generator generator,
             SimilarityFunctor<Histogram> similarity,
             std::optional<LDAConfiguration> ldaConfig,
-            std::optional<PCAConfiguration> pcaConfig )
+            std::optional<PCAConfiguration> pcaConfig
+    )
             : SVMModel( configuration ),
               MCMicroSimilarityBasedMLClassifier<States>( generator, similarity, ldaConfig, pcaConfig )
     {}
@@ -763,9 +981,12 @@ public:
     using MCMicroSimilarityBasedMLClassifier<States>::fit;
 
 protected:
-    void _fitML( std::vector<std::string_view> &&labels, std::vector<FeatureVector> &&f ) override
+    void _fitML(
+            std::vector<std::string_view> &&labels,
+            std::vector<FeatureVector> &&f
+    ) override
     {
-        SVMModel::fit( std::move( labels), std::move( f ));
+        SVMModel::fit( std::move( labels ), std::move( f ));
     }
 
     ScoredLabels _predictML( FeatureVector &&f ) const override
@@ -789,7 +1010,8 @@ public:
             Generator generator,
             SimilarityFunctor<Histogram> similarity,
             std::optional<LDAConfiguration> ldaConfig,
-            std::optional<PCAConfiguration> pcaConfig )
+            std::optional<PCAConfiguration> pcaConfig
+    )
             : KNNModel( k ),
               MCMicroSimilarityBasedMLClassifier<States>( generator, similarity, ldaConfig, pcaConfig )
     {}
@@ -799,9 +1021,12 @@ public:
     using MCMicroSimilarityBasedMLClassifier<States>::fit;
 
 protected:
-    void _fitML( std::vector<std::string_view> &&labels, std::vector<FeatureVector> &&f ) override
+    void _fitML(
+            std::vector<std::string_view> &&labels,
+            std::vector<FeatureVector> &&f
+    ) override
     {
-        KNNModel::fit( std::move( labels), std::move( f ));
+        KNNModel::fit( std::move( labels ), std::move( f ));
     }
 
     ScoredLabels _predictML( FeatureVector &&f ) const override

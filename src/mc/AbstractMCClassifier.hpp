@@ -18,8 +18,10 @@ enum class ClassificationEnum
     MacroSimilarityCombined,
     Propensity,
     Segmentation,
-    SVM,
-    KNN,
+    SVM_MCParameters,
+    KNN_MCParameters,
+    SVM_MCSimilarity,
+    KNN_MCSimilirity,
     KMERS,
     SVM_Stack,
     KNN_Stack,
@@ -31,8 +33,10 @@ static const std::map<std::string, ClassificationEnum> ClassifierEnum = {
         {"acc",          ClassificationEnum::MacroSimilarityAccumulative},
         {"propensity",   ClassificationEnum::Propensity},
         {"segmentation", ClassificationEnum::Segmentation},
-        {"svm",          ClassificationEnum::SVM},
-        {"knn",          ClassificationEnum::KNN},
+        {"svm_mcp",      ClassificationEnum::SVM_MCParameters},
+        {"knn_mcp",      ClassificationEnum::KNN_MCParameters},
+        {"svm_mcs",      ClassificationEnum::SVM_MCSimilarity},
+        {"knn_mcs",      ClassificationEnum::KNN_MCSimilirity},
         {"svm_stack",    ClassificationEnum::SVM_Stack},
         {"knn_stack",    ClassificationEnum::KNN_Stack},
         {"kmers",        ClassificationEnum::KMERS},
@@ -99,7 +103,8 @@ public:
             const SequencesType &sequences,
             const BackboneProfiles &backboneProfiles,
             const BackboneProfiles &backgroundProfiles,
-            const std::optional<BackboneProfile> &centralBackground = std::nullopt ) const
+            const std::optional<BackboneProfile> &centralBackground = std::nullopt
+    ) const
     {
         assert( _validTraining( backboneProfiles, backgroundProfiles, centralBackground ));
         std::vector<std::string_view> labels;
@@ -111,7 +116,8 @@ public:
 
     template<typename InputSequence>
     std::vector<ScoredLabels> scoredPredictions(
-            const std::vector<InputSequence> &sequences ) const
+            const std::vector<InputSequence> &sequences
+    ) const
     {
         return scoredPredictions( sequences, _backbones, _backgrounds, _centralBackground );
     }
@@ -121,7 +127,8 @@ public:
             const std::vector<InputSequence> &sequences,
             const BackboneProfiles &backboneProfiles,
             const BackboneProfiles &backgroundProfiles,
-            const BackboneProfile &centralBackground ) const
+            const BackboneProfile &centralBackground
+    ) const
     {
         assert( _validTraining( backboneProfiles, backgroundProfiles, centralBackground ));
         std::vector<ScoredLabels> scoredLabels;
@@ -133,7 +140,8 @@ public:
     }
 
     ScoredLabels scoredPredictions(
-            std::string_view sequence ) const
+            std::string_view sequence
+    ) const
     {
         assert( _validTraining( _backbones, _backgrounds, _centralBackground ));
         return _predict( sequence, _backbones, _backgrounds, _centralBackground );
@@ -143,16 +151,19 @@ public:
             std::string_view sequence,
             const BackboneProfiles &backboneProfiles,
             const BackboneProfiles &backgroundProfiles,
-            const BackboneProfile &centralBackground ) const
+            const BackboneProfile &centralBackground
+    ) const
     {
         assert( _validTraining( backboneProfiles, backgroundProfiles, centralBackground ));
         return _predict( sequence, backboneProfiles, backgroundProfiles, centralBackground );
     }
 
 protected:
-    static bool _validTraining( const BackboneProfiles &backboneProfiles,
-                                const BackboneProfiles &backgroundProfiles,
-                                const BackboneProfile &centralBackground )
+    static bool _validTraining(
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &centralBackground
+    )
     {
         return !backgroundProfiles.empty() &&
                backboneProfiles.size() == backgroundProfiles.size();
@@ -163,10 +174,12 @@ protected:
         return _validTraining( _backbones, _backgrounds, _centralBackground );
     }
 
-    std::string_view _bestPrediction( std::string_view sequence,
-                                      const BackboneProfiles &backboneProfiles,
-                                      const BackboneProfiles &backgroundProfiles,
-                                      const BackboneProfile &centralBackground ) const
+    std::string_view _bestPrediction(
+            std::string_view sequence,
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &centralBackground
+    ) const
     {
         auto predictions = _predict( sequence, backgroundProfiles, backgroundProfiles, centralBackground );
         if ( auto top = predictions.top(); top )
@@ -175,10 +188,12 @@ protected:
         } else return unclassified;
     }
 
-    virtual ScoredLabels _predict( std::string_view sequence,
-                                   const BackboneProfiles &backboneProfiles,
-                                   const BackboneProfiles &backgroundProfiles,
-                                   const BackboneProfile &centralBackground ) const = 0;
+    virtual ScoredLabels _predict(
+            std::string_view sequence,
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &centralBackground
+    ) const = 0;
 
 protected:
     const ModelGenerator <States> _generator;
@@ -203,10 +218,12 @@ public:
     {}
 
 protected:
-    ScoredLabels _predict( std::string_view sequence,
-                           const BackboneProfiles &backboneProfiles,
-                           const BackboneProfiles &backgroundProfiles,
-                           const BackboneProfile & ) const override
+    ScoredLabels _predict(
+            std::string_view sequence,
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &
+    ) const override
     {
         std::map<std::string_view, double> propensitites;
 
@@ -251,7 +268,8 @@ public:
     explicit MicroSimilarityBasedClassifier(
             const MacroScoringEnum macroScoring,
             const ModelGenerator <States> &generator,
-            const SimilarityFunctor<Histogram> similarityFunctor )
+            const SimilarityFunctor<Histogram> similarityFunctor
+    )
             : AbstractMCClassifier<States>( generator ), _similarityFunctor( similarityFunctor ),
               _macroScoring( macroScoring )
     {}
@@ -264,7 +282,8 @@ protected:
     macroScoresFromMicroMeasurement(
             MicroMeasurementsType &&microMeasurements,
             AlternativeMeasurementsType &&alternativeMeasurements,
-            const SimilarityFunctor<Histogram> &similarityFunctor )
+            const SimilarityFunctor<Histogram> &similarityFunctor
+    )
     {
         std::map<std::string_view, double> macro;
         for (auto &&[label, measurements] : microMeasurements)
@@ -275,7 +294,10 @@ protected:
                 auto &isoAlternativeMeasurements = alternativeMeasurements.at( order );
                 labelMacro = std::accumulate(
                         isoMeasurements.cbegin(), isoMeasurements.cend(), labelMacro,
-                        [&]( double acc, std::pair<HistogramID, double> &&value ) {
+                        [&](
+                                double acc,
+                                std::pair<HistogramID, double> &&value
+                        ) {
                             if ( double measurement = value.second; !std::isnan( measurement ))
                             {
                                 return acc + measurement;
@@ -298,7 +320,12 @@ protected:
     template<typename MicroMeasurementsType>
     static std::map<std::string_view, double>
     votingFromMicroMeasurements(
-            MicroMeasurementsType &&microMeasurements, std::function<bool( double, double )> closerThan )
+            MicroMeasurementsType &&microMeasurements,
+            std::function<bool(
+                    double,
+                    double
+            )> closerThan
+    )
     {
         std::map<std::string_view, double> votes;
         std::unordered_map<Order, std::unordered_map<HistogramID, std::pair<std::string_view, double >>> closest;
@@ -328,10 +355,12 @@ protected:
         return votes;
     }
 
-    ScoredLabels _predict( std::string_view sequence,
-                           const BackboneProfiles &backboneProfiles,
-                           const BackboneProfiles &backgroundProfiles,
-                           const BackboneProfile &centralBackground ) const override
+    ScoredLabels _predict(
+            std::string_view sequence,
+            const BackboneProfiles &backboneProfiles,
+            const BackboneProfiles &backgroundProfiles,
+            const BackboneProfile &centralBackground
+    ) const override
     {
         MicroMeasurements measurements;
         AlternativeMeasurements alternatives;
@@ -346,7 +375,11 @@ protected:
         {
             auto &_measurements = measurements[label];
             histograms.forEach(
-                    [&]( Order order, HistogramID id, const Histogram &histogram ) {
+                    [&](
+                            Order order,
+                            HistogramID id,
+                            const Histogram &histogram
+                    ) {
                         double &measurement = _measurements[order][id];
                         double &furthest = alternatives[order].try_emplace( id, bestInfinity ).first->second;
 

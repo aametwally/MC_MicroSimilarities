@@ -42,7 +42,10 @@ public:
         return cm;
     }
 
-    void countInstance( const Label &prediction, const Label &actual )
+    void countInstance(
+            const Label &prediction,
+            const Label &actual
+    )
     {
         assert( !_dictionary.empty());
         size_t actualIdx = _getClassIdx( actual );
@@ -90,7 +93,10 @@ public:
     T population() const
     {
         return std::accumulate( _matrix.cbegin(), _matrix.cend(),
-                                T( 0 ), [this]( T count, const Row &row ) {
+                                T( 0 ), [this](
+                        T count,
+                        const Row &row
+                ) {
                     return count + _rowCount( row );
                 } );
     }
@@ -152,7 +158,10 @@ public:
         return double( allTp + eps ) / (allTp + allFn + eps);
     }
 
-    double fScore( const Label &cl, double beta = 1 ) const
+    double fScore(
+            const Label &cl,
+            double beta = 1
+    ) const
     {
         auto classIdx = _getClassIdx( cl );
         return _fScore( classIdx, beta );
@@ -348,7 +357,10 @@ private:
     template<size_t indentation, size_t col1Width = 50>
     static auto _printRowFunction()
     {
-        return [=]( const char *col1, double col2 ) {
+        return [=](
+                const char *col1,
+                double col2
+        ) {
             constexpr const char *fmtSpec = "{:<{}}{:<{}}:{}\n";
             fmt::print( fmtSpec, "", indentation, col1, col1Width, col2 );
         };
@@ -466,7 +478,10 @@ private:
         return double( tp + eps ) / (tp + fn + eps);
     }
 
-    double _fScore( size_t classIdx, double beta ) const
+    double _fScore(
+            size_t classIdx,
+            double beta
+    ) const
     {
         auto mPrecision = _precision( classIdx ), mRecall = _recall( classIdx );
         beta *= beta;

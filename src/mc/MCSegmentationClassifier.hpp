@@ -9,9 +9,8 @@
 #include "AbstractMC.hpp"
 #include "SequenceAnnotator.hpp"
 
-namespace MC
-{
-template < size_t States >
+namespace MC {
+template<size_t States>
 class MCSegmentationClassifier : public AbstractMCClassifier<States>
 {
     static constexpr size_t MAX_SEGMENTS = 10;
@@ -22,18 +21,20 @@ class MCSegmentationClassifier : public AbstractMCClassifier<States>
 
     using ScoreFunction = SequenceAnnotator::ScoreFunction;
 public:
-    explicit MCSegmentationClassifier( const BackboneProfiles &backbones ,
-                                       const BackboneProfiles &backgrounds ,
-                                       const std::map<std::string_view , std::vector<std::string>> &trainingSequences ,
-                                       const ModelGenerator <States> &modelTrainer )
-            : _backbones( backbones ) ,
-              _background( backgrounds ) ,
-              _scoringFunctions( _extractScoringFunctions( backbones , backgrounds )) ,
+    explicit MCSegmentationClassifier(
+            const BackboneProfiles &backbones,
+            const BackboneProfiles &backgrounds,
+            const std::map<std::string_view, std::vector<std::string>> &trainingSequences,
+            const ModelGenerator<States> &modelTrainer
+    )
+            : _backbones( backbones ),
+              _background( backgrounds ),
+              _scoringFunctions( _extractScoringFunctions( backbones, backgrounds )),
               AbstractMCClassifier<States>( modelTrainer )
     {
         _segmentationLearners =
-                _learnBySegmentation( backbones , backgrounds , _scoringFunctions ,
-                                      trainingSequences , modelTrainer );
+                _learnBySegmentation( backbones, backgrounds, _scoringFunctions,
+                                      trainingSequences, modelTrainer );
     }
 
     virtual ~MCSegmentationClassifier() = default;
@@ -42,28 +43,32 @@ protected:
 
 
     static std::vector<ScoreFunction>
-    _extractScoringFunctions( const BackboneProfiles &profiles , const BackboneProfiles &backgrounds )
+    _extractScoringFunctions(
+            const BackboneProfiles &profiles,
+            const BackboneProfiles &backgrounds
+    )
     {
         std::vector<ScoreFunction> scoringFunctions;
-        for ( auto &[l , profile] : profiles )
+        for (auto &[l, profile] : profiles)
         {
             auto &background = backgrounds.at( l );
-            scoringFunctions.emplace_back( [&]( std::string_view query ) -> double
-                                           {
-                                               assert( !query.empty());
-                                               char state = query.back();
-                                               query.remove_suffix( 1 );
-                                               return profile->transitionalPropensity( query , state ) -
-                                                      background->transitionalPropensity( query , state );
-                                           } );
+            scoringFunctions.emplace_back( [&]( std::string_view query ) -> double {
+                assert( !query.empty());
+                char state = query.back();
+                query.remove_suffix( 1 );
+                return profile->transitionalPropensity( query, state ) -
+                       background->transitionalPropensity( query, state );
+            } );
         }
         return scoringFunctions;
     }
 
     static std::vector<std::vector<double >>
-    _extractBinaryScores( std::string_view query ,
-                          const BackboneProfile &profile ,
-                          const BackboneProfile &background )
+    _extractBinaryScores(
+            std::string_view query,
+            const BackboneProfile &profile,
+            const BackboneProfile &background
+    )
     {
         std::vector<std::vector<double >> scoresForward;
 
@@ -74,23 +79,25 @@ protected:
     }
 
     static BackboneProfiles
-    _learnBySegmentation( const BackboneProfiles &backbones ,
-                          const BackboneProfiles &backgrounds ,
-                          const std::vector<ScoreFunction> &scoringFunctions ,
-                          const std::map<std::string_view , std::vector<std::string>> &trainingSequences ,
-                          const ModelGenerator <States> &modelTrainer )
+    _learnBySegmentation(
+            const BackboneProfiles &backbones,
+            const BackboneProfiles &backgrounds,
+            const std::vector<ScoreFunction> &scoringFunctions,
+            const std::map<std::string_view, std::vector<std::string>> &trainingSequences,
+            const ModelGenerator<States> &modelTrainer
+    )
     {
         std::vector<std::string_view> labels;
-        std::transform( backbones.cbegin() , backbones.cend() , std::back_inserter( labels ) ,
+        std::transform( backbones.cbegin(), backbones.cend(), std::back_inserter( labels ),
                         []( const auto &p ) { return p.first; } );
 
-        std::map<std::string_view , std::vector<std::string_view >> trainingSegments;
-        for ( auto &[l , sequences] : trainingSequences )
+        std::map<std::string_view, std::vector<std::string_view >> trainingSegments;
+        for (auto &[l, sequences] : trainingSequences)
         {
             auto &segments = trainingSegments[l];
-            for ( auto &sequence : sequences )
+            for (auto &sequence : sequences)
             {
-                SequenceAnnotator annotator( sequence , scoringFunctions );
+                SequenceAnnotator annotator( sequence, scoringFunctions );
                 std::vector<SequenceAnnotation> annotations = annotator.annotate( MAX_SEGMENTS );
 
 //                    for( auto &annotation : annotations )
@@ -101,36 +108,38 @@ protected:
 //                                segments.push_back( segment.getSubsequence());
 //                        }
 //                    }
-                for ( auto &segment : annotations.back().getSegments())
+                for (auto &segment : annotations.back().getSegments())
                 {
                     if ( auto segmentLabel = labels.at( segment.getLabel()); segmentLabel == l )
                         segments.push_back( segment.getSubsequence());
                 }
             }
         }
-        return MCModel::train( trainingSegments , modelTrainer );
+        return MCModel::train( trainingSegments, modelTrainer );
     }
 
 
     static BackboneProfiles
-    _learnByBinarySegmentation( const BackboneProfiles &backbones ,
-                                const BackboneProfiles &backgrounds ,
-                                const std::map<std::string_view , std::vector<std::string>> &trainingSequences ,
-                                const ModelGenerator <States> &modelTrainer )
+    _learnByBinarySegmentation(
+            const BackboneProfiles &backbones,
+            const BackboneProfiles &backgrounds,
+            const std::map<std::string_view, std::vector<std::string>> &trainingSequences,
+            const ModelGenerator<States> &modelTrainer
+    )
     {
-        std::map<std::string_view , std::vector<std::string_view >> trainingSegments;
-        for ( auto &[l , sequences] : trainingSequences )
+        std::map<std::string_view, std::vector<std::string_view >> trainingSegments;
+        for (auto &[l, sequences] : trainingSequences)
         {
             auto &segments = trainingSegments[l];
             auto &backbone = backbones.at( l );
             auto &background = backgrounds.at( l );
 
-            for ( auto &sequence : sequences )
+            for (auto &sequence : sequences)
             {
-                SequenceAnnotator annotator( sequence , _extractBinaryScores( sequence , backbone , background ));
+                SequenceAnnotator annotator( sequence, _extractBinaryScores( sequence, backbone, background ));
                 std::vector<SequenceAnnotation> annotations = annotator.annotate( MAX_SEGMENTS );
 
-                for ( auto &segment : annotations.back().getSegments())
+                for (auto &segment : annotations.back().getSegments())
                 {
                     if ( segment.getLabel() == 0 )
                         segments.push_back( segment.getSubsequence());
@@ -138,18 +147,20 @@ protected:
 
             }
         }
-        return MCModel::train( trainingSegments , modelTrainer );
+        return MCModel::train( trainingSegments, modelTrainer );
     }
 
-    ScoredLabels _predict( std::string_view sequence,
-                           const BackboneProfiles &,
-                           const BackboneProfiles &,
-                           const BackboneProfile & ) const override
+    ScoredLabels _predict(
+            std::string_view sequence,
+            const BackboneProfiles &,
+            const BackboneProfiles &,
+            const BackboneProfile &
+    ) const override
     {
-        const SequenceAnnotator annotator( sequence , _scoringFunctions );
+        const SequenceAnnotator annotator( sequence, _scoringFunctions );
         const std::vector<SequenceAnnotation> annotations = annotator.annotate( MAX_SEGMENTS );
 
-        std::map<std::string_view , double> propensities;
+        std::map<std::string_view, double> propensities;
 
 //            for( auto &annotation : annotations )
 //            {
@@ -162,9 +173,9 @@ protected:
 //                }
 //            }
 
-        for ( auto &segment : annotations.back().getSegments())
+        for (auto &segment : annotations.back().getSegments())
         {
-            for ( auto &[learnerLabel , learner] : _segmentationLearners )
+            for (auto &[learnerLabel, learner] : _segmentationLearners)
             {
                 propensities[learnerLabel] += learner->propensity( segment.getSubsequence());
             }
@@ -173,17 +184,17 @@ protected:
         propensities = minmaxNormalize( std::move( propensities ));
 
         ScoredLabels matchSet( _segmentationLearners.size());
-        for ( auto &[label , relativeAffinity] : propensities )
-            matchSet.emplace( label , relativeAffinity );
+        for (auto &[label, relativeAffinity] : propensities)
+            matchSet.emplace( label, relativeAffinity );
 
         return matchSet;
     }
 
     ScoredLabels _predict2( std::string_view sequence ) const
     {
-        std::map<std::string_view , double> propensities;
+        std::map<std::string_view, double> propensities;
 
-        for ( auto&[label , backbone] :_segmentationLearners )
+        for (auto&[label, backbone] :_segmentationLearners)
         {
             propensities[label] = backbone->propensity( sequence );
         }
@@ -191,8 +202,8 @@ protected:
         propensities = minmaxNormalize( std::move( propensities ));
 
         ScoredLabels matchSet( _segmentationLearners.size());
-        for ( auto &[label , relativeAffinity] : propensities )
-            matchSet.emplace( label , relativeAffinity );
+        for (auto &[label, relativeAffinity] : propensities)
+            matchSet.emplace( label, relativeAffinity );
 
         return matchSet;
     }

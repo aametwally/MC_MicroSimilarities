@@ -14,7 +14,11 @@ struct SequenceAnnotation
 
     struct Segment
     {
-        explicit Segment( std::string_view subsequence, size_t label, double score )
+        explicit Segment(
+                std::string_view subsequence,
+                size_t label,
+                double score
+        )
                 : _subsequence( subsequence ), _label( label ),
                   _score( score )
         {}
@@ -77,21 +81,23 @@ struct SequenceAnnotation
         return ss.str();
     }
 
-    static std::string toString( const std::vector<SequenceAnnotation> &annotations,
-                                 std::string_view prefix = "" )
+    static std::string toString(
+            const std::vector<SequenceAnnotation> &annotations,
+            std::string_view prefix = ""
+    )
     {
         std::stringstream ss;
         double max = -inf;
         for (auto annotation : annotations)
         {
-            max = std::max( max, annotation.getScore() );
+            max = std::max( max, annotation.getScore());
         }
 
         for (const auto &annotation : annotations)
         {
             auto score = annotation.getScore();
-            char flag = ( score == max )? '*' : ' ';
-            ss << fmt::format( "{},{}ΣS={},{}\n", prefix , flag , score ,  annotation.toStringCompact());
+            char flag = (score == max) ? '*' : ' ';
+            ss << fmt::format( "{},{}ΣS={},{}\n", prefix, flag, score, annotation.toStringCompact());
         }
 
         return ss.str();
@@ -100,7 +106,10 @@ struct SequenceAnnotation
     size_t size() const
     {
         return std::accumulate( _segments.cbegin(), _segments.cend(), size_t( 0 ),
-                                []( size_t acc, const auto &s ) {
+                                [](
+                                        size_t acc,
+                                        const auto &s
+                                ) {
                                     return acc + s.size();
                                 } );
     }
@@ -110,16 +119,23 @@ struct SequenceAnnotation
         return _segments;
     }
 
-    void addSegment( std::string_view seq, size_t label, double score  )
+    void addSegment(
+            std::string_view seq,
+            size_t label,
+            double score
+    )
     {
         _segments.emplace_back( seq, label, score );
     }
 
     double getScore() const
     {
-        return std::accumulate( _segments.cbegin() , _segments.cend() , 0.0 , []( double acc , auto &seg ){
-           return acc + seg.getScore();
-        });
+        return std::accumulate( _segments.cbegin(), _segments.cend(), 0.0, [](
+                double acc,
+                auto &seg
+        ) {
+            return acc + seg.getScore();
+        } );
     }
 
 private:
@@ -133,8 +149,10 @@ class SequenceAnnotator
 public:
     using ScoreFunction = std::function<double( std::string_view )>;
 
-    explicit SequenceAnnotator( std::string_view sequence,
-                                const std::vector<ScoreFunction> &scoreFunctions )
+    explicit SequenceAnnotator(
+            std::string_view sequence,
+            const std::vector<ScoreFunction> &scoreFunctions
+    )
             : _sequence( sequence ),
               _scoreFunctions( scoreFunctions )
     {}
@@ -195,7 +213,10 @@ public:
         using BacktraceRow = std::vector<BacktraceLabel>;
         using BacktraceBuffer = std::vector<BacktraceRow>;
     public:
-        explicit BacktraceGraph( size_t rows, size_t columns )
+        explicit BacktraceGraph(
+                size_t rows,
+                size_t columns
+        )
         {
             _paths = BacktraceBuffer( rows, BacktraceRow( columns, horizontal ));
             assert( nRows() > 0 );
@@ -209,7 +230,7 @@ public:
 
         void addRow()
         {
-            _paths.push_back( BacktraceRow( nColumns() , horizontal ));
+            _paths.push_back( BacktraceRow( nColumns(), horizontal ));
         }
 
         inline size_t nColumns() const
@@ -217,25 +238,37 @@ public:
             return _paths.front().size();
         }
 
-        inline void setHorizontal( size_t row, size_t column )
+        inline void setHorizontal(
+                size_t row,
+                size_t column
+        )
         {
             assert( row < _paths.size() && column < _paths.front().size());
             _paths[row][column] = horizontal;
         }
 
-        inline void setVertical( size_t row, size_t column )
+        inline void setVertical(
+                size_t row,
+                size_t column
+        )
         {
             assert( row < _paths.size() && column < _paths.front().size());
             _paths[row][column] = vertical;
         }
 
-        inline bool isHorizontal( size_t row, size_t column ) const
+        inline bool isHorizontal(
+                size_t row,
+                size_t column
+        ) const
         {
             assert( row < _paths.size() && column < _paths.front().size());
             return _paths[row][column] == horizontal;
         }
 
-        inline bool isVertical( size_t row, size_t column ) const
+        inline bool isVertical(
+                size_t row,
+                size_t column
+        ) const
         {
             return !isHorizontal( row, column );
         }
@@ -282,7 +315,7 @@ public:
 
     std::vector<SequenceAnnotation> annotate( size_t maxSegments = 0 ) const
     {
-        if( maxSegments == 0 ) return adaptiveAnnotation();
+        if ( maxSegments == 0 ) return adaptiveAnnotation();
         else
         {
             BacktraceGraph backtrace( maxSegments, nColumns());
@@ -303,7 +336,7 @@ public:
 
     std::vector<SequenceAnnotation> adaptiveAnnotation() const
     {
-        BacktraceGraph backtrace( 1 , nColumns());
+        BacktraceGraph backtrace( 1, nColumns());
         std::unordered_map<size_t, std::unordered_map<size_t, std::pair<size_t, double> >> labels;
 
         std::vector<Node> currentLine = runFirstLine( backtrace );
@@ -311,7 +344,7 @@ public:
 
         double oldScore = -inf;
         double newScore = currentLine.back().getMaxLane().second;
-        for (size_t row = 1; newScore > oldScore ; ++row)
+        for (size_t row = 1; newScore > oldScore; ++row)
         {
             oldScore = newScore;
             backtrace.addRow();
@@ -352,7 +385,8 @@ protected:
             size_t row,
             std::vector<Node> &&currentLine,
             BacktraceGraph &backtrace,
-            std::unordered_map<size_t, std::unordered_map<size_t, std::pair<size_t, double> >> &labels ) const
+            std::unordered_map<size_t, std::unordered_map<size_t, std::pair<size_t, double> >> &labels
+    ) const
     {
         assert( row > 0 );
         const size_t maxSegments = backtrace.nRows();
@@ -402,7 +436,8 @@ protected:
 
     std::vector<SequenceAnnotation> makeAnnotations(
             const BacktraceGraph &backtrace,
-            const std::unordered_map<size_t, std::unordered_map<size_t, std::pair<size_t, double> >> &labels ) const
+            const std::unordered_map<size_t, std::unordered_map<size_t, std::pair<size_t, double> >> &labels
+    ) const
     {
         std::vector<SequenceAnnotation> annotations;
 

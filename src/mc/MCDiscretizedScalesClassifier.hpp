@@ -45,7 +45,10 @@ class MCDiscretizedScalesClassifier : public AbstractMCClassifier<States>
     static constexpr std::array<char, States> alphabets = reducedAlphabet<States>();
 
 public:
-    explicit MCDiscretizedScalesClassifier( ModelGenerator <States> generator, size_t k )
+    explicit MCDiscretizedScalesClassifier(
+            ModelGenerator <States> generator,
+            size_t k
+    )
             : _discretizedAAScales( selectedIndices, k ), _k( k ),
               AbstractMCClassifier<States>( generator )
     {}
@@ -63,7 +66,10 @@ public:
 
 protected:
 
-    static inline char nearestNeighborInterpolateAminoAcids_OU( std::string_view sequence, const size_t index )
+    static inline char nearestNeighborInterpolateAminoAcids_OU(
+            std::string_view sequence,
+            const size_t index
+    )
     {
         assert( sequence.at( index ) == 'O' || sequence.at( index ) == 'U' );
         auto aaItForward = std::find_if( sequence.cbegin() + index, sequence.cend(), [&]( char aa ) {
@@ -88,8 +94,10 @@ protected:
         }
     }
 
-    static std::string _transformSequence( std::string_view sequence,
-                                           const aaindex::AAIndexClustering &discretizedAAScales )
+    static std::string _transformSequence(
+            std::string_view sequence,
+            const aaindex::AAIndexClustering &discretizedAAScales
+    )
     {
         std::string transformed;
         transformed.reserve( sequence.size());
@@ -113,7 +121,8 @@ protected:
     template<typename InputSequence>
     static std::vector<std::string> _transformSequences(
             const std::vector<InputSequence> &sequences,
-            const aaindex::AAIndexClustering &discretizedAAScales )
+            const aaindex::AAIndexClustering &discretizedAAScales
+    )
     {
         std::vector<std::string> transformed;
         transformed.reserve( sequences.size());
@@ -125,7 +134,8 @@ protected:
     template<typename InputSequence>
     static std::map<std::string_view, std::vector<std::string >> _transformSequences(
             const std::map<std::string_view, std::vector<InputSequence >> &labeledSequences,
-            const aaindex::AAIndexClustering &discretizedAAScales )
+            const aaindex::AAIndexClustering &discretizedAAScales
+    )
     {
         std::map<std::string_view, std::vector<std::string >> transformed;
         for (auto&[label, sequences] : labeledSequences)
@@ -133,10 +143,12 @@ protected:
         return transformed;
     }
 
-    ScoredLabels _predict( std::string_view sequence,
-                           const BackboneProfiles &backbones,
-                           const BackboneProfiles &background,
-                           const BackboneProfile & ) const override
+    ScoredLabels _predict(
+            std::string_view sequence,
+            const BackboneProfiles &backbones,
+            const BackboneProfiles &background,
+            const BackboneProfile &
+    ) const override
     {
         std::map<std::string_view, double> propensitites;
 

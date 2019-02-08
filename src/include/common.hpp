@@ -41,7 +41,10 @@ inline constexpr size_t powi( uint16_t exponent )
     return (exponent == 0) ? size_t{1} : Base * powi<Base>( exponent - 1 );
 }
 
-inline double powd( double x, uint16_t exponent )
+inline double powd(
+        double x,
+        uint16_t exponent
+)
 {
     return (exponent == 0) ? 1.f : x * powd( x, exponent - 1 );
 }
@@ -56,7 +59,10 @@ inline double maxInformation_UNIFORM( size_t k )
 }
 
 template<typename I>
-inline double entropy( I first, I last )
+inline double entropy(
+        I first,
+        I last
+)
 {
     double sum = 0;
     for (auto it = first; it != last; ++it)
@@ -68,14 +74,21 @@ inline double entropy( I first, I last )
 }
 
 template<typename I>
-inline double informationGain_UNIFORM( I first, I last, long k = -1 )
+inline double informationGain_UNIFORM(
+        I first,
+        I last,
+        long k = -1
+)
 {
     k = (k < 0) ? std::distance( first, last ) : k;
     return maxInformation_UNIFORM( k ) - entropy( first, last );
 }
 
 template<typename I>
-inline void normalize( I first, I last )
+inline void normalize(
+        I first,
+        I last
+)
 {
     double sum = 0;
     for (auto it = first; it != last; ++it)
@@ -102,7 +115,10 @@ inline std::vector<double> unitNormalize( std::vector<double> &&vec )
 
 inline std::map<std::string_view, double> minmaxNormalize( std::map<std::string_view, double> &&map )
 {
-    auto[minIt, maxIt] = std::minmax_element( map.cbegin(), map.cend(), []( auto &p1, auto &p2 ) {
+    auto[minIt, maxIt] = std::minmax_element( map.cbegin(), map.cend(), [](
+            auto &p1,
+            auto &p2
+    ) {
         return p1.second < p2.second;
     } );
     const double min = minIt->second;
@@ -131,7 +147,10 @@ inline std::vector<double> minmaxNormalize( std::vector<double> &&vec )
  * @return
  */
 template<typename I>
-inline I randomElement( I begin, I end )
+inline I randomElement(
+        I begin,
+        I end
+)
 {
     using UInt = unsigned long;
     const UInt n = std::distance( begin, end );
@@ -147,7 +166,10 @@ inline I randomElement( I begin, I end )
 }
 
 template<typename I>
-inline auto randomElementSampler( I begin, I end )
+inline auto randomElementSampler(
+        I begin,
+        I end
+)
 {
     static std::mt19937 rng( std::random_device{}());
     auto n = std::distance( begin, end );
@@ -158,7 +180,10 @@ inline auto randomElementSampler( I begin, I end )
 }
 
 template<typename I>
-inline auto randomIndexSampler( I begin, I end )
+inline auto randomIndexSampler(
+        I begin,
+        I end
+)
 {
     static std::mt19937 rng( std::random_device{}());
     auto n = std::distance( begin, end );
@@ -171,7 +196,11 @@ inline auto randomIndexSampler( I begin, I end )
 
 template<typename ContainerOut, typename ContainerIn, typename ConverterFn>
 inline ContainerOut
-randomSubset( ContainerIn &&items, size_t select, ConverterFn converter )
+randomSubset(
+        ContainerIn &&items,
+        size_t select,
+        ConverterFn converter
+)
 {
     using InputItem = typename std::remove_reference_t<ContainerIn>::value_type;
     using OutputItem = typename std::remove_reference_t<ContainerOut>::value_type;
@@ -187,7 +216,11 @@ randomSubset( ContainerIn &&items, size_t select, ConverterFn converter )
 
 template<typename ContainerOut, typename ContainerIn, typename ConverterFn>
 inline std::pair<ContainerOut, ContainerOut>
-subsetRandomSeparation( ContainerIn &&items, size_t select, ConverterFn converter )
+subsetRandomSeparation(
+        ContainerIn &&items,
+        size_t select,
+        ConverterFn converter
+)
 {
     using InputItem = typename std::remove_reference_t<ContainerIn>::value_type;
     using OutputItem = typename std::remove_reference_t<ContainerOut>::value_type;
@@ -249,7 +282,10 @@ readInputStream()
     return lines;
 }
 
-inline auto split( const std::string &s, char delim )
+inline auto split(
+        const std::string &s,
+        char delim
+)
 {
     std::stringstream ss( s );
     std::vector<std::string> tokens;
@@ -272,8 +308,10 @@ inline auto split( const std::string &s )
     return tokens;
 }
 
-inline auto split( std::string_view s,
-                   std::string_view delim )
+inline auto split(
+        std::string_view s,
+        std::string_view delim
+)
 {
     std::vector<std::string> tokens;
     size_t last = 0;
@@ -290,9 +328,16 @@ inline auto split( std::string_view s,
 }
 
 template<typename SeqIt>
-inline std::string join( SeqIt first, SeqIt last, const std::string &sep )
+inline std::string join(
+        SeqIt first,
+        SeqIt last,
+        const std::string &sep
+)
 {
-    auto binaryJoinString = [&sep]( std::string &a, std::string_view b ) -> std::string & {
+    auto binaryJoinString = [&sep](
+            std::string &a,
+            std::string_view b
+    ) -> std::string & {
         return a.append((a.empty()) ? "" : sep ).append( b );
     };
     return std::accumulate( first, last,
@@ -300,8 +345,10 @@ inline std::string join( SeqIt first, SeqIt last, const std::string &sep )
 }
 
 template<typename Container = std::vector<std::string >>
-inline std::string join( const Container &container,
-                         const std::string &sep )
+inline std::string join(
+        const Container &container,
+        const std::string &sep
+)
 {
     return join( container.cbegin(), container.cend(), sep );
 }
@@ -323,7 +370,10 @@ inline void rtrim( std::string &s )
 }
 
 // trim from start (in place)
-inline void ltrim( std::string &s, const std::string &trimmed )
+inline void ltrim(
+        std::string &s,
+        const std::string &trimmed
+)
 {
     s.erase( s.begin(), std::find_if( s.begin(), s.end(), [&trimmed]( int ch ) {
         return trimmed.find( ch ) == std::string::npos;
@@ -331,7 +381,10 @@ inline void ltrim( std::string &s, const std::string &trimmed )
 }
 
 // trim from end (in place)
-inline void rtrim( std::string &s, const std::string &trimmed )
+inline void rtrim(
+        std::string &s,
+        const std::string &trimmed
+)
 {
     s.erase( std::find_if( s.rbegin(), s.rend(), [&trimmed]( int ch ) {
         return trimmed.find( ch ) == std::string::npos;
@@ -367,28 +420,40 @@ inline std::string trim_copy( std::string s )
 }
 
 // trim from both ends (in place)
-inline void trim( std::string &s, const std::string &trimmed )
+inline void trim(
+        std::string &s,
+        const std::string &trimmed
+)
 {
     ltrim( s, trimmed );
     rtrim( s, trimmed );
 }
 
 // trim from start (copying)
-inline std::string ltrim_copy( std::string s, const std::string &trimmed )
+inline std::string ltrim_copy(
+        std::string s,
+        const std::string &trimmed
+)
 {
     ltrim( s, trimmed );
     return s;
 }
 
 // trim from end (copying)
-inline std::string rtrim_copy( std::string s, const std::string &trimmed )
+inline std::string rtrim_copy(
+        std::string s,
+        const std::string &trimmed
+)
 {
     rtrim( s, trimmed );
     return s;
 }
 
 // trim from both ends (copying)
-inline std::string trim_copy( std::string s, const std::string &trimmed )
+inline std::string trim_copy(
+        std::string s,
+        const std::string &trimmed
+)
 {
     trim( s, trimmed );
     return s;
@@ -396,9 +461,11 @@ inline std::string trim_copy( std::string s, const std::string &trimmed )
 
 
 inline auto
-findWithMismatches( const std::string &str,
-                    const std::string &substr,
-                    unsigned int d )
+findWithMismatches(
+        const std::string &str,
+        const std::string &substr,
+        unsigned int d
+)
 {
     assert( substr.size() <= str.size() && substr.size() > d );
     auto cStr = str.data();
@@ -422,7 +489,10 @@ findWithMismatches( const std::string &str,
 }
 
 template<typename SeqIt>
-inline std::vector<std::string> asStringsVector( SeqIt firstIt, SeqIt lastIt )
+inline std::vector<std::string> asStringsVector(
+        SeqIt firstIt,
+        SeqIt lastIt
+)
 {
     std::vector<std::string> stringified;
     if ( std::distance( firstIt, lastIt ) > 0 )
@@ -442,7 +512,10 @@ inline std::vector<std::string> asStringsVector( const Container &container )
 }
 
 template<typename Container>
-inline std::string join2string( const Container &container, const std::string &sep )
+inline std::string join2string(
+        const Container &container,
+        const std::string &sep
+)
 {
     auto s = asStringsVector( container.cbegin(), container.cend());
     return join( s, sep );
@@ -459,7 +532,10 @@ inline std::vector<K> keys( const std::map<K, V> &m )
 };
 
 template<typename MapType, typename ConverterType>
-inline auto keys( const MapType &m, ConverterType converter )
+inline auto keys(
+        const MapType &m,
+        ConverterType converter
+)
 {
     using K = typename std::remove_reference_t<MapType>::key_type;
     using NewKeyType = decltype( converter( std::declval<K>()));
@@ -497,15 +573,21 @@ inline std::vector<V> values( const std::unordered_map<K, V> &m )
 };
 
 template<typename Map>
-inline typename Map::mapped_type getOr( const Map &m, const typename Map::key_type &k,
-                                        typename Map::mapped_type defaultValue = typename Map::mapped_type()) noexcept
+inline typename Map::mapped_type getOr(
+        const Map &m,
+        const typename Map::key_type &k,
+        typename Map::mapped_type defaultValue = typename Map::mapped_type()) noexcept
 {
     auto it = m.find( k );
     return (it == m.cend()) ? defaultValue : it->second;
 };
 
 template<typename Map, typename K1, typename K2, typename T>
-inline auto getOr( const Map &m, K1 k1, K2 k2, T defaultValue = T()) noexcept
+inline auto getOr(
+        const Map &m,
+        K1 k1,
+        K2 k2,
+        T defaultValue = T()) noexcept
 {
     if ( auto it1 = m.find( k1 ); it1 != m.cend())
     {
@@ -525,7 +607,12 @@ inline std::string reverse( String &&seq )
     return reversed;
 };
 
-inline bool overlappingSegments( size_t pos1, size_t size1, size_t pos2, size_t size2 )
+inline bool overlappingSegments(
+        size_t pos1,
+        size_t size1,
+        size_t pos2,
+        size_t size2
+)
 {
     if ( pos1 <= pos2 )
         return pos1 + size1 >= pos2;
@@ -533,8 +620,11 @@ inline bool overlappingSegments( size_t pos1, size_t size1, size_t pos2, size_t 
 }
 
 
-inline std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions( std::string_view seq,
-                                                                                  size_t kMin, size_t kMax )
+inline std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions(
+        std::string_view seq,
+        size_t kMin,
+        size_t kMax
+)
 {
     std::map<std::string_view, std::vector<size_t>> kmers;
     for (auto k = kMin; k <= kMax && k < seq.size(); ++k)
@@ -545,8 +635,10 @@ inline std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions
     return kmers;
 }
 
-inline std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions( std::string_view seq,
-                                                                                  std::initializer_list<size_t> ks )
+inline std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions(
+        std::string_view seq,
+        std::initializer_list<size_t> ks
+)
 {
     std::map<std::string_view, std::vector<size_t>> kmers;
     for (auto k : ks)
@@ -561,8 +653,11 @@ inline std::map<std::string_view, std::vector<size_t>> extractKmersWithPositions
 }
 
 
-inline std::map<std::string_view, size_t> extractKmersWithCounts( std::string_view seq,
-                                                                  size_t kMin, size_t kMax )
+inline std::map<std::string_view, size_t> extractKmersWithCounts(
+        std::string_view seq,
+        size_t kMin,
+        size_t kMax
+)
 {
     std::map<std::string_view, size_t> kmers;
     for (auto k = kMin; k <= kMax && k < seq.size(); ++k)
@@ -582,7 +677,10 @@ inline std::vector<double> hannWindow( size_t size )
     return w;
 }
 
-inline std::vector<double> correlate( const std::vector<double> &window, const std::vector<double> &vector )
+inline std::vector<double> correlate(
+        const std::vector<double> &window,
+        const std::vector<double> &vector
+)
 {
     assert( window.size() < vector.size());
     std::vector<double> product;
@@ -610,7 +708,11 @@ inline std::vector<double> correlate( const std::vector<double> &window, const s
 
 
 template<typename Iterator>
-inline bool next_combination( const Iterator first, Iterator k, const Iterator last )
+inline bool next_combination(
+        const Iterator first,
+        Iterator k,
+        const Iterator last
+)
 {
     /* Credits: Thomas Draper */
     if ((first == last) || (first == k) || (last == k))
@@ -651,7 +753,10 @@ inline bool next_combination( const Iterator first, Iterator k, const Iterator l
 
 template<typename T>
 std::vector<std::vector<T >>
-inline combinations( const std::vector<T> &vec, size_t k )
+inline combinations(
+        const std::vector<T> &vec,
+        size_t k
+)
 {
     assert( k <= vec.size());
     auto copy = vec;

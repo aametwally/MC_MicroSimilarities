@@ -73,9 +73,11 @@ private:
     using LeaderBoard = ClassificationCandidates<Score>;
 
 public:
-    Pipeline( ModelGenerator<States> modelTrainer,
-              SimilarityFunctor<Histogram> similarity,
-              Order order )
+    Pipeline(
+            ModelGenerator<States> modelTrainer,
+            SimilarityFunctor<Histogram> similarity,
+            Order order
+    )
             : _modelGenerator( std::move( modelTrainer )),
               _similarity( std::move( similarity )),
               _order( order )
@@ -102,13 +104,15 @@ public:
 
     template<typename TrainingDataType>
     std::vector<ScoredLabels>
-    scoredPredictions( const std::vector<std::string> &queries,
-                       const BackboneProfiles &backbones,
-                       const BackboneProfiles &backgrounds,
-                       const BackboneProfile &centralBackground,
-                       const TrainingDataType &trainingClusters,
-                       const ClassificationEnum classificationStrategy,
-                       std::optional<std::reference_wrapper<const Selection>> selection = std::nullopt ) const
+    scoredPredictions(
+            const std::vector<std::string> &queries,
+            const BackboneProfiles &backbones,
+            const BackboneProfiles &backgrounds,
+            const BackboneProfile &centralBackground,
+            const TrainingDataType &trainingClusters,
+            const ClassificationEnum classificationStrategy,
+            std::optional<std::reference_wrapper<const Selection>> selection = std::nullopt
+    ) const
     {
         SVMConfiguration svmConfiguration;
         PCAConfiguration pcaConfiguration;
@@ -152,30 +156,55 @@ public:
                                                              _modelGenerator );
                 return classifier.scoredPredictions( reducedAlphabetEntries( queries ));
             }
-            case ClassificationEnum::SVM :
+            case ClassificationEnum::SVM_MCSimilarity:
             {
                 SVMCMMicroSimilarity<States> svm(
                         svmConfiguration, _modelGenerator, _similarity,
                         ldaConfiguration, pcaConfiguration );
+
                 svm.fit( reducedAlphabetEntries( trainingClusters ),
                          backbones, backgrounds, centralBackground );
+
                 return svm.scoredPredictions( reducedAlphabetEntries( queries ),
                                               backbones, backgrounds, centralBackground );
             }
-            case ClassificationEnum::KNN :
+            case ClassificationEnum::KNN_MCSimilirity:
             {
-                KNNMCMicroSimilarity<States> knn(
-                        7, _modelGenerator, _similarity, ldaConfiguration, pcaConfiguration );
+                KNNMCMicroSimilarity<States> knn( 7, _modelGenerator, _similarity,
+                                             ldaConfiguration, pcaConfiguration );
 
                 knn.fit( reducedAlphabetEntries( trainingClusters ),
                          backbones, backgrounds, centralBackground );
+
                 return knn.scoredPredictions( reducedAlphabetEntries( queries ),
+                                              backbones, backgrounds, centralBackground );
+            }
+            case ClassificationEnum::KNN_MCParameters :
+            {
+                KNNMCParameters<States> knn( 7, _modelGenerator, ldaConfiguration, pcaConfiguration );
+
+                knn.fit( reducedAlphabetEntries( trainingClusters ),
+                         backbones, backgrounds, centralBackground );
+
+                return knn.scoredPredictions( reducedAlphabetEntries( queries ),
+                                              backbones, backgrounds, centralBackground );
+            }
+            case ClassificationEnum::SVM_MCParameters :
+            {
+                SVMMCParameters<States> svm(
+                        svmConfiguration, _modelGenerator,
+                        ldaConfiguration, pcaConfiguration );
+
+                svm.fit( reducedAlphabetEntries( trainingClusters ),
+                         backbones, backgrounds, centralBackground );
+
+                return svm.scoredPredictions( reducedAlphabetEntries( queries ),
                                               backbones, backgrounds, centralBackground );
             }
             case ClassificationEnum::SVM_Stack :
             {
                 SVMStackedMC<States> svm(
-                        svmConfiguration, _modelGenerator, ldaConfiguration, pcaConfiguration  );
+                        svmConfiguration, _modelGenerator, ldaConfiguration, pcaConfiguration );
 
                 svm.initWeakModels( _similarity );
 
@@ -223,8 +252,11 @@ public:
         return centralBackground;
     }
 
-    void runPipeline_VALIDATION( std::vector<LabeledEntry> &&entries, const size_t k,
-                                 const std::vector<std::string> &classificationStrategy )
+    void runPipeline_VALIDATION(
+            std::vector<LabeledEntry> &&entries,
+            const size_t k,
+            const std::vector<std::string> &classificationStrategy
+    )
     {
         std::set<std::string> classifiers;
         for (const auto &classifier : classificationStrategy)
@@ -263,13 +295,19 @@ public:
         auto groupedEntries = LabeledEntry::groupEntriesByLabels( std::move( entries ));
         auto averageLength = LabeledEntry::groupAveragedValue<LabeledEntry>(
                 groupedEntries,
-                []( std::string_view, const auto &sequence ) -> double {
+                [](
+                        std::string_view,
+                        const auto &sequence
+                ) -> double {
                     return sequence.length();
                 } );
 
         auto varianceLength = LabeledEntry::groupAveragedValue<LabeledEntry>(
                 groupedEntries,
-                [&]( std::string_view label, const auto &sequence ) -> double {
+                [&](
+                        std::string_view label,
+                        const auto &sequence
+                ) -> double {
                     double deviation = sequence.length() - averageLength.at( std::string( label ));
                     return deviation * deviation;
                 } );
@@ -317,7 +355,10 @@ public:
 
             auto labelsAverageStates = LabeledEntry::groupAveragedValue<std::string_view>(
                     trainingData,
-                    []( std::string_view, auto &&sequence ) -> double {
+                    [](
+                            std::string_view,
+                            auto &&sequence
+                    ) -> double {
                         return sequence.length();
                     } );
 
@@ -401,7 +442,11 @@ private:
 using PipelineVariant = MakeVariantType<Pipeline, SupportedAAGrouping>;
 
 template<typename AAGrouping, typename Similarity>
-PipelineVariant getConfiguredPipeline( MCModelsEnum model, Order mxOrder, Similarity similarity )
+PipelineVariant getConfiguredPipeline(
+        MCModelsEnum model,
+        Order mxOrder,
+        Similarity similarity
+)
 {
     static constexpr auto States = AAGrouping::StatesN;
     using MG = ModelGenerator<States>;
@@ -435,7 +480,11 @@ PipelineVariant getConfiguredPipeline( MCModelsEnum model, Order mxOrder, Simila
 
 
 template<typename AAGrouping>
-PipelineVariant getConfiguredPipeline( CriteriaEnum criteria, MCModelsEnum model, Order mxOrder )
+PipelineVariant getConfiguredPipeline(
+        CriteriaEnum criteria,
+        MCModelsEnum model,
+        Order mxOrder
+)
 {
     static constexpr auto States = AAGrouping::StatesN;
 
@@ -493,7 +542,12 @@ PipelineVariant getConfiguredPipeline( CriteriaEnum criteria, MCModelsEnum model
 
 
 PipelineVariant
-getConfiguredPipeline( AminoAcidGroupingEnum grouping, CriteriaEnum criteria, MCModelsEnum model, Order mxOrder )
+getConfiguredPipeline(
+        AminoAcidGroupingEnum grouping,
+        CriteriaEnum criteria,
+        MCModelsEnum model,
+        Order mxOrder
+)
 {
     switch (grouping)
     {
@@ -511,9 +565,12 @@ getConfiguredPipeline( AminoAcidGroupingEnum grouping, CriteriaEnum criteria, MC
     }
 }
 
-PipelineVariant getConfiguredPipeline( const std::string &groupingName,
-                                       const std::string &criteria,
-                                       const std::string &model, Order mxOrder )
+PipelineVariant getConfiguredPipeline(
+        const std::string &groupingName,
+        const std::string &criteria,
+        const std::string &model,
+        Order mxOrder
+)
 {
     const AminoAcidGroupingEnum groupingLabel = GroupingLabels.at( groupingName );
     const CriteriaEnum criteriaLabel = CriteriaLabels.at( criteria );

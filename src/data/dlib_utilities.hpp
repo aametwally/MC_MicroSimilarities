@@ -10,25 +10,25 @@
 namespace dlib_utilities {
 
 template<typename T>
-struct ColumnVectorMatrixLike
+struct column_matrix_like
 {
     /*!
         This object defines a matrix expression that holds a reference to a std::vector<T>
         and makes it look like a column vector.  Thus it enables you to use a std::vector
         as if it was a dlib::matrix.
     !*/
-    explicit ColumnVectorMatrixLike( std::vector<T> vect_ ) : _vect( std::move( vect_ ))
+    explicit column_matrix_like( std::vector<T> vect_ ) : _vect( std::move( vect_ ))
     {}
 
     template<typename MatrixExpression>
-    explicit ColumnVectorMatrixLike( MatrixExpression exp )
+    explicit column_matrix_like( MatrixExpression exp )
     {
         _vect.reserve( exp.size());
         _vect.insert( _vect.end(), exp.begin(), exp.end());
     }
 
     template<typename MatrixExpression>
-    ColumnVectorMatrixLike &operator=( MatrixExpression exp )
+    column_matrix_like &operator=( MatrixExpression exp )
     {
         _vect.clear();
         _vect.reserve( exp.nr());
@@ -52,7 +52,10 @@ struct ColumnVectorMatrixLike
     // return the contents of the std::vector by reference.
     typedef const T &const_ret_type;
 
-    const_ret_type apply( long r, long ) const
+    const_ret_type apply(
+            long r,
+            long
+    ) const
     { return _vect[r]; }
 
     long nr() const
@@ -81,18 +84,14 @@ private:
     std::vector<T> _vect;
 };
 
-template<typename T>
-const dlib::matrix_op<ColumnVectorMatrixLike<T> > vectorToColumnMatrixLike( std::vector<T> &&vector )
+template<typename InputContainer>
+auto vector_to_column_matrix_like( InputContainer &&container )
 {
-    using MatrixLike = ColumnVectorMatrixLike<T>;
-    return dlib::matrix_op<MatrixLike>( MatrixLike( std::move( vector )));
-}
+    using T = typename std::remove_reference_t<InputContainer>::value_type;
+    using MatrixLike = column_matrix_like<T>;
 
-template<typename T>
-const dlib::matrix_op<ColumnVectorMatrixLike<T> > vectorToColumnMatrixLike( std::initializer_list<T> &&vector )
-{
-    using MatrixLike = ColumnVectorMatrixLike<T>;
-    return dlib::matrix_op<MatrixLike>( MatrixLike( std::vector<double>( vector )));
+    std::vector<T> delegate = std::forward<InputContainer>( container );
+    return dlib::matrix_op<MatrixLike>( MatrixLike( std::move( delegate )));
 }
 
 }

@@ -56,8 +56,12 @@ public:
     }
 
     template<typename BinaryOp>
-    static double sum( Derived1 s1, Derived1 s2, BinaryOp op,
-                       std::optional<T> &&defaultTerm = std::nullopt )
+    static double sum(
+            Derived1 s1,
+            Derived1 s2,
+            BinaryOp op,
+            std::optional<T> &&defaultTerm = std::nullopt
+    )
     {
         assert( s1.length() == s2.length());
         double sum = 0;
@@ -81,8 +85,12 @@ public:
 
     template<typename BinaryOp>
     static std::vector<double>
-    apply( Derived1 s1, Derived1 s2, BinaryOp op,
-           std::optional<T> defaultTerm = std::nullopt )
+    apply(
+            Derived1 s1,
+            Derived1 s2,
+            BinaryOp op,
+            std::optional<T> defaultTerm = std::nullopt
+    )
     {
         assert( s1.length() == s2.length());
         std::vector<double> result;
@@ -106,10 +114,14 @@ public:
     }
 
     template<typename WeightsSeries>
-    static T weightedDot( Derived1 s1, Derived1 s2, WeightsSeries w  )
+    static T weightedDot(
+            Derived1 s1,
+            Derived1 s2,
+            WeightsSeries w
+    )
     {
         assert( s1.length() == s2.length() && s2.length() == w.length());
-        T sum = T(0);
+        T sum = T( 0 );
 
         while (!s1.isEmpty() && !s2.isEmpty() && !w.isEmpty())
         {
@@ -124,9 +136,13 @@ public:
     }
 
     template<typename WeightsSeries, typename BinaryOp>
-    static double weightedSum( Derived1 s1, Derived1 s2,
-                               WeightsSeries w, BinaryOp op,
-                               std::optional<T> defaultTerm = std::nullopt )
+    static double weightedSum(
+            Derived1 s1,
+            Derived1 s2,
+            WeightsSeries w,
+            BinaryOp op,
+            std::optional<T> defaultTerm = std::nullopt
+    )
     {
         assert( s1.length() == s2.length() && s2.length() == w.length());
         double sum = 0;

@@ -30,7 +30,10 @@ public:
 
     template<size_t N = Size,
             typename std::enable_if<N == 0, int>::type = 0>
-    explicit Histogram( size_t size, double pseudoCount )
+    explicit Histogram(
+            size_t size,
+            double pseudoCount
+    )
     {
         static_assert( N == 0, "Size paramter must be zero." );
         assert( size > 0 );
@@ -94,7 +97,10 @@ public:
         ++_buffer.at( state );
     }
 
-    inline void increment( size_t state, double val )
+    inline void increment(
+            size_t state,
+            double val
+    )
     {
         _buffer.at( state ) += val;
     }
@@ -201,7 +207,10 @@ public:
         return diff;
     }
 
-    static inline double dot( const Histogram &k1, const Histogram &k2 )
+    static inline double dot(
+            const Histogram &k1,
+            const Histogram &k2
+    )
     {
         assert( k2.size() == k1.size());
         double sum = 0;
@@ -238,7 +247,10 @@ public:
         _buffer.clear();
     }
 
-    static Histogram<Size> mean( const std::vector<Histogram<Size>> &histograms, size_t n )
+    static Histogram<Size> mean(
+            const std::vector<Histogram<Size>> &histograms,
+            size_t n
+    )
     {
         static_assert( Size > 0, "Histogram size must be non-zero" );
 
@@ -246,7 +258,10 @@ public:
 
         auto accumulative = std::accumulate( histograms.cbegin(), histograms.cend(),
                                              Histogram<Size>( 0.0 ),
-                                             []( Histogram<Size> hist, const Histogram<Size> &bHist ) {
+                                             [](
+                                                     Histogram<Size> hist,
+                                                     const Histogram<Size> &bHist
+                                             ) {
                                                  return std::move( hist += bHist );
                                              } );
         return std::move( accumulative /= double( n ));
@@ -256,7 +271,8 @@ public:
     static Histogram<Size> variance(
             const std::vector<Histogram<Size>> &histograms,
             const Histogram<Size> &mean,
-            size_t n )
+            size_t n
+    )
     {
         static_assert( Size > 0, "Histogram size must be non-zero" );
         using T = typename Histogram<Size>::ValueType;
@@ -266,7 +282,10 @@ public:
         auto sumSquares = std::accumulate(
                 histograms.cbegin(), histograms.cend(),
                 Histogram<Size>( 0.0 ),
-                [&]( Histogram<Size> hist, const Histogram<Size> &bHist ) {
+                [&](
+                        Histogram<Size> hist,
+                        const Histogram<Size> &bHist
+                ) {
                     hist += (bHist - mean).square();
                     return std::move( hist );
                 } );
@@ -275,14 +294,16 @@ public:
 
     static Histogram<Size> variance(
             const std::vector<Histogram<Size>> &histograms,
-            size_t n )
+            size_t n
+    )
     {
         return variance( histograms, mean( histograms, n ), n );
     }
 
     static Histogram<Size> standardDeviation(
             const std::vector<Histogram<Size>> &histograms,
-            size_t n )
+            size_t n
+    )
     {
         return variance( histograms, n ).sqrt();
     }
@@ -290,7 +311,8 @@ public:
     static Histogram<Size> standardDeviation(
             const std::vector<Histogram<Size>> &histograms,
             const Histogram<Size> &meanHistogram,
-            size_t n )
+            size_t n
+    )
     {
         return variance( histograms, meanHistogram, n ).sqrt();
     }
@@ -298,7 +320,8 @@ public:
     static Histogram<Size> standardError(
             const std::vector<Histogram<Size>> &histograms,
             const Histogram<Size> &meanHistogram,
-            size_t n )
+            size_t n
+    )
     {
         return variance( histograms, meanHistogram, n ).sqrt() * (1 + 1 / std::sqrt( histograms.size()));
     }
@@ -341,7 +364,10 @@ public:
     {
         auto dHist = Histogram<Size>::zeros();
         std::transform( std::cbegin( hist ), std::cend( hist ), dHist.cbegin(), dHist.begin(),
-                        []( bool a, double ) {
+                        [](
+                                bool a,
+                                double
+                        ) {
                             return static_cast<double>(a);
                         } );
         return dHist;
@@ -400,13 +426,19 @@ public:
     }
 
     template<typename HistogramT>
-    static Histogram<Size> accumulate( HistogramT &&histogram, const BooleanHistogram<Size> &bHistogram )
+    static Histogram<Size> accumulate(
+            HistogramT &&histogram,
+            const BooleanHistogram<Size> &bHistogram
+    )
     {
         using T = typename HistogramT::ValueType;
         Histogram<Size> hist = std::forward<HistogramT>( histogram );
         assert( hist.size() == bHistogram.size());
         std::transform( hist.begin(), hist.end(), bHistogram.cbegin(), hist.begin(),
-                        []( T a, bool b ) -> T {
+                        [](
+                                T a,
+                                bool b
+                        ) -> T {
                             return a + b;
                         } );
         return hist;
@@ -417,33 +449,46 @@ public:
         static_assert( Size > 0, "Histogram size must be non-zero" );
         return std::accumulate( bHistograms.cbegin(), bHistograms.cend(),
                                 Histogram<Size>( double( 0 )),
-                                []( Histogram<Size> hist, const BooleanHistogram<Size> &bHist ) {
+                                [](
+                                        Histogram<Size> hist,
+                                        const BooleanHistogram<Size> &bHist
+                                ) {
                                     return accumulate( std::move( hist ), bHist );
                                 } );
     }
 
     static Histogram<Size> varianceBernoulli(
-            const Histogram<Size> &mean, size_t n )
+            const Histogram<Size> &mean,
+            size_t n
+    )
     {
         using T = typename Histogram<Size>::ValueType;
         auto variance = Histogram<Size>::zeros();
         assert( mean.size() == variance.size());
         std::transform( mean.cbegin(), mean.cend(), variance.cbegin(), variance.begin(),
-                        [=]( T p, T ) {
+                        [=](
+                                T p,
+                                T
+                        ) {
                             return p * (1 - p);
                         } );
         return variance;
     }
 
     static Histogram<Size> standardDeviationBernoulli(
-            const Histogram<Size> &mean, size_t n )
+            const Histogram<Size> &mean,
+            size_t n
+    )
     {
         return varianceBernoulli( mean, n ).sqrt();
     }
 
     template<typename HistogramT>
     static BooleanHistogram<Size>
-    binarizeHistogram( HistogramT &&histogram, typename HistogramT::ValueType threshold = 0 )
+    binarizeHistogram(
+            HistogramT &&histogram,
+            typename HistogramT::ValueType threshold = 0
+    )
     {
         auto hist = std::forward<HistogramT>( histogram );
         Buffer bBuffer;
