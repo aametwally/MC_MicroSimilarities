@@ -56,13 +56,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup(TARGETS)
+conan_basic_setup()
 
 ### Add external libraries
 #message($ENV{FMT_SOURCE})
 #message($ENV{DLIB_SOURCE})
-#add_subdirectory($ENV{FMT_SOURCE} fmt_build )
-#add_subdirectory($ENV{DLIB_SOURCE} dlib_build )
+find_package(fmt REQUIRED CONFIG)
 
 ### Add all the files in the src directory to the CMake tree
 add_subdirectory( src )

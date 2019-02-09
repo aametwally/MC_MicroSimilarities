@@ -16,28 +16,19 @@ namespace MC {
 template<typename Grouping>
 class MCSegmentationPipeline
 {
-
 private:
-    using MCF = MCFeatures<Grouping>;
-
-    using AbstractModel = AbstractMC<Grouping>;
-
+    static constexpr size_t States = Grouping::StatesN;
+    using MCF = MCFeatures<States>;
+    using AbstractModel = AbstractMC<States>;
     using BackboneProfiles =  typename AbstractModel::BackboneProfiles;
     using BackboneProfile =  typename AbstractModel::BackboneProfile;
-
     using Histogram = typename AbstractModel::Histogram;
-
-    using HeteroHistograms = typename AbstractModel::HeteroHistograms;
-    using HeteroHistogramsFeatures = typename AbstractModel::HeteroHistogramsFeatures;
-
-
     using PriorityQueue = typename MatchSet<Score>::Queue<std::string_view>;
     using LeaderBoard = ClassificationCandidates<Score>;
-
     using ScoreFunction = SequenceAnnotator::ScoreFunction;
 
 public:
-    MCSegmentationPipeline( ModelGenerator<Grouping> modelTrainer )
+    MCSegmentationPipeline( ModelGenerator<States> modelTrainer )
             : _modelTrainer( modelTrainer )
     {
 
@@ -45,13 +36,12 @@ public:
 
 public:
 
-    template<typename Entries>
-    static std::vector<LabeledEntry>
-    reducedAlphabetEntries( Entries &&entries )
+    template<typename InputSequence>
+    static std::vector<std::string>
+    reducedAlphabetEntries( const std::vector<InputSequence> &entries )
     {
-        return LabeledEntry::reducedAlphabetEntries<Grouping>( std::forward<Entries>( entries ));
+        return LabeledEntry::reducedAlphabetEntries<Grouping>( entries );
     }
-
 
     static std::vector<ScoreFunction>
     extractScoringFunctions(
@@ -76,25 +66,23 @@ public:
 
     void run( std::vector<LabeledEntry> &&entries )
     {
-
         std::set<std::string> labels;
         for (const auto &entry : entries)
-            labels.insert( entry.getLabel());
+            labels.insert( std::string( entry.label()));
         auto viewLabels = std::set<std::string_view>( labels.cbegin(), labels.cend());
-
 
         std::set<std::string> uniqueIds;
         for (auto &e : entries)
-            uniqueIds.insert( e.getMemberId());
+            uniqueIds.insert( std::string( e.memberId()));
 
         fmt::print( "[All Sequences:{} (unique:{})]\n", entries.size(), uniqueIds.size());
 
 
         auto groupedEntries = [&]() {
-            auto _ = LabeledEntry::groupSequencesByLabels( reducedAlphabetEntries( std::move( entries )));
+            auto lEntries = LabeledEntry::groupEntriesByLabels( reducedAlphabetEntries( std::move( entries )));
             std::map<std::string_view, std::vector<std::string >> grouped;
             for (const auto &l : labels)
-                grouped.emplace( std::string_view( l ), std::move( _.at( l )));
+                grouped.emplace( std::string_view( l ), std::move( lEntries.at( l )));
             return grouped;
         }();
 
@@ -135,7 +123,7 @@ public:
     }
 
 private:
-    const ModelGenerator<Grouping> _modelTrainer;
+    const ModelGenerator<States> _modelTrainer;
 };
 
 
@@ -147,19 +135,31 @@ SegmentationVariant getConfiguredSegmentation(
         Order mxOrder
 )
 {
-    using MG = ModelGenerator<AAGrouping>;
-    using RMC = MC<AAGrouping>;
-    using ZMC = ZYMC<AAGrouping>;
-    using GMC = GappedMC<AAGrouping>;
+    static constexpr auto States = AAGrouping::StatesN;
+    using MG = ModelGenerator<States>;
+    using RMC = MC<States>;
+    using ZMC = ZYMC<States>;
+    using GMC = GappedMC<States>;
+    using BMC = RegularizedBinaryMC<States, RMC>;
+    using VMC = RegularizedVectorsMC<States, RMC>;
 
     switch (model)
     {
         case MCModelsEnum::RegularMC :
-            return MCSegmentationPipeline<AAGrouping>( MG::template create<RMC>( mxOrder ));
+            return MCSegmentationPipeline<AAGrouping>(
+                    MG::template create<RMC>( mxOrder ));
         case MCModelsEnum::ZhengYuanMC :
-            return MCSegmentationPipeline<AAGrouping>( MG::template create<ZMC>( mxOrder ));
+            return MCSegmentationPipeline<AAGrouping>(
+                    MG::template create<ZMC>( mxOrder ));
         case MCModelsEnum::GappedMC :
-            return MCSegmentationPipeline<AAGrouping>( MG::template create<GMC>( mxOrder ));
+            return MCSegmentationPipeline<AAGrouping>(
+                    MG::template create<GMC>( mxOrder ));
+        case MCModelsEnum::RegularizedBinaryMC :
+            return MCSegmentationPipeline<AAGrouping>(
+                    MG::template create<BMC>( mxOrder ));
+        case MCModelsEnum::RegularizedVectorsMC :
+            return MCSegmentationPipeline<AAGrouping>(
+                    MG::template create<VMC>( mxOrder ));
         default:
             throw std::runtime_error( "Undefined Strategy" );
     }

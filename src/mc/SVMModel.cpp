@@ -148,11 +148,12 @@ auto SVMModel::_crossValidationScoreSingleGamma(
                 rawCM[r][c] = static_cast<size_t>(result( r, c ));
 
         auto cm = ConfusionMatrix<std::string, size_t>::fromRawConfusionMatrix( rawCM );
+        auto objective = cm.microFScore( 1 );
 
         fmt::print( "gamma:{:.11f}\n"
-                    "CV accuracy:{}\n", gamma, result );
+                    "CV F1-Score:{}\n", gamma, objective );
 
-        return cm.overallAccuracy();
+        return objective;
     };
 }
 
@@ -181,10 +182,10 @@ auto SVMModel::_crossValidationScoreMultipleGammas(
                 rawCM[r][c] = static_cast<size_t>(result( r, c ));
 
         auto cm = ConfusionMatrix<std::string, size_t>::fromRawConfusionMatrix( rawCM );
-        fmt::print( "gamma:{:.11f}\n"
-                    "CV accuracy:{}\n", fmt::join( gammas, ", " ), result );
-
-        return cm.overallAccuracy();
+        auto objective = cm.microFScore(1);
+        fmt::print( "gammas:{:.11f}\n"
+                    "CV F1-Score:{}\n", fmt::join( gammas, ", " ), objective );
+        return objective;
     };
 }
 
@@ -202,7 +203,8 @@ SVMModel::DecisionFunction SVMModel::_fitTuningHyperParameters(
     newConfig.gamma.reset();
     newConfig.gammas.reset();
 
-    auto tp = dlib::thread_pool( std::thread::hardware_concurrency());
+    auto tp = dlib::thread_pool(
+            static_cast<size_t>(std::max( 1, static_cast<int>(std::thread::hardware_concurrency()))));
     auto[min, max] = configuration.tuning->gammaBounds;
     auto maxCalls = configuration.tuning->maxTrials;
 

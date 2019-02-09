@@ -12,5 +12,5 @@ add_library( ${SEGMENTATION_LIB} STATIC ${SEGMENTATION_INCLUDES} ${SEGMENTATION_
 target_include_directories( ${SEGMENTATION_LIB} PUBLIC .
   ${CMAKE_SOURCE_DIR}/src/include
   ${EXTERNAL_INSTALL_LOCATION}/include )
-target_link_libraries( ${SEGMENTATION_LIB} PUBLIC CONAN_PKG::fmt stdc++fs )
+target_link_libraries( ${SEGMENTATION_LIB} PUBLIC ${CONAN_LIBS} stdc++fs )
 target_compile_features( ${SEGMENTATION_LIB} PUBLIC cxx_std_17 )

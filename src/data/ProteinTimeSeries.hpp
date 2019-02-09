@@ -38,7 +38,7 @@ public:
         for (auto &[id, index] : _aaIndices())
         {
             generators.emplace( id, [this, &index]() {
-                return index.sequence2NormalizedTimeSeries( _entry.getSequence());
+                return index.sequence2NormalizedTimeSeries( _entry.sequence());
             } );
         }
         return generators;
@@ -51,7 +51,7 @@ public:
         for (auto &[id, index] : _aaIndices())
         {
             generators.emplace( id, [this, &index]() {
-                return index.sequence2TimeSeries( _entry.getSequence());
+                return index.sequence2TimeSeries( _entry.sequence());
             } );
         }
         return generators;
@@ -60,7 +60,7 @@ public:
     std::string toString( bool normalized = false ) const
     {
         std::stringstream ss;
-        ss << fmt::format( ">{} {}\n{}\n", _entry.getMemberId(), _entry.getLabel(), _entry.getSequence());
+        ss << fmt::format( ">{} {}\n{}\n", _entry.memberId(), _entry.label(), _entry.sequence());
         for (auto &[indexAccessionNo, seriesGenerator] : (normalized) ?
                                                          makeNormalizedTimeSeriesGenerators() :
                                                          makeTimeSeriesGenerators())
@@ -80,7 +80,7 @@ public:
         if ( indicesSelection )
         {
             std::stringstream ss;
-            ss << fmt::format( ">{} {}\n{}\n", _entry.getMemberId(), _entry.getLabel(), _entry.getSequence());
+            ss << fmt::format( ">{} {}\n{}\n", _entry.memberId(), _entry.label(), _entry.sequence());
             auto ts = (normalized) ? makeNormalizedTimeSeriesGenerators() : makeTimeSeriesGenerators();
 
             for (auto &indexAccessionNo : indicesSelection->get())

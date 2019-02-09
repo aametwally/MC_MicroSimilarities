@@ -47,7 +47,7 @@ target_include_directories( ${MC_LIB} PUBLIC
   ../segmentation
   )
 
-target_link_libraries( ${MC_LIB} stdc++fs CONAN_PKG::dlib CONAN_PKG::fmt
+target_link_libraries( ${MC_LIB} stdc++fs ${CONAN_LIBS}
   ${SEGMENTATION_LIB}
   ${REPORT_LIB}
   ${FEATURES_LIB}

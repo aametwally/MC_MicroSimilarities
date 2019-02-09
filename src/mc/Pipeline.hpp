@@ -114,10 +114,14 @@ public:
             std::optional<std::reference_wrapper<const Selection>> selection = std::nullopt
     ) const
     {
+        auto pcaConfiguration = std::make_optional<SVDConfiguration>() ;
+        auto ldaConfiguration = std::make_optional<LDAConfiguration>();
+//        ldaConfiguration.reset();
+        pcaConfiguration.reset();
+
         SVMConfiguration svmConfiguration;
-        PCAConfiguration pcaConfiguration;
-        LDAConfiguration ldaConfiguration;
         svmConfiguration.tuning = SVMConfiguration::defaultTuning();
+        svmConfiguration.tuning->tuneGammaPerClass = true;
 
         switch (classificationStrategy)
         {
@@ -171,7 +175,7 @@ public:
             case ClassificationEnum::KNN_MCSimilirity:
             {
                 KNNMCMicroSimilarity<States> knn( 7, _modelGenerator, _similarity,
-                                             ldaConfiguration, pcaConfiguration );
+                                                  ldaConfiguration, pcaConfiguration );
 
                 knn.fit( reducedAlphabetEntries( trainingClusters ),
                          backbones, backgrounds, centralBackground );
@@ -350,7 +354,7 @@ public:
             const auto trainingClusters = joinFoldsExceptK( sFolds, i );
             const auto
             [ids, queries, qLabels] = unzip( folds.at( i ));
-            fmt::print( "Training..\n" );
+            fmt::print( "Training MC Model..\n" );
             const auto trainingData = AbstractModel::oversampleStateBalancing( trainingClusters );
 
             auto labelsAverageStates = LabeledEntry::groupAveragedValue<std::string_view>(
@@ -380,15 +384,18 @@ public:
             BackboneProfiles backbones = AbstractModel::train( reducedTrainingData, _modelGenerator );
             BackboneProfiles backgrounds = AbstractModel::backgroundProfiles( reducedTrainingData, _modelGenerator );
             auto balancedBackgroundCentroid = balancedCentroid( reducedTrainingData );
-            fmt::print( "[DONE] Training..\n" );
+            fmt::print( "[DONE] Training MC Model..\n" );
 
-            fmt::print( "Classification..\n" );
             for (auto &classifier : classifiers)
             {
                 auto classifierEnum = ClassifierEnum.at( classifier );
+                fmt::print( "Classifier {} processing..\n",  classifier );
+
                 auto predictions = scoredPredictions( queries, backbones, backgrounds,
                                                       balancedBackgroundCentroid,
                                                       trainingData, classifierEnum );
+
+                fmt::print( "[DONE] Classifier {} processing..\n",  classifier );
 
                 assert( predictions.size() == qLabels.size() && qLabels.size() == queries.size() &&
                         queries.size() == ids.size());
@@ -405,8 +412,11 @@ public:
                     cValidation.countInstance( i, prediction.top()->get().label(), label );
                     ensembleValidation.countInstance( i, classifier, id, prediction );
                 }
+
+                cValidation.printReport<0>( i );
             }
             fmt::print( "[DONE] Classification..\n" );
+
         }
 
         for (auto &[classifier, cvalidation] : validation)

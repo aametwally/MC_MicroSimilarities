@@ -26,7 +26,7 @@ public:
         std::map<std::string, std::vector<std::string >> clusters;
 
         for (auto &entry : entries)
-            clusters[entry.getLabel()].emplace_back( entry.getSequence());
+            clusters[std::string( entry.label())].emplace_back( entry.sequence());
 
         return clusters;
     }

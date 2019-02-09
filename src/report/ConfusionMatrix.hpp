@@ -37,8 +37,31 @@ public:
 
         for (auto i = 0; i < nRows; ++i)
             labels.insert( fmt::format( "Label#{}", i ));
+
         auto cm = ConfusionMatrix<std::string, U>( labels );
-        cm._matrix = raw;
+
+        if ( labels.size() == cm._order - 1 )
+        {
+            auto skipIndex = cm._dictionary.at( cm._unclassifiedLabel());
+            for (auto iLocal = 0, iExternal = 0;
+                 iLocal < cm._order && iExternal < labels.size();
+                 ++iLocal, ++iExternal)
+            {
+                if ( iLocal == skipIndex ) ++iLocal;
+                for (auto jLocal = 0, jExternal = 0;
+                     jLocal < cm._order && jExternal < labels.size();
+                     ++jLocal, ++jExternal)
+                {
+                    if ( jLocal == skipIndex ) ++jLocal;
+
+                    cm._matrix[iLocal][jLocal] = raw.at( iExternal ).at( jExternal );
+                }
+            }
+        } else if ( labels.size() == cm._order )
+        {
+            cm._matrix = raw;
+        } else throw std::runtime_error( "Unexpected case!" );
+
         return cm;
     }
 
