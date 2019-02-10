@@ -114,14 +114,9 @@ public:
             std::optional<std::reference_wrapper<const Selection>> selection = std::nullopt
     ) const
     {
-        auto pcaConfiguration = std::make_optional<SVDConfiguration>() ;
-        auto ldaConfiguration = std::make_optional<LDAConfiguration>();
-//        ldaConfiguration.reset();
-        pcaConfiguration.reset();
-
         SVMConfiguration svmConfiguration;
         svmConfiguration.tuning = SVMConfiguration::defaultTuning();
-        svmConfiguration.tuning->tuneGammaPerClass = true;
+        svmConfiguration.gammaSetting = SVMConfiguration::GammaMultiLabelSettingEnum::GammaVector_ONE_VS_ONE;
 
         switch (classificationStrategy)
         {
@@ -162,6 +157,10 @@ public:
             }
             case ClassificationEnum::SVM_MCSimilarity:
             {
+                auto pcaConfiguration = std::make_optional<SVDConfiguration>();
+                auto ldaConfiguration = std::make_optional<LDAConfiguration>();
+//                ldaConfiguration.reset();
+                pcaConfiguration.reset();
                 SVMCMMicroSimilarity<States> svm(
                         svmConfiguration, _modelGenerator, _similarity,
                         ldaConfiguration, pcaConfiguration );
@@ -174,6 +173,10 @@ public:
             }
             case ClassificationEnum::KNN_MCSimilirity:
             {
+                auto pcaConfiguration = std::make_optional<SVDConfiguration>();
+                auto ldaConfiguration = std::make_optional<LDAConfiguration>();
+//                ldaConfiguration.reset();
+                pcaConfiguration.reset();
                 KNNMCMicroSimilarity<States> knn( 7, _modelGenerator, _similarity,
                                                   ldaConfiguration, pcaConfiguration );
 
@@ -185,6 +188,10 @@ public:
             }
             case ClassificationEnum::KNN_MCParameters :
             {
+                auto pcaConfiguration = std::make_optional<SVDConfiguration>();
+                auto ldaConfiguration = std::make_optional<LDAConfiguration>();
+//                ldaConfiguration.reset();
+                pcaConfiguration.reset();
                 KNNMCParameters<States> knn( 7, _modelGenerator, ldaConfiguration, pcaConfiguration );
 
                 knn.fit( reducedAlphabetEntries( trainingClusters ),
@@ -195,6 +202,10 @@ public:
             }
             case ClassificationEnum::SVM_MCParameters :
             {
+                auto pcaConfiguration = std::make_optional<SVDConfiguration>();
+                auto ldaConfiguration = std::make_optional<LDAConfiguration>();
+//        ldaConfiguration.reset();
+                pcaConfiguration.reset();
                 SVMMCParameters<States> svm(
                         svmConfiguration, _modelGenerator,
                         ldaConfiguration, pcaConfiguration );
@@ -207,6 +218,10 @@ public:
             }
             case ClassificationEnum::SVM_Stack :
             {
+                auto pcaConfiguration = std::make_optional<SVDConfiguration>();
+                auto ldaConfiguration = std::make_optional<LDAConfiguration>();
+//        ldaConfiguration.reset();
+                pcaConfiguration.reset();
                 SVMStackedMC<States> svm(
                         svmConfiguration, _modelGenerator, ldaConfiguration, pcaConfiguration );
 
@@ -219,6 +234,10 @@ public:
             }
             case ClassificationEnum::KNN_Stack :
             {
+                auto pcaConfiguration = std::make_optional<SVDConfiguration>();
+                auto ldaConfiguration = std::make_optional<LDAConfiguration>();
+//        ldaConfiguration.reset();
+                pcaConfiguration.reset();
                 KNNStackedMC<States> knn(
                         7, _modelGenerator, ldaConfiguration, pcaConfiguration );
 
@@ -389,13 +408,13 @@ public:
             for (auto &classifier : classifiers)
             {
                 auto classifierEnum = ClassifierEnum.at( classifier );
-                fmt::print( "Classifier {} processing..\n",  classifier );
+                fmt::print( "Classifier {} processing..\n", classifier );
 
                 auto predictions = scoredPredictions( queries, backbones, backgrounds,
                                                       balancedBackgroundCentroid,
                                                       trainingData, classifierEnum );
 
-                fmt::print( "[DONE] Classifier {} processing..\n",  classifier );
+                fmt::print( "[DONE] Classifier {} processing..\n", classifier );
 
                 assert( predictions.size() == qLabels.size() && qLabels.size() == queries.size() &&
                         queries.size() == ids.size());

@@ -36,7 +36,7 @@ SVMModel::DecisionFunction SVMModel::_fit(
                 std::move( labels ), std::move( samples ), configuration, label2Index );
     } else
     {
-        assert( configuration.gammas || configuration.gamma );
+        assert( configuration.gamma );
         return _fitFixedHyperParameters(
                 std::move( labels ), std::move( samples ), configuration, label2Index );
     }
@@ -70,6 +70,19 @@ std::vector<SVMModel::SampleType> SVMModel::_svmSamples( std::vector<std::vector
     return svmSamples;
 }
 
+std::vector<std::pair<int, int>> SVMModel::_one2oneCombination( int nLabels )
+{
+    std::vector<std::pair<int, int>> pairs;
+    for (auto i = 0; i < nLabels; ++i)
+    {
+        for (auto j = i + 1; j < nLabels; ++j)
+        {
+            pairs.emplace_back( i, j );
+        }
+    }
+    return pairs;
+}
+
 std::vector<SVMModel::Label> SVMModel::_registerLabels( std::vector<std::string_view> &&labels )
 {
     std::vector<Label> svmLabels;
@@ -100,33 +113,79 @@ SVMModel::DecisionFunction SVMModel::_fitFixedHyperParameters(
         const std::map<std::string_view, int> &label2Index
 )
 {
-    SVMTrainer trainer;
-    trainer.set_num_threads( std::thread::hardware_concurrency());
+    using GammaSetting = SVMConfiguration::GammaMultiLabelSettingEnum;
+    assert( configuration.gamma );
+    if ( !configuration.gamma )
+        throw std::runtime_error( "Missing gamma value." );
+    auto &&gamma = configuration.gamma.value();
 
-    if ( configuration.gamma )
+    switch (configuration.gammaSetting)
     {
-        SVMBinaryTrainer btrainer;
-        btrainer.use_classification_loss_for_loo_cv();
-        btrainer.set_kernel( SVMRBFKernel( configuration.gamma.value()));
-        trainer.set_trainer( btrainer );
-    } else if ( configuration.gammas )
-    {
-        assert( configuration.gammas->size() == label2Index.size());
-        if ( configuration.gammas->size() != label2Index.size())
-            throw std::runtime_error( "Gammas count should equal to labels count." );
-
-        for (auto &&[label, gamma] : configuration.gammas.value())
+        case GammaSetting::SingleGamma_ONE_VS_ALL :
         {
+            assert( gamma.size() == 1 );
+            if ( gamma.size() != 1 )
+                throw std::runtime_error( "Gamma vector size must equal 1." );
+
+            SVMOneVsAllTrainer trainer;
+            trainer.set_num_threads( std::thread::hardware_concurrency());
             SVMBinaryTrainer btrainer;
             btrainer.use_classification_loss_for_loo_cv();
-            btrainer.set_kernel( SVMRBFKernel( gamma ));
-            trainer.set_trainer( btrainer, label2Index.at( label ));
+            btrainer.set_kernel( SVMRBFKernel( gamma.front()));
+            trainer.set_trainer( btrainer );
+            return trainer.train( samples, labels );
         }
-    } else throw std::runtime_error( "Gammas are not defined!" );
-    return trainer.train( samples, labels );
+            break;
+        case GammaSetting::GammaVector_ONE_VS_ALL:
+        {
+            assert( gamma.size() == label2Index.size());
+            if ( gamma.size() != label2Index.size())
+                throw std::runtime_error( "Gammas count should equal to labels count." );
+
+            SVMOneVsAllTrainer trainer;
+            trainer.set_num_threads( std::thread::hardware_concurrency());
+
+            for (auto i = 0; i < label2Index.size(); ++i)
+            {
+                SVMBinaryTrainer btrainer;
+                btrainer.use_classification_loss_for_loo_cv();
+                btrainer.set_kernel( SVMRBFKernel( gamma.at( i )));
+                trainer.set_trainer( btrainer, i );
+            }
+            return trainer.train( samples, labels );
+        }
+            break;
+        case GammaSetting::GammaVector_ONE_VS_ONE:
+        {
+            auto nLabels = label2Index.size();
+            auto one2oneComb = _one2oneCombination( static_cast<int>(nLabels));
+            assert( gamma.size() == nLabels * (nLabels - 1) &&
+                    gamma.size() == one2oneComb.size());
+            if ( gamma.size() != nLabels * (nLabels - 1)
+                 || gamma.size() != one2oneComb.size())
+                throw std::runtime_error( "Gammas count should equal to n(n-1); n: labeles count." );
+
+            SVMOneVsOneTrainer trainer;
+            trainer.set_num_threads( std::thread::hardware_concurrency());
+
+            for (auto i = 0; i < one2oneComb.size(); ++i)
+            {
+                SVMBinaryTrainer btrainer;
+                btrainer.use_classification_loss_for_loo_cv();
+                btrainer.set_kernel( SVMRBFKernel( gamma.at( i )));
+                trainer.set_trainer( btrainer, one2oneComb.at( i ).first, one2oneComb.at( i ).second );
+            }
+            return trainer.train( samples, labels );
+        }
+            break;
+        default:
+            throw std::runtime_error( "Unhandled gamma setting" );
+    }
+
+    throw std::runtime_error( "Function should not reach here." );
 }
 
-auto SVMModel::_crossValidationScoreSingleGamma(
+auto SVMModel::_crossValidationScoreSingleGamma_ONE_VS_ALL(
         const std::vector<SVMModel::SampleType> &samples,
         const std::vector<SVMModel::Label> &labels
 )
@@ -135,7 +194,7 @@ auto SVMModel::_crossValidationScoreSingleGamma(
         SVMBinaryTrainer btrainer;
         btrainer.use_classification_loss_for_loo_cv();
 
-        SVMTrainer trainer;
+        SVMOneVsAllTrainer trainer;
 
         btrainer.set_kernel( SVMRBFKernel( gamma ));
         trainer.set_trainer( btrainer );
@@ -148,16 +207,15 @@ auto SVMModel::_crossValidationScoreSingleGamma(
                 rawCM[r][c] = static_cast<size_t>(result( r, c ));
 
         auto cm = ConfusionMatrix<std::string, size_t>::fromRawConfusionMatrix( rawCM );
-        auto objective = cm.microFScore( 1 );
+        auto objective = cm.microFScore();
 
-        fmt::print( "gamma:{:.11f}\n"
-                    "CV F1-Score:{}\n", gamma, objective );
-
+//        fmt::print( "gamma:{:.11f}\n"
+//                    "CV F1-Score:{}\n", gamma, objective );
         return objective;
     };
 }
 
-auto SVMModel::_crossValidationScoreMultipleGammas(
+auto SVMModel::_crossValidationScoreMultipleGammas_ONE_VS_ALL(
         const std::vector<SVMModel::SampleType> &samples,
         const std::vector<SVMModel::Label> &labels,
         const std::map<std::string_view, int> &label2Index
@@ -165,7 +223,7 @@ auto SVMModel::_crossValidationScoreMultipleGammas(
 {
     return [&]( dlib::matrix<double, 0, 1> gammas ) {
         assert( gammas.size() == label2Index.size());
-        SVMTrainer trainer;
+        SVMOneVsAllTrainer trainer;
         for (auto &&[label, index] : label2Index)
         {
             SVMBinaryTrainer btrainer;
@@ -182,13 +240,44 @@ auto SVMModel::_crossValidationScoreMultipleGammas(
                 rawCM[r][c] = static_cast<size_t>(result( r, c ));
 
         auto cm = ConfusionMatrix<std::string, size_t>::fromRawConfusionMatrix( rawCM );
-        auto objective = cm.microFScore(1);
-        fmt::print( "gammas:{:.11f}\n"
-                    "CV F1-Score:{}\n", fmt::join( gammas, ", " ), objective );
+        auto objective = cm.microFScore();
+//        fmt::print( "ovaGammas:{:.11f}\n"
+//                    "CV F1-Score:{}\n", fmt::join( ovaGammas, ", " ), objective );
         return objective;
     };
 }
 
+auto SVMModel::_crossValidationScoreMultipleGammas_ONE_VS_ONE(
+        const std::vector<SVMModel::SampleType> &samples,
+        const std::vector<SVMModel::Label> &labels,
+        const std::vector<std::pair<int, int>> &one2oneComb
+)
+{
+    return [&]( dlib::matrix<double, 0, 1> gammas ) {
+        assert( gammas.size() == one2oneComb.size());
+        SVMOneVsOneTrainer trainer;
+        for (auto i = 0; i < one2oneComb.size(); ++i)
+        {
+            SVMBinaryTrainer btrainer;
+            btrainer.use_classification_loss_for_loo_cv();
+            btrainer.set_kernel( SVMRBFKernel( gammas( i )));
+            trainer.set_trainer( btrainer, one2oneComb.at( i ).first, one2oneComb.at( i ).second );
+        }
+
+        // Finally, perform 10-fold cross validation and then print and return the results.
+        auto result = dlib::cross_validate_multiclass_trainer( trainer, samples, labels, 10 );
+        auto rawCM = std::vector<std::vector<size_t>>( result.nr(), std::vector<size_t>( result.nc()));
+        for (auto r = 0; r < result.nr(); ++r)
+            for (auto c = 0; c < result.nc(); ++c)
+                rawCM[r][c] = static_cast<size_t>(result( r, c ));
+
+        auto cm = ConfusionMatrix<std::string, size_t>::fromRawConfusionMatrix( rawCM );
+        auto objective = cm.microFScore();
+        fmt::print( "ovoGammas:{:.11f}\n"
+                    "CV F1-Score:{}\n", fmt::join( gammas, ", " ), objective );
+        return objective;
+    };
+}
 
 SVMModel::DecisionFunction SVMModel::_fitTuningHyperParameters(
         std::vector<Label> &&labels,
@@ -197,46 +286,79 @@ SVMModel::DecisionFunction SVMModel::_fitTuningHyperParameters(
         const std::map<std::string_view, int> &label2Index
 )
 {
+    using GammaSetting = SVMConfiguration::GammaMultiLabelSettingEnum;
+
     assert( configuration.tuning );
     auto newConfig = configuration;
     newConfig.tuning.reset();
     newConfig.gamma.reset();
-    newConfig.gammas.reset();
 
     auto tp = dlib::thread_pool(
             static_cast<size_t>(std::max( 1, static_cast<int>(std::thread::hardware_concurrency()))));
     auto[min, max] = configuration.tuning->gammaBounds;
     auto maxCalls = configuration.tuning->maxTrials;
 
-    if ( configuration.tuning->tuneGammaPerClass )
+    switch (configuration.gammaSetting)
     {
-        dlib::matrix<double, 0, 1> minMat = dlib_utilities::vector_to_column_matrix_like(
-                std::vector<double>( label2Index.size(), min ));
-        dlib::matrix<double, 0, 1> maxMat = dlib_utilities::vector_to_column_matrix_like(
-                std::vector<double>( label2Index.size(), max ));
-
-        auto result = dlib::find_max_global(
-                tp, _crossValidationScoreMultipleGammas( samples, labels, label2Index ), minMat, maxMat,
-                dlib::max_function_calls( static_cast<size_t>(maxCalls * label2Index.size())));
-
-        std::map<std::string_view, double> newGammas;
-        for (auto &&[label, index] : label2Index)
+        case GammaSetting::SingleGamma_ONE_VS_ALL :
         {
-            newGammas.emplace( label, result.x( index ));
+            dlib::matrix<double, 0, 1> minMat =
+                    dlib_utilities::vector_to_column_matrix_like( std::vector<double>( {min} ));
+            dlib::matrix<double, 0, 1> maxMat =
+                    dlib_utilities::vector_to_column_matrix_like( std::vector<double>( {max} ));
+
+            auto result = dlib::find_max_global(
+                    tp, _crossValidationScoreSingleGamma_ONE_VS_ALL( samples, labels ),
+                    minMat, maxMat, dlib::max_function_calls( maxCalls ));
+
+            newConfig.gamma.emplace( {result.x( 0 )} );
         }
-        newConfig.gammas.emplace( std::move( newGammas ));
-    } else
-    {
-        dlib::matrix<double, 0, 1> minMat =
-                dlib_utilities::vector_to_column_matrix_like( std::vector<double>( {min} ));
-        dlib::matrix<double, 0, 1> maxMat =
-                dlib_utilities::vector_to_column_matrix_like( std::vector<double>( {max} ));
+            break;
+        case GammaSetting::GammaVector_ONE_VS_ALL:
+        {
+            dlib::matrix<double, 0, 1> minMat = dlib_utilities::vector_to_column_matrix_like(
+                    std::vector<double>( label2Index.size(), min ));
+            dlib::matrix<double, 0, 1> maxMat = dlib_utilities::vector_to_column_matrix_like(
+                    std::vector<double>( label2Index.size(), max ));
 
-        auto result = dlib::find_max_global(
-                tp, _crossValidationScoreSingleGamma( samples, labels ),
-                minMat, maxMat, dlib::max_function_calls( maxCalls ));
+            auto result = dlib::find_max_global(
+                    tp, _crossValidationScoreMultipleGammas_ONE_VS_ALL(
+                            samples, labels, label2Index ), minMat, maxMat,
+                    dlib::max_function_calls( static_cast<size_t>(maxCalls )));
 
-        newConfig.gamma.emplace( result.x( 0 ));
+            std::vector<double> newGammas;
+            for (auto i = 0; i < label2Index.size(); ++i)
+            {
+                newGammas.push_back( result.x( i ));
+            }
+            newConfig.gamma.emplace( std::move( newGammas ));
+        }
+            break;
+        case GammaSetting::GammaVector_ONE_VS_ONE:
+        {
+            int nLabels = static_cast<int>( label2Index.size());
+            auto one2oneComb = _one2oneCombination( nLabels );
+
+            dlib::matrix<double, 0, 1> minMat = dlib_utilities::vector_to_column_matrix_like(
+                    std::vector<double>( one2oneComb.size(), min ));
+            dlib::matrix<double, 0, 1> maxMat = dlib_utilities::vector_to_column_matrix_like(
+                    std::vector<double>( one2oneComb.size(), max ));
+
+            auto result = dlib::find_max_global(
+                    tp, _crossValidationScoreMultipleGammas_ONE_VS_ONE(
+                            samples, labels, one2oneComb ), minMat, maxMat,
+                    dlib::max_function_calls( static_cast<size_t>(maxCalls )));
+
+            std::vector<double> newGammas;
+            for (auto i = 0; i < one2oneComb.size(); ++i)
+            {
+                newGammas.push_back( result.x( i ));
+            }
+            newConfig.gamma.emplace( std::move( newGammas ));
+        }
+            break;
+        default:
+            throw std::runtime_error( "Unhandled gamma setting" );
     }
 
     return _fit( std::move( labels ), std::move( samples ), newConfig, label2Index );

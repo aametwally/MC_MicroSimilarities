@@ -1,0 +1,15 @@
+//
+// Created by asem on 10/02/19.
+//
+
+#ifndef MARKOVIAN_FEATURES_RANDOMFORESTMODEL_HPP
+#define MARKOVIAN_FEATURES_RANDOMFORESTMODEL_HPP
+
+
+class RandomForestModel
+{
+
+};
+
+
+#endif //MARKOVIAN_FEATURES_RANDOMFORESTMODEL_HPP
