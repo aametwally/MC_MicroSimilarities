@@ -53,6 +53,10 @@ public:
         return _statistics.at( k ).microRecall();
     }
 
+    double microSpecificity( size_t k ) const
+    {
+        return _statistics.at( k ).microSpecificity();
+    }
 
     double microFScore(
             size_t k,
@@ -70,6 +74,11 @@ public:
     double macroRecall( size_t k ) const
     {
         return _statistics.at( k ).macroRecall();
+    }
+
+    double macroSpecificity( size_t k ) const
+    {
+        return _statistics.at( k ).macroSpecificity();
     }
 
     double macroFScore(
@@ -134,6 +143,14 @@ public:
         return _statistics.at( k ).recall( label );
     }
 
+    double specificity(
+            size_t k,
+            const Label &label
+    ) const
+    {
+        return _statistics.at( k ).specificity( label );
+    }
+
     double fScore(
             size_t k,
             const Label &label,
@@ -169,6 +186,13 @@ public:
     {
         return averagingFunction( [&, this]( size_t k ) {
             return recall( k, label );
+        } );
+    }
+
+    std::pair<double, double> specificity( const Label &label ) const
+    {
+        return averagingFunction( [&, this]( size_t k ) {
+          return specificity( k, label );
         } );
     }
 
@@ -217,6 +241,12 @@ public:
         } );
     }
 
+    std::pair<double, double> microSpecificity() const
+    {
+        return averagingFunction( [this]( size_t k ) {
+          return microSpecificity( k );
+        } );
+    }
 
     std::pair<double, double> microFScore( double beta = 1 ) const
     {
@@ -236,6 +266,13 @@ public:
     {
         return averagingFunction( [this]( size_t k ) {
             return macroRecall( k );
+        } );
+    }
+
+    std::pair<double, double> macroSpecificity() const
+    {
+        return averagingFunction( [this]( size_t k ) {
+          return macroSpecificity( k );
         } );
     }
 
@@ -307,6 +344,8 @@ public:
         printRow( "Micro Precision, Positive Predictive Value (PPV)", microPrecision());
         printRow( "Macro TPR, Recall, Sensitivity", macroRecall());
         printRow( "Micro TPR, Recall, Sensitivity", microRecall());
+        printRow( "Macro TNR, Specificity", macroSpecificity());
+        printRow( "Micro TNR, Specificity", microSpecificity());
         printRow( "Macro F1-Score", macroFScore());
         printRow( "Micro F1-Score", microFScore());
         printRow( "MCC (multiclass)", mcc());
@@ -357,6 +396,7 @@ public:
         printRow( "Accuracy", scoresVector( [this]( const auto &l ) { return accuracy( l ); } ));
         printRow( "Precision", scoresVector( [this]( const auto &l ) { return precision( l ); } ));
         printRow( "Recall", scoresVector( [this]( const auto &l ) { return recall( l ); } ));
+        printRow( "Specificity", scoresVector( [this]( const auto &l ) { return specificity( l ); } ));
         printRow( "F1-Score", scoresVector( [this]( const auto &l ) { return fScore( l, 1.0 ); } ));
         printRow( "MCC", scoresVector( [this]( const auto &l ) { return mcc( l ); } ));
     }

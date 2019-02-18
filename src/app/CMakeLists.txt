@@ -17,12 +17,6 @@ target_compile_features( MC_pipeline PRIVATE cxx_std_17 )
 #target_compile_features( markovian_features_scoring PRIVATE cxx_std_17 )
 #add_dependencies(markovian_features_scoring dlib fmt )
 
-### Confusion Matrix Test
-add_executable( segmentation segmentation.cpp )
-target_include_directories( segmentation PRIVATE ${INCLUDES} ${CMAKE_SOURCE_DIR}/src/include )
-target_link_libraries( segmentation PRIVATE ${LIBS} ${SEGMENTATION_LIB} ${CONAN_LIBS})
-target_compile_features( segmentation PRIVATE cxx_std_17 )
-
 
 ### Segmentation
 #add_executable( confusionMatrix confusionMatrix.cpp )

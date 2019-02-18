@@ -458,18 +458,17 @@ public:
             {
                 if ( histogramsVector.size() > minimumOccurrence.value_or( 0 ))
                 {
-                    std::vector<Histogram> unitVectors;
+                    std::vector<Histogram> normalized;
 
-                    // Unit vector normalize.
                     std::transform(
                             std::make_move_iterator( histogramsVector.begin()),
                             std::make_move_iterator( histogramsVector.end()),
-                            std::back_inserter( unitVectors ), []( auto &&v ) { return v.unitVectorNormalized(); } );
+                            std::back_inserter( normalized ), []( auto &&v ) { return v.normalize(); } );
 
                     auto mean =
-                            Histogram::mean( unitVectors, this->_n );
+                            Histogram::mean( normalized, this->_n );
                     auto standardDeviation =
-                            Histogram::standardError( unitVectors, mean, this->_n );
+                            Histogram::standardError( normalized, mean, this->_n );
 
                     this->_centroids.set( order, id, std::move( mean ));
                     this->_standardDeviations.set( order, id, std::move( standardDeviation ));
@@ -543,18 +542,17 @@ public:
             {
                 if ( histogramsVector.size() > minimumOccurrence.value_or( 0 ))
                 {
-                    std::vector<Histogram> unitVectors;
+                    std::vector<Histogram> normalized;
 
-                    // Unit vector normalize.
                     std::transform(
                             std::make_move_iterator( histogramsVector.begin()),
                             std::make_move_iterator( histogramsVector.end()),
-                            std::back_inserter( unitVectors ), []( auto &&v ) { return v.unitVectorNormalize(); } );
+                            std::back_inserter( normalized ), []( auto &&v ) { return v.normalize(); } );
 
                     auto centroid =
-                            Histogram::mean( unitVectors, this->_n );
+                            Histogram::mean( normalized, this->_n );
                     auto standardDeviation =
-                            Histogram::standardError( unitVectors, centroid, this->_n );
+                            Histogram::standardError( normalized, centroid, this->_n );
 
                     this->_standardDeviations.set( order, id, std::move( standardDeviation ));
                     this->_centroids.set( order, id, std::move( centroid ));

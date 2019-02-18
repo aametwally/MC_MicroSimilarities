@@ -379,6 +379,12 @@ public:
         return std::move( dHist.unitVectorNormalize());
     }
 
+    inline Histogram<Size> normalize() const
+    {
+        auto dHist = toDoubleHistogram( *this );
+        return std::move( dHist.normalize());
+    }
+
     inline size_t size() const
     {
         return _buffer.size();

@@ -9,7 +9,8 @@
 #include "MCDefs.h"
 #include "AbstractMC.hpp"
 
-namespace MC {
+namespace MC
+{
 
 enum class ClassificationEnum
 {
@@ -20,8 +21,11 @@ enum class ClassificationEnum
     Segmentation,
     SVM_MCParameters,
     KNN_MCParameters,
+    RandomForest_MCParameters,
     SVM_MCSimilarity,
     KNN_MCSimilirity,
+    RandomForest_MCSimilarity,
+    RandomForest_MCSinglePoleSimilarity,
     KMERS,
     SVM_Stack,
     KNN_Stack,
@@ -35,22 +39,26 @@ static const std::map<std::string, ClassificationEnum> ClassifierEnum = {
         {"segmentation", ClassificationEnum::Segmentation},
         {"svm_mcp",      ClassificationEnum::SVM_MCParameters},
         {"knn_mcp",      ClassificationEnum::KNN_MCParameters},
+        {"rf_mcp",       ClassificationEnum::RandomForest_MCParameters},
         {"svm_mcs",      ClassificationEnum::SVM_MCSimilarity},
         {"knn_mcs",      ClassificationEnum::KNN_MCSimilirity},
+        {"rf_mcs",       ClassificationEnum::RandomForest_MCSimilarity},
+        {"rf_mcs_sp",    ClassificationEnum::RandomForest_MCSinglePoleSimilarity},
         {"svm_stack",    ClassificationEnum::SVM_Stack},
         {"knn_stack",    ClassificationEnum::KNN_Stack},
         {"kmers",        ClassificationEnum::KMERS},
         {"discretized",  ClassificationEnum::DiscretizedScales},
 };
 
-static const std::map<ClassificationEnum, std::string_view> ClassifierLabel = []() {
+static const std::map<ClassificationEnum, std::string_view> ClassifierLabel = []()
+{
     std::map<ClassificationEnum, std::string_view> m;
-    for (auto &[label, enumm] : ClassifierEnum)
+    for ( auto &[label, enumm] : ClassifierEnum )
         m.emplace( enumm, label );
     return m;
 }();
 
-template<size_t States>
+template < size_t States >
 class AbstractMCClassifier
 {
 public:
@@ -64,10 +72,10 @@ public:
     {
     }
 
-    template<typename TrainingDataType>
+    template < typename TrainingDataType >
     void trainMC( const TrainingDataType &trainingData )
     {
-        for (auto &&[label, classSequences]: trainingData)
+        for ( auto &&[label, classSequences]: trainingData )
         {
             auto backboneIt = _backbones.emplace( label, _generator()).first;
             auto &&backbone = backboneIt->second;
@@ -75,7 +83,7 @@ public:
 
             auto backgroundIt = _backgrounds.emplace( label, _generator()).first;
             auto &&background = backgroundIt->second;
-            for (auto &&[backgroundLabel, backgroundSequences] : trainingData)
+            for ( auto &&[backgroundLabel, backgroundSequences] : trainingData )
             {
                 if ( backgroundLabel != label )
                 {
@@ -85,20 +93,20 @@ public:
             backbone.normalize();
             background.normalize();
             _centralBackground = _generator();
-            for (auto &&[_, subset] : AbstractMC<States>::undersampleBalancing( trainingData ))
+            for ( auto &&[_, subset] : AbstractMC<States>::undersampleBalancing( trainingData ))
                 _centralBackground->addSequences( subset );
             _centralBackground->normalize();
         }
     }
 
 public:
-    template<typename SequencesType>
+    template < typename SequencesType >
     std::vector<std::string_view> predict( const SequencesType &sequences ) const
     {
         return predict( sequences, _backbones, _backgrounds, _centralBackground );
     }
 
-    template<typename SequencesType>
+    template < typename SequencesType >
     std::vector<std::string_view> predict(
             const SequencesType &sequences,
             const BackboneProfiles &backboneProfiles,
@@ -108,13 +116,13 @@ public:
     {
         assert( _validTraining( backboneProfiles, backgroundProfiles, centralBackground ));
         std::vector<std::string_view> labels;
-        for (auto &&seq : sequences)
+        for ( auto &&seq : sequences )
             labels.emplace_back( _bestPrediction( seq, backboneProfiles, backgroundProfiles, centralBackground ));
 
         return labels;
     }
 
-    template<typename InputSequence>
+    template < typename InputSequence >
     std::vector<ScoredLabels> scoredPredictions(
             const std::vector<InputSequence> &sequences
     ) const
@@ -122,7 +130,7 @@ public:
         return scoredPredictions( sequences, _backbones, _backgrounds, _centralBackground );
     }
 
-    template<typename InputSequence>
+    template < typename InputSequence >
     std::vector<ScoredLabels> scoredPredictions(
             const std::vector<InputSequence> &sequences,
             const BackboneProfiles &backboneProfiles,
@@ -132,7 +140,7 @@ public:
     {
         assert( _validTraining( backboneProfiles, backgroundProfiles, centralBackground ));
         std::vector<ScoredLabels> scoredLabels;
-        for (auto &&seq : sequences)
+        for ( auto &&seq : sequences )
             scoredLabels.emplace_back(
                     scoredPredictions( seq, backboneProfiles, backgroundProfiles, centralBackground ));
 
@@ -202,7 +210,7 @@ protected:
     BackboneProfile _centralBackground;
 };
 
-template<size_t States>
+template < size_t States >
 class MCPropensityClassifier : public AbstractMCClassifier<States>
 {
     using MCModel = AbstractMC<States>;
@@ -214,8 +222,7 @@ public:
     virtual ~MCPropensityClassifier() = default;
 
     MCPropensityClassifier( ModelGenerator <States> generator )
-            : AbstractMCClassifier<States>( generator )
-    {}
+            : AbstractMCClassifier<States>( generator ) {}
 
 protected:
     ScoredLabels _predict(
@@ -227,7 +234,7 @@ protected:
     {
         std::map<std::string_view, double> propensitites;
 
-        for (auto&[label, backbone] :backboneProfiles)
+        for ( auto&[label, backbone] :backboneProfiles )
         {
             auto &bg = backgroundProfiles.at( label );
             double logOdd = backbone->propensity( sequence ) - bg->propensity( sequence );
@@ -237,14 +244,14 @@ protected:
         propensitites = minmaxNormalize( std::move( propensitites ));
 
         ScoredLabels matchSet( backboneProfiles.size());
-        for (auto &[label, relativeAffinity] : propensitites)
+        for ( auto &[label, relativeAffinity] : propensitites )
             matchSet.emplace( label, relativeAffinity );
 
         return matchSet;
     }
 };
 
-template<size_t States>
+template < size_t States >
 class MicroSimilarityBasedClassifier : public AbstractMCClassifier<States>
 {
 public:
@@ -271,13 +278,12 @@ public:
             const SimilarityFunctor<Histogram> similarityFunctor
     )
             : AbstractMCClassifier<States>( generator ), _similarityFunctor( similarityFunctor ),
-              _macroScoring( macroScoring )
-    {}
+              _macroScoring( macroScoring ) {}
 
     virtual ~MicroSimilarityBasedClassifier() = default;
 
 protected:
-    template<typename MicroMeasurementsType, typename AlternativeMeasurementsType>
+    template < typename MicroMeasurementsType, typename AlternativeMeasurementsType >
     static std::map<std::string_view, double>
     macroScoresFromMicroMeasurement(
             MicroMeasurementsType &&microMeasurements,
@@ -286,10 +292,10 @@ protected:
     )
     {
         std::map<std::string_view, double> macro;
-        for (auto &&[label, measurements] : microMeasurements)
+        for ( auto &&[label, measurements] : microMeasurements )
         {
             double &labelMacro = macro[label];
-            for (auto &&[order, isoMeasurements] : measurements)
+            for ( auto &&[order, isoMeasurements] : measurements )
             {
                 auto &isoAlternativeMeasurements = alternativeMeasurements.at( order );
                 labelMacro = std::accumulate(
@@ -297,7 +303,8 @@ protected:
                         [&](
                                 double acc,
                                 std::pair<HistogramID, double> &&value
-                        ) {
+                        )
+                        {
                             if ( double measurement = value.second; !std::isnan( measurement ))
                             {
                                 return acc + measurement;
@@ -311,13 +318,13 @@ protected:
         }
         if ( similarityFunctor.cost )
         {
-            for (auto &[label, cost] : macro)
+            for ( auto &[label, cost] : macro )
                 cost *= -1;
         }
         return macro;
     }
 
-    template<typename MicroMeasurementsType>
+    template < typename MicroMeasurementsType >
     static std::map<std::string_view, double>
     votingFromMicroMeasurements(
             MicroMeasurementsType &&microMeasurements,
@@ -329,11 +336,11 @@ protected:
     {
         std::map<std::string_view, double> votes;
         std::unordered_map<Order, std::unordered_map<HistogramID, std::pair<std::string_view, double >>> closest;
-        for (auto &&[label, measurements] : microMeasurements)
+        for ( auto &&[label, measurements] : microMeasurements )
         {
-            for (auto &&[order, isoMeasurements] : measurements)
+            for ( auto &&[order, isoMeasurements] : measurements )
             {
-                for (auto &&[id, measurement] : isoMeasurements)
+                for ( auto &&[id, measurement] : isoMeasurements )
                 {
                     auto current = std::make_pair( label, measurement );
                     auto[nearestIt, insertionResult] = closest[order].try_emplace( id, current );
@@ -349,8 +356,8 @@ protected:
             }
         }
 
-        for (auto &&[_, nearestHistograms] : closest)
-            for (auto &&[_, nearestHistogram] : nearestHistograms)
+        for ( auto &&[_, nearestHistograms] : closest )
+            for ( auto &&[_, nearestHistogram] : nearestHistograms )
                 ++votes[nearestHistogram.first];
         return votes;
     }
@@ -371,7 +378,7 @@ protected:
         model->train( sequence );
 
         auto histograms = std::move( model->stealCentroids());
-        for (const auto &[label, backbone] : backboneProfiles)
+        for ( const auto &[label, backbone] : backboneProfiles )
         {
             auto &_measurements = measurements[label];
             histograms.forEach(
@@ -379,7 +386,8 @@ protected:
                             Order order,
                             HistogramID id,
                             const Histogram &histogram
-                    ) {
+                    )
+                    {
                         double &measurement = _measurements[order][id];
                         double &furthest = alternatives[order].try_emplace( id, bestInfinity ).first->second;
 
@@ -412,20 +420,20 @@ protected:
 
         ScoredLabels matchSet( backboneProfiles.size());
 
-        switch (_macroScoring)
+        switch ( _macroScoring )
         {
             case MacroScoringEnum::Accumulative :
             {
                 auto macroScores = minmaxNormalize(
                         macroScoresFromMicroMeasurement( measurements, alternatives, _similarityFunctor ));
-                for (auto &[label, _] : backboneProfiles)
+                for ( auto &[label, _] : backboneProfiles )
                     matchSet.emplace( label, macroScores[label] );
             }
                 break;
             case MacroScoringEnum::Voting:
             {
                 auto voteScores = minmaxNormalize( votingFromMicroMeasurements( measurements, closerThan ));
-                for (auto &[label, _] : backboneProfiles)
+                for ( auto &[label, _] : backboneProfiles )
                     matchSet.emplace( label, voteScores[label] );
             }
                 break;
@@ -434,8 +442,8 @@ protected:
                 auto macroScores = minmaxNormalize(
                         macroScoresFromMicroMeasurement( measurements, alternatives, _similarityFunctor ));
                 auto voteScores = minmaxNormalize( votingFromMicroMeasurements( measurements, closerThan ));
-                for (auto &[label, _] : backboneProfiles)
-                    matchSet.emplace( label, (macroScores[label] + voteScores[label]) / 2 );
+                for ( auto &[label, _] : backboneProfiles )
+                    matchSet.emplace( label, ( macroScores[label] + voteScores[label] ) / 2 );
             }
                 break;
             default:

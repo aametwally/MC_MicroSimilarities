@@ -12,3 +12,4 @@ dlib:enable_lapack=True
 dlib:enable_sse2=True
 dlib:enable_sse4=True
 dlib:enable_avx=True
+dlib:enable_mkl_fft=False

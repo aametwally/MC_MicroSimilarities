@@ -189,7 +189,7 @@ public:
     ) const
     {
         if ( context.empty())
-            return std::log2( probability( state ));
+            return 0;//std::log2( probability( state ));
         else return std::log2( probability( context, state ));
     }
 
