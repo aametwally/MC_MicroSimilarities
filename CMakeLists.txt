@@ -45,9 +45,7 @@ elseif (UNIX)
 endif ()
 
 
-#add_dependencies(dlib openblas)
-#add_dependencies(dlib lapack)
-project(markovian_features C CXX)
+project(mcms C CXX)
 
 ### Add CMake modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
@@ -59,8 +57,6 @@ include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
 ### Add external libraries
-#message($ENV{FMT_SOURCE})
-#message($ENV{DLIB_SOURCE})
 find_package(fmt REQUIRED CONFIG)
 
 ### Add all the files in the src directory to the CMake tree

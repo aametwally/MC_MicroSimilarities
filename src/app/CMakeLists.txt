@@ -1,3 +1,5 @@
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/app )
+
 set( INCLUDES ../report ../mc ../features ../data ../segmentation )
 
 set( LIBS ${MC_LIB} )
@@ -7,7 +9,7 @@ add_definitions( -ftemplate-backtrace-limit=0 )
 ### Generate the MC Pipeline executable
 add_executable( MC_pipeline MC_pipeline.cpp )
 target_include_directories( MC_pipeline PRIVATE ${INCLUDES} ${CMAKE_SOURCE_DIR}/src/include )
-target_link_libraries( MC_pipeline ${LIBS} stdc++fs ${CONAN_LIBS})
+target_link_libraries( MC_pipeline ${LIBS} stdc++fs ${CONAN_LIBS} )
 target_compile_features( MC_pipeline PRIVATE cxx_std_17 )
 
 ### Generate the feature scoring executable
@@ -28,8 +30,9 @@ target_compile_features( MC_pipeline PRIVATE cxx_std_17 )
 ### Protein Time Series Generator
 add_executable( protein2ts protein2ts.cpp )
 target_include_directories( protein2ts PRIVATE ${INCLUDES} ${CMAKE_SOURCE_DIR}/src/include )
-target_link_libraries( protein2ts PRIVATE ${LIBS} ${CONAN_LIBS})
+target_link_libraries( protein2ts PRIVATE ${LIBS} ${CONAN_LIBS} )
 target_compile_features( protein2ts PRIVATE cxx_std_17 )
 
-# Install the executable (generate with 'make install' in the bin directory)
-#install( TARGETS ${FINDING_CLUMPS_EXE} DESTINATION bin )
+# Installation
+install( TARGETS MC_pipeline protein2ts
+  RUNTIME DESTINATION bin )
