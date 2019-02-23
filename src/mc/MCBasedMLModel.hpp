@@ -633,7 +633,7 @@ private:
             const std::vector<double> &compensation
     ) const
     {
-        assert( compensation.size() == sample.size());
+        assert( compensation.size() == featureVector.size());
         for ( auto i = 0; i < featureVector.size(); ++i )
         {
             if ( std::isnan( featureVector[i] ))

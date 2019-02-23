@@ -8,10 +8,3 @@ endforeach()
 
 
 configure_file( AAIndex1Data.h.in ${CMAKE_CURRENT_SOURCE_DIR}/AAIndex1Data.h @ONLY )
-
-install(
-  DIRECTORY   mcms
-  DESTINATION include
-  COMPONENT   library
-  FILES_MATCHING PATTERN "*.{hpp,h}"
-)
