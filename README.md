@@ -18,11 +18,14 @@ A C++ implementation of various and new methods of representing Markov Chains in
 
 - Run `conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan`
 - Run `conan remote add a-alaa https://api.bintray.com/conan/a-alaa/public-conan`.
-- In this repository folder create `build` folder and, after moving into the new folder, run `conan install .. --build missing`.
-- Run `cmake ..`.
+- In this repository folder create `build` folder and, after moving into the new folder, run `conan install .. -s build_type=Release --build missing`.
+- Run `cmake .. -DCMAKE_BUILD_TYPE=Release`.
 - Run `make -j8`.
 
 ### Installation
 
 - Run `make install` from the `build` directory. By default, this will require root privileges, unless you change the `CMAKE_INSTALL_PREFIX` variable to a local directory.
 
+## LICENSE
+
+This project uses the MIT license. Please see [LICENSE.txt](LICENSE.txt) in the main directory for more details.
