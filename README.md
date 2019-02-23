@@ -1,10 +1,10 @@
-![](mcms.svg)
+![](mcms.png)
 
 # Markov Chains Latent Representation by Micro-similarities
 
 A C++ implementation of various and new methods of representing Markov Chains in a latent space that hypothetically relates the Markov model in hand with multiple pre-trained Markov models. An example usage for this representation is to base the classification of sequences using the latent representation then applying a secondary classifier, as an alternative to classifying sequences using the maximum propensity method. The current results show that the prediction performance is improved while retaining the explanatory power of the generative models.
 
-![](mcprojection.svg)
+![](mcprojection.png)
 
 ## Installation on Linux
 
