@@ -30,7 +30,7 @@ A C++ implementation of various and new methods of representing Markov Chains in
 
 The following tutorials (will be updated regularly), demonstrates the various applications of this project:
 
-- [Tutorial on Benchmarking Performance of Protein Subcellular Localization Prediction by Different Methods](wiki/Tutorial:-Benchmarking-Protein-Subcellular-Localization-Prediction)
+- [Tutorial on Benchmarking Performance of Protein Subcellular Localization Prediction by Different Methods](https://github.com/aametwally/MC_MicroSimilarities/wiki/Tutorial:-Benchmarking-Protein-Subcellular-Localization-Prediction)
 
 ## LICENSE
 
