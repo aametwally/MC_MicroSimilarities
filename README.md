@@ -26,6 +26,12 @@ A C++ implementation of various and new methods of representing Markov Chains in
 
 - Run `make install` from the `build` directory. By default, this will require root privileges, unless you change the `CMAKE_INSTALL_PREFIX` variable to a local directory.
 
+## Applications
+
+The following tutorials (will be updated regularly), demonstrates the various applications of this project:
+
+- [Tutorial on Benchmarking Performance of Protein Subcellular Localization Prediction by Different Methods](wiki/Tutorial:-Benchmarking-Protein-Subcellular-Localization-Prediction)
+
 ## LICENSE
 
 This project uses the MIT license. Please see [LICENSE.txt](LICENSE.txt) in the main directory for more details.
