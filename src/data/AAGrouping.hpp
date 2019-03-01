@@ -16,11 +16,12 @@ enum class AminoAcidGroupingEnum
     DIAMOND11
 };
 
+constexpr auto GroupingLabel_NOGROUPING = "nogrouping";
 const std::map<std::string, AminoAcidGroupingEnum> GroupingLabels{
-        {"nogrouping", AminoAcidGroupingEnum::NoGrouping22},
-        {"ofer15",     AminoAcidGroupingEnum::OFER15},
-        {"ofer8",      AminoAcidGroupingEnum::OFER8},
-        {"diamond11",  AminoAcidGroupingEnum::DIAMOND11}
+        {GroupingLabel_NOGROUPING, AminoAcidGroupingEnum::NoGrouping22},
+        {"ofer15",                 AminoAcidGroupingEnum::OFER15},
+        {"ofer8",                  AminoAcidGroupingEnum::OFER8},
+        {"diamond11",              AminoAcidGroupingEnum::DIAMOND11}
 };
 
 template<size_t N>

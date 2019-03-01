@@ -63,13 +63,6 @@ private:
 
     using Histogram = typename AbstractModel::Histogram;
 
-    using HeteroHistograms = typename AbstractModel::TransitionMatrices2D;
-
-    static constexpr const char *LOADING = "loading";
-    static constexpr const char *PREPROCESSING = "preprocessing";
-    static constexpr const char *TRAINING = "training";
-    static constexpr const char *CLASSIFICATION = "classification";
-
     using PriorityQueue = typename MatchSet<Score>::Queue<std::string_view>;
     using LeaderBoard = ClassificationCandidates<Score>;
 
@@ -84,7 +77,6 @@ public:
               _order( order ) {}
 
 public:
-
     template < typename InputSequence >
     static std::vector<std::string>
     reducedAlphabetEntries( const std::vector<InputSequence> &entries )
@@ -181,7 +173,7 @@ public:
                 auto ldaConfiguration = std::make_optional<LDAConfiguration>();
                 ldaConfiguration.reset();
                 pcaConfiguration.reset();
-                KNNMCMicroSimilarity<States> knn( 27, _modelGenerator, _similarity,
+                KNNMCMicroSimilarity<States> knn( 15, _modelGenerator, _similarity,
                                                   ldaConfiguration, pcaConfiguration );
 
                 knn.fit( reducedAlphabetEntries( trainingData ),
@@ -192,7 +184,7 @@ public:
             }
             case ClassificationEnum::RandomForest_MCSimilarity:
             {
-                const auto trainingData = AbstractModel::oversampleBalancing( trainingClusters );
+//                const auto trainingData = AbstractModel::oversampleBalancing( trainingClusters );
 
                 auto pcaConfiguration = std::make_optional<SVDConfiguration>();
                 auto ldaConfiguration = std::make_optional<LDAConfiguration>();
@@ -201,7 +193,7 @@ public:
                 RandomForestMicroSimilarity<States> rf( 500, _modelGenerator, _similarity,
                                                         ldaConfiguration, pcaConfiguration );
 
-                rf.fit( reducedAlphabetEntries( trainingData ),
+                rf.fit( reducedAlphabetEntries( trainingClusters ),
                         backbones, backgrounds, centralBackground );
 
                 return rf.scoredPredictions( reducedAlphabetEntries( queries ),
@@ -446,12 +438,12 @@ public:
             [ids, queries, qLabels] = unzip( folds.at( i ));
             fmt::print( "Training MC Model..\n" );
 
-            const auto trainingData = AbstractModel::oversampleBalancing( trainingClusters );
+//            const auto trainingData = AbstractModel::oversampleBalancing( trainingClusters );
 
             //const auto trainingData = AbstractModel::oversampleStateBalancing( trainingClusters );
 
             auto labelsAverageStates = LabeledEntry::groupAveragedValue<std::string_view>(
-                    trainingData,
+                    trainingClusters,
                     [](
                             std::string_view,
                             auto &&sequence
@@ -460,22 +452,22 @@ public:
                         return sequence.length();
                     } );
 
-            auto currentLabelsInfo = keys( trainingData, []( auto &&s )->std::string
+            auto currentLabelsInfo = keys( trainingClusters, []( auto &&s )->std::string
             {
                 return std::string( s );
             } );
 
             for ( auto &l : currentLabelsInfo )
                 l = fmt::format( "{}({}*{}={})", l,
-                                 trainingData.at( l ).size(),
+                                 trainingClusters.at( l ).size(),
                                  labelsAverageStates.at( l ),
-                                 labelsAverageStates.at( l ) * trainingData.at( l ).size());
+                                 labelsAverageStates.at( l ) * trainingClusters.at( l ).size());
 
             fmt::print( "[Clusters:{}][{}]\n",
-                        trainingData.size(),
+                        trainingClusters.size(),
                         io::join( currentLabelsInfo, "|" ));
 
-            auto reducedTrainingData = reducedAlphabetEntries( trainingData );
+            auto reducedTrainingData = reducedAlphabetEntries( trainingClusters );
             BackboneProfiles backbones = AbstractModel::train( reducedTrainingData, _modelGenerator );
             BackboneProfiles backgrounds = AbstractModel::backgroundProfiles( reducedTrainingData, _modelGenerator );
             auto balancedBackgroundCentroid = balancedCentroid( reducedTrainingData );
@@ -520,22 +512,6 @@ public:
             cvalidation.printReport();
             cvalidation.printPerClassReport();
         }
-
-//        for ( auto & [ensemble, cv, aucs] : ensembleValidation.majorityVotingOverallAccuracy())
-//        {
-//            fmt::print( "Majority MacroSimilarityVoting {{{}}} Cross-validation\n", io::join( ensemble, "," ));
-//            cv.printReport();
-//            for ( auto & [feature, auc] : aucs )
-//                fmt::print( "AUC({}):{}\n", feature, auc.auc());
-//        }
-//
-//        for ( auto & [ensemble, cv, aucs] : ensembleValidation.weightedVotingOverallAccuracy())
-//        {
-//            fmt::print( "Weighted MacroSimilarityVoting {{{}}} Cross-validation\n", io::join( ensemble, "," ));
-//            cv.printReport();
-//            for ( auto & [feature, auc] : aucs )
-//                fmt::print( "AUC({}):{}\n", feature, auc.auc());
-//        }
     }
 
 private:
