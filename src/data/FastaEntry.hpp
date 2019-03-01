@@ -86,7 +86,6 @@ public:
     }
 
     static std::vector<FastaEntry>
-
     readFastaFile( const std::string &path )
     {
         std::ifstream input( path );
