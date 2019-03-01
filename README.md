@@ -16,6 +16,7 @@ A C++ implementation of various and new methods of representing Markov Chains in
 
 ### Building
 
+- Since the project in experimental development and big changes may take place between successive versions, make sure you are on the desired version (tag). For example, `git checkout embc`. Moreover, the table in [Applications](#app) lists various tutorials and each is associated with a particular version (tag).
 - Run `conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan`
 - Run `conan remote add a-alaa https://api.bintray.com/conan/a-alaa/public-conan`.
 - In this repository folder create `build` folder and, after moving into the new folder, run `conan install .. --build missing -s build_type=Release -s compiler.libcxx=libstdc++11`.
@@ -26,11 +27,14 @@ A C++ implementation of various and new methods of representing Markov Chains in
 
 - Run `make install` from the `build` directory. By default, this will require root privileges, unless you change the `CMAKE_INSTALL_PREFIX` variable to a local directory.
 
-## Applications
+## Applications <a name="app"></a>
 
 The following tutorials (will be updated regularly), demonstrates the various applications of this project:
 
-- [Tutorial on Benchmarking Performance of Protein Subcellular Localization Prediction by Different Methods](https://github.com/aametwally/MC_MicroSimilarities/wiki/Tutorial:-Benchmarking-Protein-Subcellular-Localization-Prediction)
+| Tutorial name | Supported versions (tags) |
+|----|----|
+|  [Tutorial on Benchmarking Performance of Protein Subcellular Localization Prediction by Different Methods](https://github.com/aametwally/MC_MicroSimilarities/wiki/Tutorial:-Benchmarking-Protein-Subcellular-Localization-Prediction) | `embc` |
+
 
 ## LICENSE
 
