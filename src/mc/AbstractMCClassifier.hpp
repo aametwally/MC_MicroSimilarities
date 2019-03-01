@@ -52,10 +52,10 @@ static const std::map<std::string, ClassificationEnum> ClassifierEnum = {
 
 static const std::map<ClassificationEnum, std::string_view> ClassifierLabel = []()
 {
-    std::map<ClassificationEnum, std::string_view> m;
-    for ( auto &[label, enumm] : ClassifierEnum )
-        m.emplace( enumm, label );
-    return m;
+  std::map<ClassificationEnum, std::string_view> m;
+  for ( auto &[label, enumm] : ClassifierEnum )
+      m.emplace( enumm, label );
+  return m;
 }();
 
 template < size_t States >
@@ -305,14 +305,14 @@ protected:
                                 std::pair<HistogramID, double> &&value
                         )
                         {
-                            if ( double measurement = value.second; !std::isnan( measurement ))
-                            {
-                                return acc + measurement;
-                            } else
-                            {
-                                HistogramID id = value.first;
-                                return acc + isoAlternativeMeasurements.at( id );
-                            }
+                          if ( double measurement = value.second; !std::isnan( measurement ))
+                          {
+                              return acc + measurement;
+                          } else
+                          {
+                              HistogramID id = value.first;
+                              return acc + isoAlternativeMeasurements.at( id );
+                          }
                         } );
             }
         }
@@ -328,10 +328,7 @@ protected:
     static std::map<std::string_view, double>
     votingFromMicroMeasurements(
             MicroMeasurementsType &&microMeasurements,
-            std::function<bool(
-                    double,
-                    double
-            )> closerThan
+            std::function<bool( double, double )> closerThan
     )
     {
         std::map<std::string_view, double> votes;
@@ -388,33 +385,33 @@ protected:
                             const Histogram &histogram
                     )
                     {
-                        double &measurement = _measurements[order][id];
-                        double &furthest = alternatives[order].try_emplace( id, bestInfinity ).first->second;
+                      double &measurement = _measurements[order][id];
+                      double &furthest = alternatives[order].try_emplace( id, bestInfinity ).first->second;
 
-                        auto backboneHistogram = backbone->centroid( order, id );
-                        if ( backboneHistogram )
-                        {
-                            auto standardDeviation = backbone->standardDeviation( order, id );
-                            measurement = _similarityFunctor( backboneHistogram->get(), histogram,
-                                                              standardDeviation->get());
+                      auto backboneHistogram = backbone->centroid( order, id );
+                      if ( backboneHistogram )
+                      {
+                          auto standardDeviation = backbone->standardDeviation( order, id );
+                          measurement = _similarityFunctor( backboneHistogram->get(), histogram,
+                                                            standardDeviation->get());
 
-                        } else if ( centralBackground )
-                        {
-                            if ( auto center = centralBackground->centroid( order, id ); center.has_value())
-                            {
-                                auto standardDeviation = centralBackground->standardDeviation( order, id );
-                                measurement = _similarityFunctor( center->get(), histogram,
-                                                                  standardDeviation->get());
-                            }
-                        } else
-                        {
-                            measurement = nan;
-                        }
-                        if ( !std::isnan( measurement ))
-                        {
-                            if ( closerThan( furthest, measurement ))
-                                furthest = measurement;
-                        }
+                      } else if ( centralBackground )
+                      {
+                          if ( auto center = centralBackground->centroid( order, id ); center.has_value())
+                          {
+                              auto standardDeviation = centralBackground->standardDeviation( order, id );
+                              measurement = _similarityFunctor( center->get(), histogram,
+                                                                standardDeviation->get());
+                          }
+                      } else
+                      {
+                          measurement = nan;
+                      }
+                      if ( !std::isnan( measurement ))
+                      {
+                          if ( closerThan( furthest, measurement ))
+                              furthest = measurement;
+                      }
                     } );
         }
 
