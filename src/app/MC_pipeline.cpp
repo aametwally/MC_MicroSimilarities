@@ -22,7 +22,7 @@ int main(
 
     size_t k = 10;
     bool showHelp = false;
-    std::string grouping = keys( GroupingLabels ).front();
+    std::string grouping = GroupingLabel_NOGROUPING;
     std::string criteria = keys( CriteriaLabels ).front();
     std::string strategy = keys( ClassifierEnum ).front();
     std::string model = keys( MCModelLabels ).front();

@@ -63,13 +63,6 @@ private:
 
     using Histogram = typename AbstractModel::Histogram;
 
-    using HeteroHistograms = typename AbstractModel::TransitionMatrices2D;
-
-    static constexpr const char *LOADING = "loading";
-    static constexpr const char *PREPROCESSING = "preprocessing";
-    static constexpr const char *TRAINING = "training";
-    static constexpr const char *CLASSIFICATION = "classification";
-
     using PriorityQueue = typename MatchSet<Score>::Queue<std::string_view>;
     using LeaderBoard = ClassificationCandidates<Score>;
 
@@ -84,7 +77,6 @@ public:
               _order( order ) {}
 
 public:
-
     template < typename InputSequence >
     static std::vector<std::string>
     reducedAlphabetEntries( const std::vector<InputSequence> &entries )
@@ -181,7 +173,7 @@ public:
                 auto ldaConfiguration = std::make_optional<LDAConfiguration>();
                 ldaConfiguration.reset();
                 pcaConfiguration.reset();
-                KNNMCMicroSimilarity<States> knn( 27, _modelGenerator, _similarity,
+                KNNMCMicroSimilarity<States> knn( 15, _modelGenerator, _similarity,
                                                   ldaConfiguration, pcaConfiguration );
 
                 knn.fit( reducedAlphabetEntries( trainingData ),
@@ -520,22 +512,6 @@ public:
             cvalidation.printReport();
             cvalidation.printPerClassReport();
         }
-
-//        for ( auto & [ensemble, cv, aucs] : ensembleValidation.majorityVotingOverallAccuracy())
-//        {
-//            fmt::print( "Majority MacroSimilarityVoting {{{}}} Cross-validation\n", io::join( ensemble, "," ));
-//            cv.printReport();
-//            for ( auto & [feature, auc] : aucs )
-//                fmt::print( "AUC({}):{}\n", feature, auc.auc());
-//        }
-//
-//        for ( auto & [ensemble, cv, aucs] : ensembleValidation.weightedVotingOverallAccuracy())
-//        {
-//            fmt::print( "Weighted MacroSimilarityVoting {{{}}} Cross-validation\n", io::join( ensemble, "," ));
-//            cv.printReport();
-//            for ( auto & [feature, auc] : aucs )
-//                fmt::print( "AUC({}):{}\n", feature, auc.auc());
-//        }
     }
 
 private:
